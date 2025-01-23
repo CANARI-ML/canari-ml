@@ -58,9 +58,11 @@ class SerialLoader(IceNetBaseDataLoader):
 
         masks = self._masks
 
+        # Loop through ('train', 'val', 'test')
         for dataset in splits:
             batch_number = 0
 
+            # Make sure we have a unique set of forecast_dates
             forecast_dates = set(
                 [
                     dt.datetime.strptime(s, DATE_FORMAT).date()
@@ -177,8 +179,26 @@ class SerialLoader(IceNetBaseDataLoader):
 
 
 def generate_and_write(
-    path: str, var_files: object, dates: object, args: tuple, dry: bool = False
-):
+    path: str,
+    var_files: dict[str, str],
+    dates: list[dt.date],
+    args: tuple,
+    dry: bool = False,
+) -> tuple[str, int, list[float]]:
+    """
+    Generate and write TFRecords.
+
+    Args:
+        path: Path to the output TFRecord file.
+        var_files: Dictionary of variable files with their corresponding paths.
+        dates: List of dates to generate samples for.
+        args: Method arguments.
+        dry (optional): Whether to run in dry mode. Defaults to False.
+
+    Returns:
+        Tuple containing the path to the output TFRecord file, the count of processed
+            dates, and a list of time taken for each date.
+    """
     count = 0
     times = []
 
@@ -240,6 +260,6 @@ def generate_and_write(
 
             end = time.time()
             times.append(end - start)
-            logging.debug("Time taken to produce {}: {}".format(date, times[-1]))
+            logging.debug(f"Time taken to produce {date}: {times[-1]:.4f} seconds")
 
     return path, count, times

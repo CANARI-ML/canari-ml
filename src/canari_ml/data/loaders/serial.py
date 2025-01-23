@@ -52,7 +52,6 @@ class SerialLoader(IceNetBaseDataLoader):
 
         # Loop through ('train', 'val', 'test')
         for dataset in splits:
-
             # Make sure we have a unique set of forecast_dates
             forecast_dates = set(
                 [
@@ -184,52 +183,53 @@ def generate_and_write(
         trend_ds = trend_ds.transpose("yc", "xc", "time")
 
     # Prepare Zarr store
-    store = zarr.open(path, mode="w")
+    with zarr.open(path, mode="w") as store:
+        # Prepare arrays for x, y, and sample_weights
+        x_store = store.create_dataset(
+            "x",
+            shape=(len(dates), *shape, num_channels),
+            dtype=dtype,
+            chunks=(batch_size, *shape, num_channels),
+            compressor=zarr.Blosc(cname="zstd", clevel=3),
+        )
+        y_store = store.create_dataset(
+            "y",
+            shape=(len(dates), *shape, n_forecast_days, 1),
+            dtype=dtype,
+            chunks=(batch_size, *shape, n_forecast_days, 1),
+            compressor=zarr.Blosc(cname="zstd", clevel=3),
+        )
+        sw_store = store.create_dataset(
+            "sample_weights",
+            shape=(len(dates), *shape, n_forecast_days, 1),
+            dtype=dtype,
+            chunks=(batch_size, *shape, n_forecast_days, 1),
+            compressor=zarr.Blosc(cname="zstd", clevel=3),
+        )
 
-    # Prepare arrays for x, y, and sample_weights
-    x_store = store.create_dataset(
-        "x",
-        shape=(len(dates), *shape, num_channels),
-        dtype=dtype,
-        chunks=(batch_size, *shape, num_channels),
-        compressor=zarr.Blosc(cname="zstd", clevel=3),
-    )
-    y_store = store.create_dataset(
-        "y",
-        shape=(len(dates), *shape, n_forecast_days, 1),
-        dtype=dtype,
-        chunks=(batch_size, *shape, n_forecast_days, 1),
-        compressor=zarr.Blosc(cname="zstd", clevel=3),
-    )
-    sw_store = store.create_dataset(
-        "sample_weights",
-        shape=(len(dates), *shape, n_forecast_days, 1),
-        dtype=dtype,
-        chunks=(batch_size, *shape, n_forecast_days, 1),
-        compressor=zarr.Blosc(cname="zstd", clevel=3),
-    )
+        for idx, date in enumerate(dates):
+            start = time.time()
 
-    for idx, date in enumerate(dates):
-        start = time.time()
-
-        x, y, sample_weights = generate_sample(date, var_ds, var_files, trend_ds, *args)
-        if not dry:
-            x[da.isnan(x)] = 0.0
-
-            x, y, sample_weights = dask.compute(
-                x, y, sample_weights, optimize_graph=True
+            x, y, sample_weights = generate_sample(
+                date, var_ds, var_files, trend_ds, *args
             )
-            print(x.shape, y.shape, sample_weights.shape)
+            if not dry:
+                x[da.isnan(x)] = 0.0
 
-            # Write to Zarr store
-            x_store[idx] = x
-            y_store[idx] = y
-            sw_store[idx] = sample_weights
+                x, y, sample_weights = dask.compute(
+                    x, y, sample_weights, optimize_graph=True
+                )
+                print(x.shape, y.shape, sample_weights.shape)
 
-        count += 1
+                # Write to Zarr store
+                x_store[idx] = x
+                y_store[idx] = y
+                sw_store[idx] = sample_weights
 
-        end = time.time()
-        times.append(end - start)
-        logging.debug(f"Time taken to produce {date}: {times[-1]:.4f} seconds")
+            count += 1
+
+            end = time.time()
+            times.append(end - start)
+            logging.debug(f"Time taken to produce {date}: {times[-1]:.4f} seconds")
 
     return path, count, times

@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=64", "wheel", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "canari_ml"
+dynamic = ["version", "readme"]
+requires-python = ">=3.12"
+description = "Library for North-Atlantic jet stream forecasting"
+license = { file = "LICENSE" }
+authors = [{ name = "Bryn Noel Ubald" }]
+maintainers = [{ email = "bryald@bas.ac.uk" }]
+dependencies = [
+  "dask",
+  "distributed",
+  "h5py",
+  "matplotlib",
+  "pip",
+  "seaborn",
+  "wheel",
+  "xarray[io]",
+]
+classifiers = [
+  "Development Status :: 3",
+  "Environment :: Console",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering",
+  "License :: OSI Approved :: MIT License",
+  "Natural Language :: English",
+  "Operating System :: POSIX",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+
+[project.scripts]
+canari_ml_dataset_create = "canari_ml.data.loader:create_network_dataset"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools_scm]
+
+[tool.setuptools.dynamic]
+version = { attr = "canari_ml.__version__" }
+readme = { file = ["README.md"] }
+
+[project.optional-dependencies]
+dev = ["coverage", "pre-commit", "ruff", "tox", "pytest", "build"]
+docs = ["jinja2", "Sphinx", "sphinx-autodoc-typehints"]
+
+[project.urls]
+"Source" = "https://github.com/antarctica/canari-ml"
+"Issue tracker" = "https://github.com/antarctica/canari-ml/issues"
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
+# testpaths = ["src/canari_ml"]

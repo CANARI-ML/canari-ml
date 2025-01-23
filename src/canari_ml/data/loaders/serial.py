@@ -2,18 +2,16 @@ import datetime as dt
 import logging
 import os
 import time
-from pprint import pformat
 
 import dask
 import dask.array as da
 import numpy as np
-import tensorflow as tf
 import xarray as xr
+import zarr
 from icenet.data.loaders.base import DATE_FORMAT, IceNetBaseDataLoader
 from icenet.data.loaders.dask import (
     generate_sample,
 )
-from icenet.data.loaders.utils import write_tfrecord
 
 
 class SerialLoader(IceNetBaseDataLoader):
@@ -50,17 +48,10 @@ class SerialLoader(IceNetBaseDataLoader):
         counts = {el: 0 for el in splits}
         exec_times = []
 
-        def batch(batch_dates, num):
-            i = 0
-            while i < len(batch_dates):
-                yield batch_dates[i : i + num]
-                i += num
-
         masks = self._masks
 
         # Loop through ('train', 'val', 'test')
         for dataset in splits:
-            batch_number = 0
 
             # Make sure we have a unique set of forecast_dates
             forecast_dates = set(
@@ -79,7 +70,7 @@ class SerialLoader(IceNetBaseDataLoader):
             forecast_dates = sorted(list(forecast_dates))
 
             output_dir = self.get_data_var_folder(dataset)
-            tf_path = os.path.join(output_dir, "{:08}.tfrecord")
+            zarr_path = os.path.join(output_dir, f"{dataset}.zarr")
 
             logging.info(
                 "{} {} dates to process, generating cache data.".format(
@@ -87,43 +78,37 @@ class SerialLoader(IceNetBaseDataLoader):
                 )
             )
 
-            for dates in batch(forecast_dates, self._output_batch_size):
-                if not pickup or (
-                    pickup and not os.path.exists(tf_path.format(batch_number))
-                ):
-                    args = [
-                        self._channels,
-                        self._dtype,
-                        self._loss_weight_days,
-                        self._meta_channels,
-                        self._missing_dates,
-                        self._lead_time,
-                        self.num_channels,
-                        self._shape,
-                        self._trend_steps,
-                        self._frequency_attr,
-                        masks,
-                        False,
-                    ]
+            if not pickup or (pickup and not os.path.exists(zarr_path)):
+                args = [
+                    self._channels,
+                    self._dtype,
+                    self._loss_weight_days,
+                    self._meta_channels,
+                    self._missing_dates,
+                    self._lead_time,
+                    self.num_channels,
+                    self._shape,
+                    self._trend_steps,
+                    self._frequency_attr,
+                    masks,
+                    False,
+                ]
 
-                    tf_data, samples, gen_times = generate_and_write(
-                        tf_path.format(batch_number),
-                        self.get_sample_files(),
-                        dates,
-                        args,
-                        dry=self._dry,
-                    )
+                zarr_data, samples, gen_times = generate_and_write(
+                    zarr_path,
+                    self.get_sample_files(),
+                    forecast_dates,
+                    args,
+                    batch_size=self._output_batch_size,
+                    dry=self._dry,
+                )
 
-                    logging.info("Finished output {}".format(tf_data))
-                    counts[dataset] += samples
-                    exec_times += gen_times
-                else:
-                    counts[dataset] += len(dates)
-                    logging.warning(
-                        "Skipping {} on pickup run".format(tf_path.format(batch_number))
-                    )
-
-                batch_number += 1
+                logging.info("Finished output {}".format(zarr_data))
+                counts[dataset] += samples
+                exec_times += gen_times
+            else:
+                counts[dataset] += len(forecast_dates)
+                logging.warning("Skipping {} on pickup run".format(zarr_path))
 
         if len(exec_times) > 0:
             logging.info(
@@ -131,51 +116,8 @@ class SerialLoader(IceNetBaseDataLoader):
             )
         self._write_dataset_config(counts)
 
-    def generate_sample(self, date: object, prediction: bool = False, parallel=True):
-        ds_kwargs = dict(
-            chunks=dict(time=1, yc=self._shape[0], xc=self._shape[1]),
-            drop_variables=["month", "plev", "level", "realization"],
-            parallel=parallel,
-        )
-        var_files = self.get_sample_files()
-
-        var_ds = xr.open_mfdataset(
-            [
-                v
-                for k, v in var_files.items()
-                if k not in self._meta_channels and not k.endswith("linear_trend")
-            ],
-            **ds_kwargs,
-        )
-
-        logging.debug("VAR: {}".format(pformat(var_ds)))
-        var_ds = var_ds.transpose("yc", "xc", "time")
-
-        trend_files = [v for k, v in var_files.items() if k.endswith("linear_trend")]
-        trend_ds = None
-
-        if len(trend_files) > 0:
-            trend_ds = xr.open_mfdataset(trend_files, **ds_kwargs)
-            logging.debug("TREND: {}".format(pformat(trend_ds)))
-            trend_ds = trend_ds.transpose("yc", "xc", "time")
-
-        args = [
-            self._channels,
-            self._dtype,
-            self._loss_weight_days,
-            self._meta_channels,
-            self._missing_dates,
-            self._lead_time,
-            self.num_channels,
-            self._shape,
-            self._trend_steps,
-            self._frequency_attr,
-            self._masks,
-            prediction,
-        ]
-
-        x, y, sw = generate_sample(date, var_ds, var_files, trend_ds, *args)
-        return x.compute(), y.compute(), sw.compute()
+    def generate_sample(self) -> None:
+        pass
 
 
 def generate_and_write(
@@ -183,27 +125,26 @@ def generate_and_write(
     var_files: dict[str, str],
     dates: list[dt.date],
     args: tuple,
+    batch_size: int = 32,
     dry: bool = False,
 ) -> tuple[str, int, list[float]]:
     """
-    Generate and write TFRecords.
+    Generate and write Zarr dataset.
 
     Args:
-        path: Path to the output TFRecord file.
+        path: Path to the output Zarr dataset.
         var_files: Dictionary of variable files with their corresponding paths.
         dates: List of dates to generate samples for.
         args: Method arguments.
         dry (optional): Whether to run in dry mode. Defaults to False.
 
     Returns:
-        Tuple containing the path to the output TFRecord file, the count of processed
+        Tuple containing the path to the output Zarr dataset, the count of processed
             dates, and a list of time taken for each date.
     """
     count = 0
     times = []
 
-    # TODO: refactor, this is very smelly - with new data throughput args
-    #  will always be the same
     (
         channels,
         dtype,
@@ -242,24 +183,53 @@ def generate_and_write(
         trend_ds = xr.open_mfdataset(trend_files, **ds_kwargs)
         trend_ds = trend_ds.transpose("yc", "xc", "time")
 
-    with tf.io.TFRecordWriter(path) as writer:
-        for date in dates:
-            start = time.time()
+    # Prepare Zarr store
+    store = zarr.open(path, mode="w")
 
-            x, y, sample_weights = generate_sample(
-                date, var_ds, var_files, trend_ds, *args
+    # Prepare arrays for x, y, and sample_weights
+    x_store = store.create_dataset(
+        "x",
+        shape=(len(dates), *shape, num_channels),
+        dtype=dtype,
+        chunks=(batch_size, *shape, num_channels),
+        compressor=zarr.Blosc(cname="zstd", clevel=3),
+    )
+    y_store = store.create_dataset(
+        "y",
+        shape=(len(dates), *shape, n_forecast_days, 1),
+        dtype=dtype,
+        chunks=(batch_size, *shape, n_forecast_days, 1),
+        compressor=zarr.Blosc(cname="zstd", clevel=3),
+    )
+    sw_store = store.create_dataset(
+        "sample_weights",
+        shape=(len(dates), *shape, n_forecast_days, 1),
+        dtype=dtype,
+        chunks=(batch_size, *shape, n_forecast_days, 1),
+        compressor=zarr.Blosc(cname="zstd", clevel=3),
+    )
+
+    for idx, date in enumerate(dates):
+        start = time.time()
+
+        x, y, sample_weights = generate_sample(date, var_ds, var_files, trend_ds, *args)
+        if not dry:
+            x[da.isnan(x)] = 0.0
+
+            x, y, sample_weights = dask.compute(
+                x, y, sample_weights, optimize_graph=True
             )
-            if not dry:
-                x[da.isnan(x)] = 0.0
+            print(x.shape, y.shape, sample_weights.shape)
 
-                x, y, sample_weights = dask.compute(
-                    x, y, sample_weights, optimize_graph=True
-                )
-                write_tfrecord(writer, x, y, sample_weights)
-            count += 1
+            # Write to Zarr store
+            x_store[idx] = x
+            y_store[idx] = y
+            sw_store[idx] = sample_weights
 
-            end = time.time()
-            times.append(end - start)
-            logging.debug(f"Time taken to produce {date}: {times[-1]:.4f} seconds")
+        count += 1
+
+        end = time.time()
+        times.append(end - start)
+        logging.debug(f"Time taken to produce {date}: {times[-1]:.4f} seconds")
 
     return path, count, times

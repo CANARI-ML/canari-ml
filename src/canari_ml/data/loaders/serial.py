@@ -6,12 +6,11 @@ import time
 import dask
 import dask.array as da
 import numpy as np
+import pandas as pd
 import xarray as xr
 import zarr
+from dateutil.relativedelta import relativedelta
 from icenet.data.loaders.base import DATE_FORMAT, IceNetBaseDataLoader
-from icenet.data.loaders.dask import (
-    generate_sample,
-)
 
 
 class SerialLoader(IceNetBaseDataLoader):
@@ -115,8 +114,42 @@ class SerialLoader(IceNetBaseDataLoader):
             )
         self._write_dataset_config(counts)
 
-    def generate_sample(self) -> None:
-        pass
+    def generate_sample(self, date: object, prediction: bool = False, parallel=True) -> None:
+        ds_kwargs = dict(
+            chunks=dict(time=1, yc=self._shape[0], xc=self._shape[1]),
+            drop_variables=["month", "plev", "level", "realization"],
+            parallel=parallel,
+            engine="h5netcdf",
+        )
+        var_files = self.get_sample_files()
+
+        var_ds = xr.open_mfdataset([
+            v for k, v in var_files.items()
+            if k not in self._meta_channels and not k.endswith("linear_trend")
+        ], **ds_kwargs)
+
+        logging.debug("VAR: {}".format(var_ds))
+        var_ds = var_ds.transpose("yc", "xc", "time")
+
+        trend_files = \
+            [v for k, v in var_files.items()
+             if k.endswith("linear_trend")]
+        trend_ds = None
+
+        if len(trend_files) > 0:
+            trend_ds = xr.open_mfdataset(trend_files, **ds_kwargs)
+            logging.debug("TREND: {}".format(trend_ds))
+            trend_ds = trend_ds.transpose("yc", "xc", "time")
+
+        args = [
+            self._channels, self._dtype, self._loss_weight_days,
+            self._meta_channels, self._missing_dates, self._lead_time,
+            self.num_channels, self._shape, self._trend_steps, self._frequency_attr,
+            self._masks, prediction
+        ]
+
+        x, y, sw = generate_sample(date, var_ds, var_files, trend_ds, *args)
+        return x.compute(), y.compute(), sw.compute()
 
 
 def generate_and_write(
@@ -150,7 +183,7 @@ def generate_and_write(
         loss_weight_days,
         meta_channels,
         missing_dates,
-        n_forecast_days,
+        lead_time,
         num_channels,
         shape,
         trend_steps,
@@ -165,6 +198,12 @@ def generate_and_write(
         parallel=True,
     )
 
+
+    for k, v in var_files.items():
+        if k not in meta_channels and not k.endswith("linear_trend"):
+            print("k, v:", k, v)
+
+
     var_ds = xr.open_mfdataset(
         [
             v
@@ -172,8 +211,8 @@ def generate_and_write(
             if k not in meta_channels and not k.endswith("linear_trend")
         ],
         **ds_kwargs,
+        engine="h5netcdf", # Found default netcdf4 engine buggy
     )
-    var_ds = var_ds.transpose("yc", "xc", "time")
 
     trend_files = [v for k, v in var_files.items() if k.endswith("linear_trend")]
     trend_ds = None
@@ -194,16 +233,16 @@ def generate_and_write(
         )
         y_store = store.create_dataset(
             "y",
-            shape=(len(dates), *shape, n_forecast_days, 1),
+            shape=(len(dates), *shape, lead_time, 1),
             dtype=dtype,
-            chunks=(batch_size, *shape, n_forecast_days, 1),
+            chunks=(batch_size, *shape, lead_time, 1),
             compressor=zarr.Blosc(cname="zstd", clevel=3),
         )
         sw_store = store.create_dataset(
             "sample_weights",
-            shape=(len(dates), *shape, n_forecast_days, 1),
+            shape=(len(dates), *shape, lead_time, 1),
             dtype=dtype,
-            chunks=(batch_size, *shape, n_forecast_days, 1),
+            chunks=(batch_size, *shape, lead_time, 1),
             compressor=zarr.Blosc(cname="zstd", clevel=3),
         )
 
@@ -219,7 +258,6 @@ def generate_and_write(
                 x, y, sample_weights = dask.compute(
                     x, y, sample_weights, optimize_graph=True
                 )
-                print(x.shape, y.shape, sample_weights.shape)
 
                 # Write to Zarr store
                 x_store[idx] = x
@@ -233,3 +271,175 @@ def generate_and_write(
             logging.debug(f"Time taken to produce {date}: {times[-1]:.4f} seconds")
 
     return path, count, times
+
+
+def generate_sample(
+    forecast_date: object,
+    var_ds: object,
+    var_files: object,
+    trend_ds: object,
+    channels: object,
+    dtype: object,
+    loss_weight_days: bool,
+    meta_channels: object,
+    missing_dates: object,
+    n_forecast_steps: int,
+    num_channels: int,
+    shape: object,
+    trend_steps: object,
+    frequency_attr: str,
+    masks: object,
+    prediction: bool = False,
+):
+    """
+
+
+    :param forecast_date:
+    :param var_ds:
+    :param var_files:
+    :param trend_ds:
+    :param channels:
+    :param dtype:
+    :param loss_weight_days:
+    :param meta_channels:
+    :param missing_dates:
+    :param n_forecast_steps:
+    :param num_channels:
+    :param shape:
+    :param trend_steps:
+    :param frequency_attr:
+    :param masks:
+    :param prediction:
+    :return:
+    """
+    relative_attr = "{}s".format(frequency_attr)
+
+    # Prepare data sample
+    # To become array of shape (*raw_data_shape, n_forecast_steps)
+    forecast_base_idx = list(var_ds.time.values).index(pd.Timestamp(forecast_date))
+    forecast_idxs = [forecast_base_idx + n for n in range(0, n_forecast_steps)]
+
+    y = da.zeros((*shape, n_forecast_steps, 1), dtype=dtype)
+    sample_weights = da.zeros((*shape, n_forecast_steps, 1), dtype=dtype)
+
+    if not prediction:
+        try:
+            sample_output = var_ds.ua700_abs.isel(time=forecast_idxs)
+            sample_output = sample_output.transpose("yc", "xc", "time") # New
+        except KeyError as sic_ex:
+            logging.exception(
+                "Issue selecting data for non-prediction sample, "
+                "please review ua700 ground-truth: dates {}".format(forecast_idxs)
+            )
+            raise RuntimeError(sic_ex)
+        y[:, :, :, 0] = sample_output
+        # y_mask = da.stack(
+        #     [masks["land"].data for _ in range(0, n_forecast_steps)], axis=-1
+        # )
+        # y_mask = da.stack([y_mask], axis=-1)
+        # y = da.ma.where(y_mask, 0.0, y)
+
+    # Masked recomposition of output
+    for leadtime_idx in range(n_forecast_steps):
+        # forecast_step = forecast_date + relativedelta(**{relative_attr: leadtime_idx})
+
+        # if any([forecast_step == missing_date for missing_date in missing_dates]):
+        #     sample_weight = da.zeros(shape, dtype)
+        # else:
+        #     # Zero loss outside of 'active grid cells'
+        #     # TODO: this is hacky, we need to assess / combine masks more consistently via that implementation
+        #     if "active_grid_cell" in masks:
+        #         sample_weight = (
+        #             masks["active_grid_cell"].sel(month=forecast_step.month).data
+        #         )
+        #         sample_weight[masks["land"].data] = 0.0
+        #     else:
+        #         sample_weight = da.ones_like(masks["land"])
+        #     # TODO: dynamic inclusion of polarhole?
+        #     sample_weight = sample_weight.astype(dtype)
+
+        #     # We can pick up nans, which messes up training
+        #     sample_weight[da.isnan(y[..., leadtime_idx, 0])] = 0
+
+        #     # Scale the loss for each month s.t. March is
+        #     #   scaled by 1 and Sept is scaled by 1.77
+        #     if loss_weight_days:
+        #         sample_weight *= 33928.0 / sample_weight.sum()
+
+        # sample_weights[:, :, leadtime_idx, 0] = sample_weight
+        sample_weights[:, :, leadtime_idx, 0] = da.ones(shape, dtype) #New
+
+    # INPUT FEATURES
+    x = da.zeros((*shape, num_channels), dtype=dtype)
+    v1, v2 = 0, 0
+
+    for var_name, num_channels in channels.items():
+        if var_name in meta_channels:
+            continue
+
+        v2 += num_channels
+
+        if var_name.endswith("linear_trend"):
+            channel_ds = trend_ds
+            if type(trend_steps) is list:
+                channel_idxs = [forecast_base_idx + n for n in trend_steps]
+            else:
+                channel_idxs = [forecast_base_idx + n for n in range(0, num_channels)]
+        # If we're not a trend, we're a lag channel looking back historically from the initialisation date
+        else:
+            channel_ds = var_ds
+            channel_idxs = [forecast_base_idx - n for n in range(0, num_channels)]
+
+        channel_data = []
+        for idx in channel_idxs:
+            try:
+                data = getattr(channel_ds, var_name).isel(time=idx)
+                if var_name.startswith("siconca"):
+                    data = da.ma.where(masks["land"], 0.0, data)
+                channel_data.append(data)
+
+                # logging.info("NANs: {} = {} in {}-{}".format(forecast_date, int(da.isnan(data).sum()), var_name, idx))
+            except KeyError as e:
+                logging.warning(
+                    "KeyError detected on channel construction for {} - {}: {}".format(
+                        var_name, idx, e
+                    )
+                )
+                channel_data.append(da.zeros(shape))
+
+        x[:, :, v1:v2] = da.from_array(channel_data).transpose([1, 2, 0])
+        v1 += num_channels
+
+    for var_name in meta_channels:
+        if channels[var_name] > 1:
+            raise RuntimeError(
+                "{} meta variable cannot have more than one channel".format(var_name)
+            )
+
+        meta_ds = xr.open_dataarray(var_files[var_name])
+
+        if var_name in ["sin", "cos"]:
+            ref_date = "2012-{}-{}".format(forecast_date.month, forecast_date.day)
+            trig_val = meta_ds.sel(time=ref_date).to_numpy()
+            x[:, :, v1] = da.broadcast_to([trig_val], shape)
+        else:
+            x[:, :, v1] = da.array(meta_ds.to_numpy())
+        v1 += channels[var_name]
+
+    # TODO: we have unwarranted nans which need fixing, probably from broken spatial infilling
+    nan_mask_x, nan_mask_y, nan_mask_sw = (
+        da.isnan(x),
+        da.isnan(y),
+        da.isnan(sample_weights),
+    )
+    if nan_mask_x.sum() + nan_mask_y.sum() + nan_mask_sw.sum() > 0:
+        logging.warning(
+            "NANs: {} in input, {} in output, {} in weights".format(
+                int(nan_mask_x.sum()), int(nan_mask_y.sum()), int(nan_mask_sw.sum())
+            )
+        )
+        x[nan_mask_x] = 0
+        sample_weights[nan_mask_sw] = 0
+        y[nan_mask_y] = 0
+
+    return x, y, sample_weights

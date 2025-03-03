@@ -36,6 +36,7 @@ classifiers = [
 
 [project.scripts]
 canari_ml_dataset_create = "canari_ml.data.loader:create_network_dataset"
+canari_ml_preprocess_regrid = "canari_ml.preprocess.regrid:regrid"
 canari_ml_train = "canari_ml.models.train:pytorch_main"
 canari_ml_predict = "canari_ml.models.predict:main"
 

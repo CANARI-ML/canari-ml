@@ -44,7 +44,7 @@ def regrid_dataset(netcdf_file, coarsen: int = 1, interpolate: bool = False):
         ds_laea = ds_laea.rio.interpolate_na("nearest")
 
     if coarsen > 1:
-        ds_laea = ds_laea.coarsen(x=2, y=2, boundary="exact").mean()
+        ds_laea = ds_laea.coarsen(x=coarsen, y=coarsen, boundary="exact").mean()
 
     return ds_laea
 

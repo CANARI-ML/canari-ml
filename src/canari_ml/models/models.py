@@ -6,11 +6,80 @@ import torch.nn.functional as F
 
 from .model_wrapper import LitUNet
 
-# Suppress the specific UserWarning from PyTorch
+# Suppress the specific UserWarning from PyTorch on performance impact due
+# to padding="same"
 warnings.filterwarnings(
     "ignore", message="Using padding='same' with even kernel lengths and odd dilation"
 )
 
+def get_padding(x: torch.Tensor, stride: int = 16) -> tuple:
+    """Calculate padding for the input tensor to make its height and width multiples
+    of the given stride.
+
+    Args:
+        x: Input tensor.
+        stride: The stride value used to calculate the required padding.
+
+    Returns:
+        Four integers representing the padding amounts in the format
+        (left, right, top, bottom).
+
+    # Notes:
+    #     Reference this URL:
+    #     https://stackoverflow.com/questions/66028743/how-to-handle-odd-resolutions-in-unet-architecture-pytorch
+    """
+    h, w = x.shape[-2:]
+
+    # Calculate new dimensions that are multiples of the stride
+    new_h = ((h + stride - 1) // stride) * stride
+    new_w = ((w + stride - 1) // stride) * stride
+
+    # Compute padding amounts for height and width
+    pad_h = new_h - h
+    pad_w = new_w - w
+
+    # Divide padding symmetrically
+    pad_top, pad_bottom = pad_h // 2, pad_h - pad_h // 2
+    pad_left, pad_right = pad_w // 2, pad_w - pad_w // 2
+
+    return (pad_left, pad_right, pad_top, pad_bottom)
+
+def apply_padding(x: torch.Tensor, padding: tuple) -> torch.Tensor:
+    """Apply given padding to the input tensor.
+
+    Args:
+        x: Input tensor to be padded.
+        padding: Tuple specifying padding amounts for each dimension in the format
+            (left, right, top, bottom).
+
+    Returns:
+        Tensor with padding applied.
+
+    Notes:
+        Using Zero padding across boundaries.
+        Other options: https://pytorch.org/docs/stable/generated/torch.nn.functional.pad.html#torch.nn.functional.pad
+    """
+    out = F.pad(x, padding, "constant", value=0)
+    return out
+
+def undo_padding(x: torch.Tensor, padding: tuple) -> torch.Tensor:
+    """Remove padding from the input tensor based on the specified padding
+    dimensions.
+
+    Args:
+        x: Input tensor that was padded using `apply_padding`.
+        padding: The padding tuple returned by `get_padding` in the format
+            (left, right, top, bottom).
+
+    Returns:
+        The input tensor with padding cropped out.
+    """
+    pad_left, pad_right, pad_top, pad_bottom = padding
+    if pad_top + pad_bottom > 0:
+        x = x[:,:,pad_top:-pad_bottom,:]
+    if pad_left + pad_right > 0:
+        x = x[:,:,:,pad_left:-pad_right]
+    return x
 
 class Interpolate(nn.Module):
     def __init__(self, scale_factor, mode):
@@ -79,15 +148,33 @@ class UNet(nn.Module):
         # transpose from shape (b, h, w, c) to (b, c, h, w) for pytorch conv2d layers
         x = torch.movedim(x, -1, 1)  # move c from last to second dim
 
+        # Number of `max_pool2d` steps in Encoder layer.
+        # i.e., dimension halved, since it must later be doubled, else, will
+        # be a dimension mismatch in the decoder layer,
+        # e.g. 65 (131/2) vs 64 (32x2).
+        # This determines number of times the input dimension must be perfectly
+        # divisible by 2, and if not, must be padded for this architecture.
+        n_max_pool = 4
+        max_pool_kernel_size = 2
+        stride = max_pool_kernel_size**n_max_pool
+
+        h, w = x.shape[-2:]
+        # Pad data if the input image dimensions is not a multiple of stride
+        if h % stride or w % stride:
+            padding = get_padding(x, stride=stride)
+            x = apply_padding(x, padding)
+        else:
+            padding = None
+
         # Encoder
         bn1 = self.conv1(x)
-        conv1 = F.max_pool2d(bn1, kernel_size=2)
+        conv1 = F.max_pool2d(bn1, kernel_size=max_pool_kernel_size)
         bn2 = self.conv2(conv1)
-        conv2 = F.max_pool2d(bn2, kernel_size=2)
+        conv2 = F.max_pool2d(bn2, kernel_size=max_pool_kernel_size)
         bn3 = self.conv3(conv2)
-        conv3 = F.max_pool2d(bn3, kernel_size=2)
+        conv3 = F.max_pool2d(bn3, kernel_size=max_pool_kernel_size)
         bn4 = self.conv4(conv3)
-        conv4 = F.max_pool2d(bn4, kernel_size=2)
+        conv4 = F.max_pool2d(bn4, kernel_size=max_pool_kernel_size)
 
         # Bottleneck
         bn5 = self.conv5(conv4)
@@ -100,6 +187,10 @@ class UNet(nn.Module):
 
         # Final layer
         output = self.final_layer(up9)
+
+        # Undo padding of the network output to recover the original input shape
+        if padding:
+            output = undo_padding(output, padding)
 
         # Convert raw logits to result
         # y_hat = torch.sigmoid(output)

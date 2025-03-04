@@ -85,6 +85,7 @@ class PytorchNetwork(BaseNetwork):
         trainer = pl.Trainer(
             accelerator="auto",
             devices=1,
+            precision=16,  # Enable 16-bit precision (mixed precision training)
             log_every_n_steps=5,
             max_epochs=epochs,
             num_sanity_val_steps=0,

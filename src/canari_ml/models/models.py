@@ -193,7 +193,7 @@ class UNet(nn.Module):
             output = undo_padding(output, padding)
 
         # Convert raw logits to result
-        # y_hat = torch.sigmoid(output)
+        y_hat = torch.sigmoid(output)
         # For CANARI, output will be unbounded floats (i.e., not limited to 0-1)
         y_hat = output
 
@@ -250,8 +250,11 @@ class UNet(nn.Module):
 
     def upconv_block(self, in_channels, out_channels):
         return nn.Sequential(
-            Interpolate(scale_factor=2, mode="nearest"),
-            nn.Conv2d(in_channels, out_channels, kernel_size=2, padding="same"),
+            # Interpolate(scale_factor=2, mode="nearest"),
+            # nn.Conv2d(in_channels, out_channels, kernel_size=2, padding="same"),
+            # Upscale the input by a factor of 2 (using instead of
+            # torch.nn.functional.interpolator or nn.Upsample with Conv2d)
+            nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2),
             nn.ReLU(inplace=True),
         )
 

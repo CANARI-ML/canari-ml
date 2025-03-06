@@ -333,41 +333,33 @@ def generate_sample(
             )
             raise RuntimeError(sic_ex)
         y[:, :, :, 0] = sample_output
-        # y_mask = da.stack(
-        #     [masks["land"].data for _ in range(0, n_forecast_steps)], axis=-1
-        # )
-        # y_mask = da.stack([y_mask], axis=-1)
-        # y = da.ma.where(y_mask, 0.0, y)
+        if "hemisphere" in masks:
+            y_mask = da.stack(
+                [masks["hemisphere"].data for _ in range(0, n_forecast_steps)], axis=-1
+            )
+            y_mask = da.stack([y_mask], axis=-1)
+            y = da.ma.where(y_mask, 0.0, y)
 
     # Masked recomposition of output
     for leadtime_idx in range(n_forecast_steps):
-        # forecast_step = forecast_date + relativedelta(**{relative_attr: leadtime_idx})
+        forecast_step = forecast_date + relativedelta(**{relative_attr: leadtime_idx})
 
-        # if any([forecast_step == missing_date for missing_date in missing_dates]):
-        #     sample_weight = da.zeros(shape, dtype)
-        # else:
-        #     # Zero loss outside of 'active grid cells'
-        #     # TODO: this is hacky, we need to assess / combine masks more consistently via that implementation
-        #     if "active_grid_cell" in masks:
-        #         sample_weight = (
-        #             masks["active_grid_cell"].sel(month=forecast_step.month).data
-        #         )
-        #         sample_weight[masks["land"].data] = 0.0
-        #     else:
-        #         sample_weight = da.ones_like(masks["land"])
-        #     # TODO: dynamic inclusion of polarhole?
-        #     sample_weight = sample_weight.astype(dtype)
+        if any([forecast_step == missing_date for missing_date in missing_dates]):
+            sample_weight = da.zeros(shape, dtype)
+        else:
+            # No masking when sample_weight = 1
+            sample_weight = np.ones(shape, dtype)
+            if "hemisphere" in masks:
+                # Zero loss across the mask hemisphere
+                # (i.e., outside of northern hemisphere)
+                hemisphere_mask = masks["hemisphere"].data
+                sample_weight[hemisphere_mask] = 0.0
+            sample_weight = sample_weight.astype(dtype)
 
-        #     # We can pick up nans, which messes up training
-        #     sample_weight[da.isnan(y[..., leadtime_idx, 0])] = 0
+            # We can pick up nans, which messes up training
+            sample_weight[da.isnan(y[..., leadtime_idx, 0])] = 0.0
 
-        #     # Scale the loss for each month s.t. March is
-        #     #   scaled by 1 and Sept is scaled by 1.77
-        #     if loss_weight_days:
-        #         sample_weight *= 33928.0 / sample_weight.sum()
-
-        # sample_weights[:, :, leadtime_idx, 0] = sample_weight
-        sample_weights[:, :, leadtime_idx, 0] = da.ones(shape, dtype) #New
+        sample_weights[:, :, leadtime_idx, 0] = sample_weight
 
     # INPUT FEATURES
     x = da.zeros((*shape, num_channels), dtype=dtype)

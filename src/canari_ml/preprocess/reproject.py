@@ -8,7 +8,7 @@ import xarray as xr
 from download_toolbox.interface import DatasetConfig
 from preprocess_toolbox.dataset.cli import init_dataset
 
-from .cli import RegridArgParser
+from .cli import ReprojectArgParser
 
 # Get the logger for rasterio (or the relevant library)
 logger = logging.getLogger("rasterio")
@@ -17,9 +17,9 @@ logger = logging.getLogger("rasterio")
 logger.setLevel(logging.WARNING)
 
 
-def regrid_dataset(netcdf_file, coarsen: int = 1, interpolate: bool = False):
+def reproject_dataset(netcdf_file, coarsen: int = 1, interpolate: bool = False):
     """
-    Regrids an ERA5 dataset from its lat/lon grid to the LAEA using
+    Reprojects an ERA5 dataset from its lat/lon grid to the LAEA using
     rioxarray.
     """
     ds = xr.open_dataset(netcdf_file, decode_coords="all")
@@ -49,33 +49,33 @@ def regrid_dataset(netcdf_file, coarsen: int = 1, interpolate: bool = False):
     return ds_laea
 
 
-def regrid_datasets_from_config(
+def reproject_datasets_from_config(
     process_config: DatasetConfig, coarsen: int = 1, interpolate: bool = False
 ):
-    logging.info("Regridding dataset")
+    logging.info("Reprojecting dataset")
 
     for datafile in [
         _ for var_files in process_config.var_files.values() for _ in var_files
     ]:
         (datafile_path, datafile_name) = os.path.split(datafile)
-        regrid_source_name = f"_regrid_{datafile_name}"
-        regrid_datafile = Path(datafile_path) / regrid_source_name
-        os.rename(datafile, regrid_datafile)
+        reproject_source_name = f"_reproject_{datafile_name}"
+        reproject_datafile = Path(datafile_path) / reproject_source_name
+        os.rename(datafile, reproject_datafile)
 
-        logging.debug("Regridding {}".format(regrid_datafile))
+        logging.debug("Reprojecting {}".format(reproject_datafile))
 
-        ds_laea = regrid_dataset(regrid_datafile, coarsen)
+        ds_laea = reproject_dataset(reproject_datafile, coarsen)
 
-        logging.debug("Saving regridded data to {}... ".format(datafile))
+        logging.debug("Saving reprojectded data to {}... ".format(datafile))
         ds_laea.to_netcdf(datafile)
 
         if os.path.exists(datafile):
-            os.remove(regrid_datafile)
+            os.remove(reproject_datafile)
 
 
-def regrid():
+def reproject():
     args = (
-        RegridArgParser()
+        ReprojectArgParser()
         .add_destination()
         .add_splits()
         .add_coarsen()
@@ -85,7 +85,7 @@ def regrid():
     # Initially copy across the source data from `./data/` to the destination
     # `./processed_data/`
     ds, ds_config = init_dataset(args)
-    regrid_datasets_from_config(
+    reproject_datasets_from_config(
         ds_config, coarsen=args.coarsen, interpolate=args.interpolate
     )
     ds_config.save_config()

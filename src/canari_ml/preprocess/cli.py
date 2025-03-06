@@ -1,7 +1,7 @@
 from preprocess_toolbox.dataset.cli import ProcessingArgParser
 
 
-class RegridArgParser(ProcessingArgParser):
+class ReprojectArgParser(ProcessingArgParser):
     def __init__(self):
         super().__init__()
 

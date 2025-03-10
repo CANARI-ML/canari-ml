@@ -2,6 +2,7 @@
 
 import logging
 import os
+import pyproj
 
 import cartopy.crs as ccrs
 import numpy as np
@@ -91,26 +92,41 @@ class MaskDatasetConfig(DatasetConfig):
         )
 
         if not os.path.exists(hemisphere_mask_path):
-            ds = self._load_reference_dataset()
+            ds_ref = self._load_reference_dataset()
 
-            # Define coordinate reference systems
-            central_latitude = 90 if self._hemi_str == "nh" else -90
-            proj_laea = ccrs.LambertAzimuthalEqualArea(
-                central_longitude=0, central_latitude=central_latitude
-            )
-            geodetic = ccrs.PlateCarree()  # Geographic projection (lat/lon)
+            try:
+                # Extract the spatial reference that I had rioxarray write when
+                # reprojecting (if it exists)
+                crs_wkt = ds_ref.spatial_ref.attrs.get("crs_wkt", None)
 
-            # Define geographic region bounds (latitude, longitude)
+                # If the spatial_ref is in EPSG code, use pyproj to define the CRS
+                if crs_wkt:
+                    # A WKT string
+                    proj_crs = pyproj.CRS.from_wkt(crs_wkt)
+                else:
+                    raise ValueError("Unsupported spatial reference format")
+            except AttributeError:
+                logging.warning("Failed to read spatial reference from dataset"
+                "Not been run through `rioxarray`?")
+                # Define coordinate reference systems
+                central_latitude = 90 if self._hemi_str == "nh" else -90
+                proj_crs = ccrs.LambertAzimuthalEqualArea(
+                    central_longitude=0, central_latitude=central_latitude
+                )
+
+            geodetic = ccrs.Geodetic()  # Geographic projection (lat/lon)
+
+            # Define geographic region bounds to mask (latitude, longitude)
             if self._hemi_str == "nh":
                 lat_min, lat_max = 0, 90
             else:
                 lat_min, lat_max = -90, 0
             lon_min, lon_max = -180, 180
 
-            X, Y = np.meshgrid(ds.x.values, ds.y.values)
+            X, Y = np.meshgrid(ds_ref.x.values, ds_ref.y.values)
 
             # Transform dataset's projected coordinates (x, y) to latitude and longitude
-            lonlat = geodetic.transform_points(proj_laea, X, Y)
+            lonlat = geodetic.transform_points(proj_crs, X, Y)
             lon = lonlat[..., 0]
             lat = lonlat[..., 1]
 

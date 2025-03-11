@@ -17,7 +17,9 @@ dependencies = [
   "lightning",
   "matplotlib",
   "pip",
+  "rioxarray",
   "seaborn",
+  "tqdm",
   "wheel",
   "xarray[io]",
 ]

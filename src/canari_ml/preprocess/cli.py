@@ -1,5 +1,6 @@
 import ast
 import importlib
+import logging
 
 import cartopy.crs as ccrs
 from preprocess_toolbox.dataset.cli import ProcessingArgParser
@@ -8,6 +9,7 @@ from preprocess_toolbox.dataset.cli import ProcessingArgParser
 class ReprojectArgParser(ProcessingArgParser):
     def __init__(self):
         super().__init__()
+        self.add_argument("-w", "--workers", default=1, type=int)
 
     def add_source_crs(self):
         self.add_argument(

@@ -12,7 +12,7 @@ from lightning.pytorch.callbacks import (
     RichProgressBar,
     TQDMProgressBar,
 )
-from lightning.pytorch.loggers import CSVLogger
+from lightning.pytorch.loggers import CSVLogger, TensorBoardLogger
 
 from ...lightning.checkpoints import ModelCheckpointOnImprovement
 
@@ -76,7 +76,9 @@ class PytorchNetwork(BaseNetwork):
         logger_name = f"{self.run_name}_{self.seed}"
 
         lit_module = model_creator(**model_creator_kwargs)
-        logger = CSVLogger("logs", name=logger_name)
+
+        logger = TensorBoardLogger("tb_logs", name=logger_name)
+        # logger = CSVLogger("logs", name=logger_name)    # Uses basic CSV logging
 
         # Print model summary
         print(lit_module.model)

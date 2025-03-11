@@ -83,11 +83,17 @@ class PytorchNetwork(BaseNetwork):
         # Print model summary
         print(lit_module.model)
 
+        # precision options:
+        # ('transformer-engine', 'transformer-engine-float16', '16-true', '16-mixed',
+        # 'bf16-true', 'bf16-mixed', '32-true', '64-true', 64, 32, 16, '64', '32',
+        # '16', 'bf16')
         # set up trainer configuration
         trainer = pl.Trainer(
             accelerator="auto",
             devices=1,
-            precision=16,  # Enable 16-bit precision (mixed precision training)
+            precision="16-mixed",  # Enable 16-bit precision (mixed precision training)
+            # precision="16-true",  # Enable true 16-bit precision
+            # precision="bf16-true",  # Enable true bfloat 16-bit precision
             log_every_n_steps=5,
             max_epochs=epochs,
             num_sanity_val_steps=0,

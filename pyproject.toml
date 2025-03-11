@@ -11,6 +11,7 @@ license = { file = "LICENSE" }
 authors = [{ name = "Bryn Noel Ubald" }]
 maintainers = [{ email = "bryald@bas.ac.uk" }]
 dependencies = [
+  "cf-units",
   "dask",
   "distributed",
   "h5py",
@@ -42,6 +43,7 @@ canari_ml_preprocess_reproject = "canari_ml.preprocess.reproject:reproject"
 canari_ml_train = "canari_ml.models.train:pytorch_main"
 canari_ml_predict = "canari_ml.models.predict:main"
 canari_ml_plot_numpy = "canari_ml.plotting.forecast:plot_numpy"
+canari_ml_output = "canari_ml.process.predict:create_cf_output"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -62,5 +64,7 @@ docs = ["jinja2", "Sphinx", "sphinx-autodoc-typehints"]
 
 [tool.pytest.ini_options]
 addopts = "-ra"
-testpaths = ["tests"]
-# testpaths = ["src/canari_ml"]
+testpaths = [
+    "tests",
+    "src/tests",
+]

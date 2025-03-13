@@ -226,7 +226,7 @@ def ua700_error_plot(
     contour_kwargs = dict(
         colors="black",
         add_labels=True,
-        linewidths=0.75,
+        linewidths=0.3,
         levels=range(ua_min, ua_max, contour_level_step),
     )
 
@@ -244,6 +244,7 @@ def ua700_error_plot(
 
     tic = f"{pd.to_datetime(fc_da.isel(time=time).time.values).strftime(obs_ds_config.frequency.plot_format)}"
     tio = f"{pd.to_datetime(obs_da.isel(time=time).time.values).strftime(obs_ds_config.frequency.plot_format)}"
+    # tic, tio = "", ""
 
     ax1.set_title(f"CANARI-ML Forecast\n{fc_da.long_name}\n{tic}")
     ax2.set_title(f"ERA5 Analysis (EASE-Grid 2.0)\n{obs_da.long_name}\n{tio}")
@@ -260,7 +261,6 @@ def ua700_error_plot(
         label=fc_da.units,
     )
 
-    # Add a big title at the top
     plt.suptitle("CANARI-ML Prediction against ERA5 observation")
     plt.show()
 

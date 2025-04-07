@@ -101,6 +101,7 @@ class UNet(nn.Module):
         n_filters_factor=1,
         lead_time=7,
         n_output_classes=1,
+        dropout_probability=0.3,
         **kwargs,
     ):
         super(UNet, self).__init__()
@@ -118,6 +119,8 @@ class UNet(nn.Module):
         channels = {
             start_out_channels * 2**pow: reduced_channels * 2**pow for pow in range(4)
         }
+
+        self.dropout = nn.Dropout2d(dropout_probability)
 
         # Encoder
         self.conv1 = self.conv_block(input_channels, channels[64])
@@ -169,20 +172,27 @@ class UNet(nn.Module):
         # Encoder
         bn1 = self.conv1(x)
         conv1 = F.max_pool2d(bn1, kernel_size=max_pool_kernel_size)
+        conv1 = self.dropout(conv1)
         bn2 = self.conv2(conv1)
         conv2 = F.max_pool2d(bn2, kernel_size=max_pool_kernel_size)
+        conv2 = self.dropout(conv2)
         bn3 = self.conv3(conv2)
         conv3 = F.max_pool2d(bn3, kernel_size=max_pool_kernel_size)
+        conv3 = self.dropout(conv3)
         bn4 = self.conv4(conv3)
         conv4 = F.max_pool2d(bn4, kernel_size=max_pool_kernel_size)
+        conv4 = self.dropout(conv4)
 
         # Bottleneck
         bn5 = self.conv5(conv4)
 
         # Decoder
         up6 = self.up6b(torch.cat([bn4, self.up6(bn5)], dim=1))
+        up6 = self.dropout(up6)
         up7 = self.up7b(torch.cat([bn3, self.up7(up6)], dim=1))
+        up7 = self.dropout(up7)
         up8 = self.up8b(torch.cat([bn2, self.up8(up7)], dim=1))
+        up8 = self.dropout(up8)
         up9 = self.up9b(torch.cat([bn1, self.up9(up8)], dim=1))
 
         # Final layer
@@ -193,9 +203,8 @@ class UNet(nn.Module):
             output = undo_padding(output, padding)
 
         # Convert raw logits to result
+        # Can do without since we're working with regression w/ continuous values
         y_hat = torch.sigmoid(output)
-        # For CANARI, output will be unbounded floats (i.e., not limited to 0-1)
-        y_hat = output
 
         # transpose from shape (b, c, h, w) back to (b, h, w, c) to align with training data
         y_hat = torch.movedim(y_hat, 1, -1)  # move c from second to final dim

@@ -50,3 +50,26 @@ class MSELoss(nn.MSELoss):
         #             ( ( y_hat.movedim(-2, 1) - targets.movedim(-1, 1) )*100 )**2
         #         )*sample_weights.movedim(-1, 1)
         return loss.mean()
+
+class HuberLoss(nn.HuberLoss):
+    def __init__(self, *args, **kwargs):
+        if "reduction" not in kwargs:
+            kwargs.update({"reduction": "none"})
+        super().__init__(*args, **kwargs)
+
+    def forward(self, inputs, targets, sample_weights):
+        """
+        Weighted Huber loss.
+
+        Compute Huber loss weighted by masking.
+
+        """
+        y_hat = inputs.movedim(-2, 1) * sample_weights.movedim(-1, 1)
+        targets = targets.movedim(-1, 1) * sample_weights.movedim(-1, 1)
+        return super().forward(y_hat, targets).mean()
+
+        # # Computing using nn.HuberLoss base class. This class must be instantiated via:
+        # # criterion = nn.HuberLoss(reduction="none")
+        # loss = super().forward(y_hat, targets)
+
+        # return loss.mean()

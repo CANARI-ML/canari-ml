@@ -116,7 +116,7 @@ def execute_pytorch_training(args, dataset, network, save=True, evaluate=True):
     #         network.add_callback(callback)
     #         using_wandb = True
 
-    input_shape = (*dataset.shape, dataset.num_channels)
+    input_shape = (*dataset.shape, dataset.num_channels) # 720, 720, 4
     ratio = args.ratio if args.ratio else 1.0
     # Do not yet support ratio != 1.0 with pytorch
     train_dataloader, validation_dataloader, _ = dataset.get_data_loaders(ratio=1.0)
@@ -128,13 +128,14 @@ def execute_pytorch_training(args, dataset, network, save=True, evaluate=True):
         train_dataloader,
         model_creator_kwargs=dict(
             input_shape=input_shape,
-            loss=losses.MSELoss(),
+            loss=losses.HuberLoss(),
             # Note, when using CLI, pass the metric method name prepended by 'val_'
             # e.g. `--checkpoint-monitor val_mse`
             metrics=[
                 metrics.MAE,
                 metrics.MSE,
                 metrics.RMSE,
+                # losses.HuberLoss,
                 # losses.MSELoss,
             ],
             learning_rate=args.lr,

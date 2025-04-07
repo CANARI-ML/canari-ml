@@ -16,9 +16,7 @@ class L1Loss(nn.L1Loss):
 
         # Computing using nn.L1Loss class. This class must be instantiated via:
         # >>> criterion = WeightedL1Loss(reduction="none")
-        loss = super().forward(
-            (100 * y_hat.movedim(-2, 1)), (100 * targets.movedim(-1, 1))
-        ) * sample_weights.movedim(-1, 1)
+        loss = super().forward(y_hat.movedim(-2, 1), targets.movedim(-1, 1)) * sample_weights.movedim(-1, 1)
 
         # Computing here, in the derived class
         # loss = (
@@ -45,9 +43,7 @@ class MSELoss(nn.MSELoss):
 
         # Computing using nn.MSELoss base class. This class must be instantiated via:
         # criterion = nn.MSELoss(reduction="none")
-        loss = super().forward(
-            (100 * y_hat.movedim(-2, 1)), (100 * targets.movedim(-1, 1))
-        ) * sample_weights.movedim(-1, 1)
+        loss = super().forward(y_hat.movedim(-2, 1), targets.movedim(-1, 1)) * sample_weights.movedim(-1, 1)
 
         # Computing here, in the nn.Module derived class
         # loss = (

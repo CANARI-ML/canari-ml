@@ -96,6 +96,7 @@ class PytorchNetwork(BaseNetwork):
             # precision="bf16-true",  # Enable true bfloat 16-bit precision
             log_every_n_steps=5,
             max_epochs=epochs,
+            # auto_lr_find=True,
             num_sanity_val_steps=0,
             enable_checkpointing=False,  # Disable built-in checkpointing, using callback instead
             logger=logger,
@@ -109,6 +110,17 @@ class PytorchNetwork(BaseNetwork):
             #    when running trainer.test()
             # Note: Cannot use with automatic best checkpointing
         )
+        # trainer.tune(lit_module.model)
+        # # Run learning rate finder
+        # lr_finder = trainer.tuner.lr_find(lit_module.model)
+
+        # # Results can be found in
+        # lr_finder.results
+
+        # # Plot with
+        # fig = lr_finder.plot(suggest=True)
+        # fig.show()
+        # exit()
 
         if save:
             # checkpoint_weights_filename = (

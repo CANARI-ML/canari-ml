@@ -3,6 +3,7 @@ import os
 
 import cartopy.crs as ccrs
 import matplotlib.path as mpath
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pyproj
@@ -233,3 +234,69 @@ def high_res_rectangle(
     boundary_path = mpath.Path(projected_coords)
 
     return boundary_path
+
+def get_axes(fig_kwargs={}, gridlines_kwargs={}, coastlines=True, gridlines=True, custom_boundary_extents=None, custom_boundary=True):
+
+    fig_kwargs_ = dict(
+        figsize=(10, 6),
+        sharey=True,
+        layout="constrained",
+    )
+    fig_kwargs_.update(fig_kwargs)
+
+    geoaxes = False
+    subplot_kw = fig_kwargs_.get("subplot_kw", None)
+    if subplot_kw:
+        projection = subplot_kw.get("projection", None)
+        if projection:
+            geoaxes = True
+
+    gridlines_kwargs_ = dict(
+        draw_labels=True,
+        dms=True,
+        auto_inline=True,
+        linewidth=1,
+        color="gray",
+        alpha=0.5,
+        linestyle="--",
+        crs=ccrs.PlateCarree(),
+        # x_inline=False,
+        # y_inline=True,
+    )
+    gridlines_kwargs_.update(gridlines_kwargs)
+
+    fig, axes = plt.subplots(
+        **fig_kwargs_,
+    )
+
+    if custom_boundary:
+        # Set extent to northern hemisphere if not provided.
+        # This should be fixed for canari-ml
+        if not custom_boundary_extents:
+            lon_min, lon_max = -180, 180
+            lat_min, lat_max = 0, 90
+        region_path = high_res_rectangle(
+            lon_min,
+            lon_max,
+            lat_min,
+            lat_max,
+            target_crs=axes[0].projection,
+            num_points=200,
+        )
+
+    for ax in axes.flat:
+        if geoaxes:
+            if coastlines:
+                ax.coastlines(resolution="110m", linewidth=1, color="black")
+            # ax.add_feature(land, linewidth=0.2, linestyle='--', edgecolor='k', alpha=1)
+            if gridlines:
+                ax.gridlines(**gridlines_kwargs)
+
+            if custom_boundary:
+                # Set the boundary on the axes without a further transform,
+                # since the boundary is already in the axes' coordinate system.
+                ax.set_boundary(region_path)
+
+                # ax.set_frame_on(False)  # Hide boundary frame, else drawing line by longitude boundary
+
+    return fig, axes

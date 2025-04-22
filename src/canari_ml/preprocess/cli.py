@@ -152,7 +152,7 @@ def parse_crs(crs_string: str):
 
     # Clean up the arguments string and convert it into a valid Python expression
     # TODO: Revisit, using ast for safety...
-    class_args = class_args.strip("()")
+    class_args = class_args.strip("(").strip(")")
     if class_args:
         class_args_dict = dict(arg.split("=") for arg in class_args.split(","))
         class_args_dict = {
@@ -160,7 +160,6 @@ def parse_crs(crs_string: str):
         }
     else:
         class_args_dict = {}
-
     crs = crs_class(**class_args_dict)
 
     if not isinstance(crs, ccrs.CRS):

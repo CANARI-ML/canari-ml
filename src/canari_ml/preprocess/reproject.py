@@ -66,7 +66,9 @@ def reproject_dataset(
         target_crs.to_epsg(),
         resolution=resolution,
         shape=shape,
-        resampling=Resampling.cubic,
+        # TODO: Missing antimeridian slice issue with Polar reprojection when using
+        # other resampling methods (e.g., bilinear, cubic)
+        resampling=Resampling.nearest,
         nodata=np.nan,
         transform=target_transform,
     )

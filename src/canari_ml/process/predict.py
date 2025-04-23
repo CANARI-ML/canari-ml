@@ -17,7 +17,7 @@ from preprocess_toolbox.utils import get_config
 
 from canari_ml import __version__ as canari_ml_version
 from canari_ml.data.dataloader import CANARIMLDataSetTorch
-
+from canari_ml.data.masks.era5 import Masks
 
 def get_prediction_data(
     root: str, name: str, date: dt, return_ensemble_data: bool = False
@@ -212,7 +212,7 @@ def create_cf_output() -> None:
     # Metadata
     #
     if not args.plain:
-        ground_truth_ds_filename = "data/era5/dataset_config.month.hemi.{}.json".format(
+        ground_truth_ds_filename = "data.aws.day.north.json".format(
             hemi_str
         )
         ground_truth_ds_config = get_dataset_config_implementation(

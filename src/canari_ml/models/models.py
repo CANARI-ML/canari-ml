@@ -162,12 +162,12 @@ class UNet(nn.Module):
         stride = max_pool_kernel_size**n_max_pool
 
         h, w = x.shape[-2:]
-        # Pad data if the input image dimensions is not a multiple of stride
-        if h % stride or w % stride:
-            padding = get_padding(x, stride=stride)
-            x = apply_padding(x, padding)
-        else:
-            padding = None
+        ## Pad data if the input image dimensions is not a multiple of stride
+        #if h % stride or w % stride:
+        #    padding = get_padding(x, stride=stride)
+        #    x = apply_padding(x, padding)
+        #else:
+        #    padding = None
 
         # Encoder
         bn1 = self.conv1(x)
@@ -198,13 +198,14 @@ class UNet(nn.Module):
         # Final layer
         output = self.final_layer(up9)
 
-        # Undo padding of the network output to recover the original input shape
-        if padding:
-            output = undo_padding(output, padding)
+        ## Undo padding of the network output to recover the original input shape
+        #if padding:
+        #    output = undo_padding(output, padding)
 
         # Convert raw logits to result
         # Can do without since we're working with regression w/ continuous values
-        y_hat = torch.sigmoid(output)
+        # y_hat = torch.sigmoid(output)
+        y_hat = output
 
         # transpose from shape (b, c, h, w) back to (b, h, w, c) to align with training data
         y_hat = torch.movedim(y_hat, 1, -1)  # move c from second to final dim

@@ -85,6 +85,10 @@ def create_get_args() -> object:
                     type=int,
                     default=2)
 
+    ap.add_argument("--plot", action="store_true", default=False,
+        help="To output plots of the samples as well for debugging",
+    )
+
     args = ap.parse_args()
     return args
 
@@ -102,6 +106,7 @@ def create_network_dataset():
         output_batch_size=args.batch_size,
         pickup=args.pickup,
         generate_workers=args.workers,
+        plot=args.plot,
         dask_port=args.dask_port,
         futures_per_worker=args.futures)
 

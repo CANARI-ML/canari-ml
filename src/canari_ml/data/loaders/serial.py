@@ -5,17 +5,25 @@ import time
 
 import dask
 import dask.array as da
+import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xarray as xr
 import zarr
+
+
 from dateutil.relativedelta import relativedelta
 from icenet.data.loaders.base import DATE_FORMAT, IceNetBaseDataLoader
 
+# Speeds up matplotlib rendering a lot!
+matplotlib.use("Agg")
+
 
 class SerialLoader(IceNetBaseDataLoader):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, plot=False, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self._plot = plot
 
         self._masks = {
             var_name: xr.open_dataarray(mask_cfg["processed_files"][var_name][0])
@@ -99,6 +107,7 @@ class SerialLoader(IceNetBaseDataLoader):
                     args,
                     batch_size=self._output_batch_size,
                     dry=self._dry,
+                    plot=self._plot,
                 )
 
                 logging.info("Finished output {}".format(zarr_data))
@@ -152,6 +161,58 @@ class SerialLoader(IceNetBaseDataLoader):
         return x.compute(), y.compute(), sw.compute()
 
 
+def plot_samples_grid(data_array, title_prefix, fname, titles=None, cmap="RdBu_r"):
+    """
+    Plot samples in a grid.
+
+    Args:
+        data_array: 3D array (H, W, N)
+        title_prefix: Prefix for figure title
+        fname: Output file path (.jpg)
+        titles: List of strings to title each subplot
+        cmap: Matplotlib colormap
+    """
+    n_slices = data_array.shape[-1]
+    n_cols = 5
+    n_rows = int(np.ceil(n_slices / n_cols))
+
+    fig, axes = plt.subplots(
+        n_rows, n_cols,
+        figsize=(n_cols * 4, n_rows * 4),
+        constrained_layout=True
+    )
+
+    # Normalize axes format
+    axes = np.atleast_2d(axes)
+
+    vmin = np.nanmin(data_array)
+    vmax = np.nanmax(data_array)
+
+    im = None
+    for i in range(n_rows * n_cols):
+        row, col = divmod(i, n_cols)
+        ax = axes[row, col]
+        ax.axis("off")
+
+        if i < n_slices:
+            im = ax.imshow(
+                data_array[:, :, i],
+                cmap=cmap,
+                vmin=vmin,
+                vmax=vmax,
+                interpolation="nearest",
+            )
+            if titles:
+                ax.set_title(titles[i], fontsize=8)
+
+    if im is not None:
+        fig.colorbar(im, ax=axes.ravel().tolist(), orientation="horizontal", shrink=0.2, pad=0.05)
+
+    fig.suptitle(title_prefix, fontsize=14)
+    fig.savefig(fname, dpi=300)
+    plt.close(fig)
+
+
 def generate_and_write(
     path: str,
     var_files: dict[str, str],
@@ -159,6 +220,7 @@ def generate_and_write(
     args: tuple,
     batch_size: int = 32,
     dry: bool = False,
+    plot: bool = False,
 ) -> tuple[str, int, list[float]]:
     """
     Generate and write Zarr dataset.
@@ -169,9 +231,10 @@ def generate_and_write(
         dates: List of dates to generate samples for.
         args: Method arguments.
         dry (optional): Whether to run in dry mode. Defaults to False.
+        plot (optional): Whether to also output plots for each sample. Defaults to False.
 
     Returns:
-        Tuple containing the path to the output Zarr dataset, the count of processed
+        Paths to the output Zarr dataset, the count of processed
             dates, and a list of time taken for each date.
     """
     count = 0
@@ -221,6 +284,11 @@ def generate_and_write(
         trend_ds = xr.open_mfdataset(trend_files, **ds_kwargs)
         trend_ds = trend_ds.transpose("yc", "xc", "time")
 
+    if plot:
+        # Directory to save plots
+        plot_dir = os.path.join(os.path.dirname(path), "plots")
+        os.makedirs(plot_dir, exist_ok=True)
+
     # Prepare Zarr store
     with zarr.open(path, mode="w") as store:
         # Prepare arrays for x, y, and sample_weights
@@ -263,6 +331,45 @@ def generate_and_write(
                 x_store[idx] = x
                 y_store[idx] = y
                 sw_store[idx] = sample_weights
+
+                # Output plots of inputs, outputs and sample weights
+                if plot:
+                    # Build channel names from config
+                    x_titles = []
+                    for var_name, num_ch in channels.items():
+                        if var_name in meta_channels:
+                            for _ in range(num_ch):
+                                x_titles.append(var_name)
+                        elif var_name.endswith("linear_trend"):
+                            for step in trend_steps if isinstance(trend_steps, list) else range(num_ch):
+                                x_titles.append(f"{var_name}_t{step}")
+                        else:
+                            for lag in range(num_ch):
+                                x_titles.append(f"{var_name}_lag{lag}")
+
+                    # Leadtime labels
+                    relative_attr = frequency_attr + "s"  # e.g. "months" or "days"
+                    lead_titles = [
+                        (date + relativedelta(**{relative_attr: i})).strftime("%Y-%m-%d")
+                        for i in range(y.shape[2])
+                    ]
+
+                    # Plot grids with colorbars and labels
+                    plot_samples_grid(
+                        x, f"x - {date}",
+                        os.path.join(plot_dir, f"x_{idx}_{date}_grid.jpg"),
+                        titles=x_titles
+                    )
+                    plot_samples_grid(
+                        y[:, :, :, 0], f"y - {date}",
+                        os.path.join(plot_dir, f"y_{idx}_{date}_grid.jpg"),
+                        titles=lead_titles
+                    )
+                    plot_samples_grid(
+                        sample_weights[:, :, :, 0], f"sample_weights - {date}",
+                        os.path.join(plot_dir, f"sw_{idx}_{date}_grid.jpg"),
+                        titles=lead_titles
+                    )
 
             count += 1
 

@@ -312,6 +312,7 @@ def generate_sample(
     :param prediction:
     :return:
     """
+    # DAYS/MONTHS/YEARS
     relative_attr = "{}s".format(frequency_attr)
 
     # Prepare data sample

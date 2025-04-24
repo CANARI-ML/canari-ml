@@ -15,16 +15,20 @@ dependencies = [
   "cf-units",
   "dask",
   "distributed",
+  "download-toolbox @ git+https://github.com/environmental-forecasting/download-toolbox@icenet_0.4",
   "h5py",
+  "icenet @ git+https://github.com/icenet-ai/icenet@9042bf6",
+  "joblib",
   "lightning",
   "matplotlib",
   "pip",
+  "preprocess-toolbox @ git+https://github.com/environmental-forecasting/preprocess-toolbox@icenet_0.4",
   "rioxarray",
   "seaborn",
   "shapely",
   "tqdm",
   "wheel",
-  "xarray[io]",
+  "xarray[io]>=2024.3.0",
 ]
 classifiers = [
   "Development Status :: 3",
@@ -59,7 +63,7 @@ readme = { file = ["README.md"] }
 
 [project.optional-dependencies]
 dev = ["coverage", "pre-commit", "ruff", "tox", "pytest", "build"]
-docs = ["jinja2", "Sphinx", "sphinx-autodoc-typehints"]
+docs = ["mkdocs"]
 
 [project.urls]
 "Source" = "https://github.com/antarctica/canari-ml"

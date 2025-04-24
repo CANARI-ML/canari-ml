@@ -488,7 +488,7 @@ def generate_sample(
         # If we're not a trend, we're a lag channel looking back historically from the initialisation date
         else:
             channel_ds = var_ds
-            channel_idxs = [forecast_base_idx - n for n in range(0, num_channels)]
+            channel_idxs = [forecast_base_idx - n for n in range(1, num_channels + 1)]
 
         channel_data = []
         for idx in channel_idxs:

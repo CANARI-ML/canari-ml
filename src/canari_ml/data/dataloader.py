@@ -155,7 +155,7 @@ class CANARIMLDataSetTorch(IceNetDataSet):
             shuffle=self._shuffling,
             num_workers=num_workers,
             persistent_workers=persistent_workers,
-            pin_memory=True  # For faster transfer to GPU if using one
+            pin_memory=True,  # For faster transfer to GPU if using one
         )
 
         val_dataset = ZarrDataset(root_path=os.path.join(root_path, "val"), zarr_name="val.zarr")
@@ -165,17 +165,17 @@ class CANARIMLDataSetTorch(IceNetDataSet):
             shuffle=False,
             num_workers=num_workers,
             persistent_workers=persistent_workers,
-            pin_memory=True  # For faster transfer to GPU if using one
+            pin_memory=True,
         )
 
         test_dataset = ZarrDataset(root_path=os.path.join(root_path, "test"), zarr_name="test.zarr")
         test_dataloader = DataLoader(
             test_dataset,
-            batch_size=self._batch_size,  # Adjust based on your model and hardware
+            batch_size=self._batch_size,
             shuffle=False,
             num_workers=num_workers,
             persistent_workers=persistent_workers,
-            pin_memory=True  # For faster transfer to GPU if using one
+            pin_memory=True,
         )
         return train_dataloader, val_dataloader, test_dataloader
 

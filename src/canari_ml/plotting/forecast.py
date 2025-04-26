@@ -1,4 +1,3 @@
-import argparse
 import logging
 import os
 
@@ -6,13 +5,11 @@ import cartopy.crs as ccrs
 import imageio_ffmpeg as ffmpeg
 import matplotlib as mpl
 import matplotlib.animation as animation
-import matplotlib.path as mpath
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pyproj
 import xarray as xr
-
 from download_toolbox.interface import get_dataset_config_implementation
 from matplotlib.animation import FuncAnimation
 from matplotlib.widgets import Button, Slider
@@ -20,7 +17,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from canari_ml.preprocess.reproject import reproject_dataset_ease2
 
-from .cli import PlottingNumpyArgParser, ForecastPlotArgParser
+from .cli import ForecastPlotArgParser, PlottingNumpyArgParser
 from .utils import get_axes, get_forecast_obs_data
 
 cm = mpl.colormaps

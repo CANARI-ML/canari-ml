@@ -225,7 +225,7 @@ def ua700_error_plot(
         im4 = obs_da.isel(time=frame).plot.contour(ax=ax2, **contour_kwargs)
         artists.extend([im1, im2, im3, im4])
 
-        # Titles and annotations
+        # Updating titles from dataset - cleaner approach.
         tic = pd.to_datetime(fc_da.isel(time=frame).time.values).strftime(obs_ds_config.frequency.plot_format)
         tio = pd.to_datetime(obs_da.isel(time=frame).time.values).strftime(obs_ds_config.frequency.plot_format)
         # tic, tio = "", ""
@@ -236,20 +236,39 @@ def ua700_error_plot(
     # successive frames.
     fig.set_constrained_layout(False)
 
-    anim = FuncAnimation(fig, update, frames=len(fc_da.time), interval=500)
+    if show_plot:
+        ax_slider = fig.add_axes([0.2, 0.02, 0.6, 0.03])
+        time_slider = Slider(
+            ax_slider,
+            'Time Index',
+            0,
+            len(fc_da.time) - 1,
+            valinit=0,
+            valstep=1,
+            valfmt='%d'
+        )
 
-    output_path = os.path.join("plots", "ua700_error.mp4") \
-        if not output_path else output_path
-    logging.info(f"Saving to {output_path}")
+        def on_slider_change(val):
+            update(int(val))
 
-    output_dir = os.path.dirname(output_path)
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir, exist_ok=True)
+        time_slider.on_changed(on_slider_change)
+        update(0)
+        plt.show()
+    else:
+        anim = FuncAnimation(fig, update, frames=len(fc_da.time), interval=500)
 
-    writer = animation.FFMpegWriter(fps=2, metadata={"artist": "CANARI-ML"})
-    anim.save(output_path, writer=writer)
+        output_path = os.path.join("plots", "ua700_error.mp4") \
+            if not output_path else output_path
+        logging.info(f"Saving to {output_path}")
 
-    plt.close(fig)
+        output_dir = os.path.dirname(output_path)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir, exist_ok=True)
+
+        writer = animation.FFMpegWriter(fps=2, metadata={"artist": "CANARI-ML"})
+        anim.save(output_path, writer=writer)
+
+        plt.close(fig)
 
 
 def plot_numpy():

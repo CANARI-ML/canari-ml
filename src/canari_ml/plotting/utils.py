@@ -66,8 +66,8 @@ def filter_ds_by_obs(
     forecast_date = pd.to_datetime(forecast_date)
     delta_attribute = "{}s".format(frequency.attribute)
     (start_date, end_date) = (
-        forecast_date + relativedelta(**{delta_attribute: int(ds.leadtime.min())}),
-        forecast_date + relativedelta(**{delta_attribute: int(ds.leadtime.max())}),
+        forecast_date,
+        forecast_date + relativedelta(**{delta_attribute: int(ds.leadtime.max()-1)}),
     )
 
     if len(obs_da.time) < len(ds.leadtime):
@@ -137,6 +137,7 @@ def get_forecast_obs_data(
     ds_config = get_dataset_config_implementation(obs_ds_config)
     obs_ds = ds_config.get_dataset(var_names=["ua700"])
     obs_ds = obs_ds.sel(
+        # This time slice of observation does not match filter_ds_by_obs() function
         time=slice(
             pd.to_datetime(forecast_date),
             pd.to_datetime(forecast_date)

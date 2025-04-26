@@ -166,8 +166,8 @@ def ua700_error_plot(
     # Plot comparison of observation with ground truth.
     obs_da = reproject_dataset_ease2(obs_da, target_crs=proj_ccrs)
     ua_min, ua_max = int(obs_da.min().data), int(obs_da.max().data)
-    ua_min, ua_max = -15, 25
-    contour_level_step = 5
+    # ua_min, ua_max = -15, 25
+    contour_level_step = 7
 
     # Set common plotting parameters
     plot_kwargs = dict(
@@ -182,7 +182,7 @@ def ua700_error_plot(
 
     # TODO: Take time variable as an input
     # TODO: Really, a refactor pulling generalisable plotting components to a separate module
-    time = 2
+    time = 0
     im = fc_da.isel(time=time).plot.pcolormesh(
         ax=ax1, add_colorbar=False, **plot_kwargs
     )
@@ -193,9 +193,9 @@ def ua700_error_plot(
     obs_da.isel(time=time).plot.contour(ax=ax2, **contour_kwargs)
 
     # Get dates from the forecast and observation (ERA5) datasets
-    # tic = f"{pd.to_datetime(fc_da.isel(time=time).time.values).strftime(obs_ds_config.frequency.plot_format)}"
-    # tio = f"{pd.to_datetime(obs_da.isel(time=time).time.values).strftime(obs_ds_config.frequency.plot_format)}"
-    tic, tio = "", ""
+    tic = f"{pd.to_datetime(fc_da.isel(time=time).time.values).strftime(obs_ds_config.frequency.plot_format)}"
+    tio = f"{pd.to_datetime(obs_da.isel(time=time).time.values).strftime(obs_ds_config.frequency.plot_format)}"
+    # tic, tio = "", ""
 
     ax1.set_title(f"CANARI-ML Forecast\n{fc_da.long_name}\n{tic}")
     ax2.set_title(f"ERA5 Analysis (EASE-Grid 2.0)\n{obs_da.long_name}\n{tio}")

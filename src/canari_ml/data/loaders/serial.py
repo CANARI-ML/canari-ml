@@ -12,9 +12,10 @@ import pandas as pd
 import xarray as xr
 import zarr
 
-
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from dateutil.relativedelta import relativedelta
 from icenet.data.loaders.base import DATE_FORMAT, IceNetBaseDataLoader
+from joblib import Parallel, delayed
 
 # Speeds up matplotlib rendering a lot!
 matplotlib.use("Agg")
@@ -106,6 +107,7 @@ class SerialLoader(IceNetBaseDataLoader):
                     forecast_dates,
                     args,
                     batch_size=self._output_batch_size,
+                    workers=self._workers,
                     dry=self._dry,
                     plot=self._plot,
                 )
@@ -213,12 +215,91 @@ def plot_samples_grid(data_array, title_prefix, fname, titles=None, cmap="RdBu_r
     plt.close(fig)
 
 
+def process_date(idx,
+                 date,
+                 x_store,
+                 y_store,
+                 sw_store,
+                 var_ds,
+                 var_files,
+                 trend_ds,
+                 channels,
+                 meta_channels,
+                 trend_steps,
+                 frequency_attr,
+                 dry,
+                 plot,
+                 plot_dir,
+                 args
+                ):
+    start = time.time()
+    # Generate sample for the date
+    x, y, sample_weights = generate_sample(
+        date, var_ds, var_files, trend_ds, *args
+    )
+    if not dry:
+        x[da.isnan(x)] = 0.0
+
+        x, y, sample_weights = dask.compute(
+            x, y, sample_weights, optimize_graph=True
+        )
+
+        # Write to Zarr store
+        x_store[idx] = x
+        y_store[idx] = y
+        sw_store[idx] = sample_weights
+
+        # Output plots of inputs, outputs and sample weights
+        if plot:
+            # Build channel names from config
+            x_titles = []
+            for var_name, num_ch in channels.items():
+                if var_name in meta_channels:
+                    for _ in range(num_ch):
+                        x_titles.append(var_name)
+                elif var_name.endswith("linear_trend"):
+                    for step in trend_steps if isinstance(trend_steps, list) else range(num_ch):
+                        x_titles.append(f"{var_name}_t{step}")
+                else:
+                    for lag in range(num_ch):
+                        x_titles.append(f"{var_name}_lag{lag}")
+
+            # Leadtime labels
+            relative_attr = frequency_attr + "s"  # e.g. "months" or "days"
+            lead_titles = [
+                (date + relativedelta(**{relative_attr: i})).strftime("%Y-%m-%d")
+                for i in range(y.shape[2])
+            ]
+
+            # Plot grids with colorbars and labels
+            plot_samples_grid(
+                x, f"x - {date}",
+                os.path.join(plot_dir, f"x_{idx}_{date}_grid.jpg"),
+                titles=x_titles
+            )
+            plot_samples_grid(
+                y[:, :, :, 0], f"y - {date}",
+                os.path.join(plot_dir, f"y_{idx}_{date}_grid.jpg"),
+                titles=lead_titles
+            )
+            plot_samples_grid(
+                sample_weights[:, :, :, 0], f"sample_weights - {date}",
+                os.path.join(plot_dir, f"sw_{idx}_{date}_grid.jpg"),
+                titles=lead_titles
+            )
+
+    end = time.time()
+    duration = end - start
+    logging.info(f"Time taken to produce {date}: {duration:.4f} seconds")
+    return idx, date, duration
+
 def generate_and_write(
     path: str,
     var_files: dict[str, str],
     dates: list[dt.date],
     args: tuple,
     batch_size: int = 32,
+    workers: int = 4,
     dry: bool = False,
     plot: bool = False,
 ) -> tuple[str, int, list[float]]:
@@ -266,7 +347,6 @@ def generate_and_write(
         if k not in meta_channels and not k.endswith("linear_trend"):
             print("k, v:", k, v)
 
-
     var_ds = xr.open_mfdataset(
         [
             v
@@ -284,9 +364,9 @@ def generate_and_write(
         trend_ds = xr.open_mfdataset(trend_files, **ds_kwargs)
         trend_ds = trend_ds.transpose("yc", "xc", "time")
 
+    # Directory to save plots
+    plot_dir = os.path.join(os.path.dirname(path), "plots")
     if plot:
-        # Directory to save plots
-        plot_dir = os.path.join(os.path.dirname(path), "plots")
         os.makedirs(plot_dir, exist_ok=True)
 
     # Prepare Zarr store
@@ -297,85 +377,101 @@ def generate_and_write(
             shape=(len(dates), *shape, num_channels),
             dtype=dtype,
             chunks=(batch_size, *shape, num_channels),
-            compressor=zarr.Blosc(cname="zstd", clevel=3),
+            # compressor=zarr.Blosc(cname="zstd", clevel=3),
         )
         y_store = store.create_dataset(
             "y",
             shape=(len(dates), *shape, lead_time, 1),
             dtype=dtype,
             chunks=(batch_size, *shape, lead_time, 1),
-            compressor=zarr.Blosc(cname="zstd", clevel=3),
+            # compressor=zarr.Blosc(cname="zstd", clevel=3),
         )
         sw_store = store.create_dataset(
             "sample_weights",
             shape=(len(dates), *shape, lead_time, 1),
             dtype=dtype,
             chunks=(batch_size, *shape, lead_time, 1),
-            compressor=zarr.Blosc(cname="zstd", clevel=3),
+            # compressor=zarr.Blosc(cname="zstd", clevel=3),
         )
+        # Use self._workers (assumes you're in a class method)
+        times = []
+        count = 0
 
-        for idx, date in enumerate(dates):
-            start = time.time()
-
-            x, y, sample_weights = generate_sample(
-                date, var_ds, var_files, trend_ds, *args
+        if workers == 1:
+            for idx, date in enumerate(dates):
+                idx, date, duration = process_date(
+                                                    idx,
+                                                    date,
+                                                    x_store,
+                                                    y_store,
+                                                    sw_store,
+                                                    var_ds,
+                                                    var_files,
+                                                    trend_ds,
+                                                    channels,
+                                                    meta_channels,
+                                                    trend_steps,
+                                                    frequency_attr,
+                                                    dry,
+                                                    plot,
+                                                    plot_dir,
+                                                    args
+                                                  )
+                times.append(duration)
+                count += 1
+        else:
+            # TODO: Switch to Dask based approach - though, workers clash
+            # with pytorch num_workers in dataloader.
+            results = Parallel(n_jobs=workers, backend="loky", timeout=9999, verbose=51)(
+                delayed(process_date)(
+                                        idx,
+                                        date,
+                                        x_store,
+                                        y_store,
+                                        sw_store,
+                                        var_ds,
+                                        var_files,
+                                        trend_ds,
+                                        channels,
+                                        meta_channels,
+                                        trend_steps,
+                                        frequency_attr,
+                                        dry,
+                                        plot,
+                                        plot_dir,
+                                        args
+                ) for idx, date in enumerate(dates)
             )
-            if not dry:
-                x[da.isnan(x)] = 0.0
+            for idx, date, duration in results:
+                times.append(duration)
+                count += 1
+            # with ProcessPoolExecutor(max_workers=workers) as executor:
+            #     futures = {
+            #         executor.submit(process_date,
+            #                         idx,
+            #                         date,
+            #                         x_store,
+            #                         y_store,
+            #                         sw_store,
+            #                         var_ds,
+            #                         var_files,
+            #                         trend_ds,
+            #                         channels,
+            #                         meta_channels,
+            #                         trend_steps,
+            #                         frequency_attr,
+            #                         dry,
+            #                         plot,
+            #                         plot_dir,
+            #                         args
+            #                         ): (idx, date)
+            #         for idx, date in enumerate(dates)
+            #     }
 
-                x, y, sample_weights = dask.compute(
-                    x, y, sample_weights, optimize_graph=True
-                )
-
-                # Write to Zarr store
-                x_store[idx] = x
-                y_store[idx] = y
-                sw_store[idx] = sample_weights
-
-                # Output plots of inputs, outputs and sample weights
-                if plot:
-                    # Build channel names from config
-                    x_titles = []
-                    for var_name, num_ch in channels.items():
-                        if var_name in meta_channels:
-                            for _ in range(num_ch):
-                                x_titles.append(var_name)
-                        elif var_name.endswith("linear_trend"):
-                            for step in trend_steps if isinstance(trend_steps, list) else range(num_ch):
-                                x_titles.append(f"{var_name}_t{step}")
-                        else:
-                            for lag in range(num_ch):
-                                x_titles.append(f"{var_name}_lag{lag}")
-
-                    # Leadtime labels
-                    relative_attr = frequency_attr + "s"  # e.g. "months" or "days"
-                    lead_titles = [
-                        (date + relativedelta(**{relative_attr: i})).strftime("%Y-%m-%d")
-                        for i in range(y.shape[2])
-                    ]
-
-                    # Plot grids with colorbars and labels
-                    plot_samples_grid(
-                        x, f"x - {date}",
-                        os.path.join(plot_dir, f"x_{idx}_{date}_grid.jpg"),
-                        titles=x_titles
-                    )
-                    plot_samples_grid(
-                        y[:, :, :, 0], f"y - {date}",
-                        os.path.join(plot_dir, f"y_{idx}_{date}_grid.jpg"),
-                        titles=lead_titles
-                    )
-                    plot_samples_grid(
-                        sample_weights[:, :, :, 0], f"sample_weights - {date}",
-                        os.path.join(plot_dir, f"sw_{idx}_{date}_grid.jpg"),
-                        titles=lead_titles
-                    )
-
-            count += 1
-
-            end = time.time()
-            times.append(end - start)
-            logging.debug(f"Time taken to produce {date}: {times[-1]:.4f} seconds")
+            #     for future in as_completed(futures):
+            #         idx, date, duration = future.result()
+            #         times.append(duration)
+            #         count += 1
 
     return path, count, times
 
@@ -398,27 +494,6 @@ def generate_sample(
     masks: object,
     prediction: bool = False,
 ):
-    """
-
-
-    :param forecast_date:
-    :param var_ds:
-    :param var_files:
-    :param trend_ds:
-    :param channels:
-    :param dtype:
-    :param loss_weight_days:
-    :param meta_channels:
-    :param missing_dates:
-    :param n_forecast_steps:
-    :param num_channels:
-    :param shape:
-    :param trend_steps:
-    :param frequency_attr:
-    :param masks:
-    :param prediction:
-    :return:
-    """
     # DAYS/MONTHS/YEARS
     relative_attr = "{}s".format(frequency_attr)
 

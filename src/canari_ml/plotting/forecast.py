@@ -259,6 +259,19 @@ def ua700_error_plot(
         # else, will show 0 when first frame is plotted
         time_slider.valtext.set_text(time_labels[0])
 
+        # Add tickmarks so I know start/end of forecast along slider
+        num_ticks = min(len(fc_da.time), 10)
+        tick_indices = np.linspace(0, len(fc_da.time) - 1, num_ticks, dtype=int)
+
+        for idx in tick_indices:
+            rel_x = idx / (len(fc_da.time) - 1)  # normalized position [0, 1]
+            tick_x = slider_start + rel_x * slider_end  # match slider's position (0.2 to 0.8)
+
+            # Create a small axis for the tick line
+            tick_ax = fig.add_axes([tick_x - 0.0005, 0.015, 0.001, 0.01])  # small shift left to center the line
+            tick_ax.plot([0, 0], [0, 1], color='black', lw=0.8)
+            tick_ax.set_axis_off()
+
         def update_slider_label(val):
             index = int(val)
             time_slider.valtext.set_text(time_labels[index])

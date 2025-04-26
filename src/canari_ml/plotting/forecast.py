@@ -291,8 +291,13 @@ def ua700_error_plot(
         if not os.path.exists(output_dir):
             os.makedirs(output_dir, exist_ok=True)
 
-        writer = animation.FFMpegWriter(fps=2, metadata={"artist": "CANARI-ML"})
-        anim.save(output_path, writer=writer)
+        writer = animation.FFMpegWriter(
+            fps=2,
+            metadata={"artist": "CANARI-ML"},
+            extra_args=['-pix_fmt', 'yuv420p']
+        )
+
+        anim.save(output_path, writer=writer, dpi=300)
 
         plt.close(fig)
 

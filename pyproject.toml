@@ -19,6 +19,7 @@ dependencies = [
   "h5py",
   "icenet @ git+https://github.com/icenet-ai/icenet@9042bf6",
   "joblib",
+  "imageio-ffmpeg",
   "lightning",
   "matplotlib",
   "pip",

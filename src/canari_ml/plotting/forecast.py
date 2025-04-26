@@ -2,7 +2,9 @@ import logging
 import os
 
 import cartopy.crs as ccrs
+import imageio_ffmpeg as ffmpeg
 import matplotlib as mpl
+import matplotlib.animation as animation
 import matplotlib.path as mpath
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,6 +23,10 @@ from .cli import PlottingNumpyArgParser
 from .utils import get_axes, get_forecast_obs_data
 
 cm = mpl.colormaps
+
+# Set Matplotlib's ffmpeg executable path to the one from imageio_ffmpeg
+ffmpeg_path = ffmpeg.get_ffmpeg_exe()
+plt.rcParams['animation.ffmpeg_path'] = ffmpeg_path
 
 # Good plotting reference:
 # https://kpegion.github.io/Pangeo-at-AOES/examples/multi-panel-cartopy.html
@@ -135,6 +141,7 @@ def ua700_error_plot(
     obs_ds_config: object,
     output_path: os.PathLike,
     crs_wkt: str,
+    show_plot: bool = False,
 ) -> None:
     """Plots ua700 forecast against ERA5 observations in EASE-Grid 2.0.
 
@@ -144,6 +151,8 @@ def ua700_error_plot(
         obs_ds_config: Configuration parameters for the observation dataset.
         output_path: Path where the plot will be saved.
         crs_wkt: WKT string of the projection to be used for plotting.
+        show_plot: Whether to show the plot or save animation to file.
+                   Defaults to False.
     """
     proj_crs = pyproj.CRS.from_wkt(crs_wkt)
     proj_ccrs = ccrs.Projection(proj_crs)
@@ -178,30 +187,20 @@ def ua700_error_plot(
         add_labels=True,
         linewidths=0.3,
         levels=range(ua_min, ua_max, contour_level_step),
+        zorder=1,
     )
 
-    # TODO: Take time variable as an input
-    # TODO: Really, a refactor pulling generalisable plotting components to a separate module
-    time = 0
-    im = fc_da.isel(time=time).plot.pcolormesh(
-        ax=ax1, add_colorbar=False, **plot_kwargs
-    )
-    fc_da.isel(time=time).plot.contour(ax=ax1, **contour_kwargs)
-    im = obs_da.isel(time=time).plot.pcolormesh(
-        ax=ax2, add_colorbar=False, **plot_kwargs
-    )
-    obs_da.isel(time=time).plot.contour(ax=ax2, **contour_kwargs)
-
-    # Get dates from the forecast and observation (ERA5) datasets
-    tic = f"{pd.to_datetime(fc_da.isel(time=time).time.values).strftime(obs_ds_config.frequency.plot_format)}"
-    tio = f"{pd.to_datetime(obs_da.isel(time=time).time.values).strftime(obs_ds_config.frequency.plot_format)}"
-    # tic, tio = "", ""
-
-    ax1.set_title(f"CANARI-ML Forecast\n{fc_da.long_name}\n{tic}")
-    ax2.set_title(f"ERA5 Analysis (EASE-Grid 2.0)\n{obs_da.long_name}\n{tio}")
+    # Initial plots
+    ## First axis
+    im1 = fc_da.isel(time=0).plot.pcolormesh(ax=ax1, add_colorbar=False, **plot_kwargs)
+    im2 = fc_da.isel(time=0).plot.contour(ax=ax1, **contour_kwargs)
+    ## Second axis
+    im3 = obs_da.isel(time=0).plot.pcolormesh(ax=ax2, add_colorbar=False, **plot_kwargs)
+    im4 = fc_da.isel(time=0).plot.contour(ax=ax2, **contour_kwargs)
+    artists = [im1, im2, im3, im4]
 
     cbar = fig.colorbar(
-        im,
+        im1,
         ax=axes,
         orientation="horizontal",
         # fraction=1.0,
@@ -212,7 +211,44 @@ def ua700_error_plot(
     )
 
     plt.suptitle("CANARI-ML Prediction against ERA5 observation")
-    plt.show()
+
+    def update(frame):
+        for artist in artists:
+            artist.remove()
+        artists.clear()
+
+        # Plot data
+        im1 = fc_da.isel(time=frame).plot.pcolormesh(ax=ax1, add_colorbar=False, **plot_kwargs)
+        im2 = fc_da.isel(time=frame).plot.contour(ax=ax1, **contour_kwargs)
+        im3 = obs_da.isel(time=frame).plot.pcolormesh(ax=ax2, add_colorbar=False, **plot_kwargs)
+        im4 = obs_da.isel(time=frame).plot.contour(ax=ax2, **contour_kwargs)
+        artists.extend([im1, im2, im3, im4])
+
+        # Titles and annotations
+        tic = pd.to_datetime(fc_da.isel(time=frame).time.values).strftime(obs_ds_config.frequency.plot_format)
+        tio = pd.to_datetime(obs_da.isel(time=frame).time.values).strftime(obs_ds_config.frequency.plot_format)
+        # tic, tio = "", ""
+        ax1.set_title(f"CANARI-ML Forecast\n{fc_da.long_name}\n{tic}")
+        ax2.set_title(f"ERA5 Analysis (EASE-Grid 2.0)\n{obs_da.long_name}\n{tio}")
+
+    # Disabling constrained after I've added plots & colorbar to prevent jumping around in
+    # successive frames.
+    fig.set_constrained_layout(False)
+
+    anim = FuncAnimation(fig, update, frames=len(fc_da.time), interval=500)
+
+    output_path = os.path.join("plots", "ua700_error.mp4") \
+        if not output_path else output_path
+    logging.info(f"Saving to {output_path}")
+
+    output_dir = os.path.dirname(output_path)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
+
+    writer = animation.FFMpegWriter(fps=2, metadata={"artist": "CANARI-ML"})
+    anim.save(output_path, writer=writer)
+
+    plt.close(fig)
 
 
 def plot_numpy():
@@ -229,9 +265,9 @@ def plot_ua700_error():
     args = ap.parse_args()
 
     fc, obs, spatial_ref = get_forecast_obs_data(
-        args.forecast_file, args.obs_dataset_config, args.forecast_date
+        args.forecast_file, args.obs_data_config, args.forecast_date
     )
-    ds_config = get_dataset_config_implementation(args.obs_dataset_config)
+    ds_config = get_dataset_config_implementation(args.obs_data_config)
 
     logging.info("Plotting ua700 error")
 
@@ -241,4 +277,5 @@ def plot_ua700_error():
         obs_ds_config=ds_config,
         output_path=args.output_path,
         crs_wkt=spatial_ref["crs_wkt"],
+        show_plot=args.show_plot,
     )

@@ -213,6 +213,12 @@ def ua700_error_plot(
 
     plt.suptitle("CANARI-ML Prediction against ERA5 observation")
 
+   # Create time labels for slider (if show plot instead of save animation flag enabled)
+    time_labels = [
+        pd.to_datetime(t.item()).strftime(obs_ds_config.frequency.plot_format)
+        for t in fc_da.time
+    ]
+
     def update(frame):
         for artist in artists:
             artist.remove()
@@ -237,21 +243,28 @@ def ua700_error_plot(
     fig.set_constrained_layout(False)
 
     if show_plot:
-        ax_slider = fig.add_axes([0.2, 0.02, 0.6, 0.03])
+        slider_start, slider_end = 0.2, 0.6
+        ax_slider = fig.add_axes([slider_start, 0.02, slider_end, 0.03])
         time_slider = Slider(
             ax_slider,
-            'Time Index',
+            "Forecast date",
             0,
             len(fc_da.time) - 1,
             valinit=0,
             valstep=1,
-            valfmt='%d'
+            valfmt="%d",
         )
 
-        def on_slider_change(val):
-            update(int(val))
+        # Set label to first time label immediately
+        # else, will show 0 when first frame is plotted
+        time_slider.valtext.set_text(time_labels[0])
 
-        time_slider.on_changed(on_slider_change)
+        def update_slider_label(val):
+            index = int(val)
+            time_slider.valtext.set_text(time_labels[index])
+            update(index)
+
+        time_slider.on_changed(update_slider_label)
         update(0)
         plt.show()
     else:

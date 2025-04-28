@@ -253,6 +253,7 @@ class CanariMLBaseDataLoader(DataCollection):
                 if var_name not in self._var_lag_override
                 else self._var_lag_override[var_name]
             )
+            logging.debug(f"Lag time for variable {var_name} is {self._lag_time}:")
 
             self._channels[var_prefix] = int(var_lag) + 1
             self._add_channel_files(

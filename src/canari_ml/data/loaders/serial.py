@@ -101,6 +101,8 @@ class SerialLoader(IceNetBaseDataLoader):
                     False,
                 ]
 
+                logging.debug(f"Forecast dates:\n{pformat(forecast_dates)}")
+
                 zarr_data, samples, gen_times = generate_and_write(
                     zarr_path,
                     self.get_sample_files(),

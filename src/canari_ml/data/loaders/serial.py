@@ -2,6 +2,8 @@ import datetime as dt
 import logging
 import os
 import time
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from pprint import pformat
 
 import dask
 import dask.array as da
@@ -11,17 +13,17 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import zarr
-
-from concurrent.futures import ProcessPoolExecutor, as_completed
 from dateutil.relativedelta import relativedelta
 from icenet.data.loaders.base import DATE_FORMAT, IceNetBaseDataLoader
 from joblib import Parallel, delayed
+
+from canari_ml.data.loaders.base import CanariMLBaseDataLoader
 
 # Speeds up matplotlib rendering a lot!
 matplotlib.use("Agg")
 
 
-class SerialLoader(IceNetBaseDataLoader):
+class SerialLoader(CanariMLBaseDataLoader):
     def __init__(self, *args, plot=False, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._plot = plot

@@ -1,1 +1,63 @@
-site_name: My Docs
+site_name: canari-ml docs
+theme:
+  name: material
+  highlightjs: true
+  color_mode: dark
+  palette:
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: pink
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    # Palette toggle for light mode
+    - scheme: default
+      primary: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - content.code.copy
+    - search.highlight
+    - search.share
+
+extra:
+  generator: false
+
+plugins:
+  - search:
+      lang: en
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            show_if_no_docstring: true
+            show_inheritance_diagram: true    # Show inheritance diagram for classes
+            show_signature: true  # Show function signatures (args, return type)
+            show_source: true # Show source code for functions and classes
+            show_root_full_path: true # Show full path of root path in headings
+            show_object_full_path: true    # Show full path of objects in signatures
+            # heading_level: 2   # Heading level for members (1 to 6)
+            members_order: source   # Order of members in the documentation
+            filters: ["!^_"]   # Exclude patterns from members
+            merge_init_into_class: true    # Merge __init__ methods into class docstrings
+            show_root_heading: true    # Show the root heading in the documentation
+            allow_inspection: true     # Allow inspecting modules (importing them) when it is not possible to visit them (parse their source code)
+            show_bases: true     # Show base classes in the documentation
+  - gen-files:
+      scripts:
+        - docs/gen_ref_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - section-index
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+
+nav:
+  - Introduction: index.md
+  - Usage: usage.md
+  - Code Reference: reference/

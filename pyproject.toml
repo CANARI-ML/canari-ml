@@ -64,7 +64,7 @@ readme = { file = ["README.md"] }
 
 [project.optional-dependencies]
 dev = ["coverage", "pre-commit", "ruff", "tox", "pytest", "build"]
-docs = ["mkdocs"]
+docs = ["mkdocs", "mkdocstrings[python]", "mkdocs-material", "mkdocs-gen-files", "mkdocs-literate-nav", "mkdocs-section-index"]
 
 [project.urls]
 "Source" = "https://github.com/antarctica/canari-ml"
@@ -76,3 +76,23 @@ testpaths = [
     "tests",
     "src/tests",
 ]
+
+[[tool.pydoc-markdown.loaders]]
+type = "python"
+search_path = ["src"]
+packages = ["canari_ml"]
+
+[[tool.pydoc-markdown.processors]]
+type = "filter"
+documented_only = true
+
+[[tool.pydoc-markdown.processors]]
+type = "smart"
+
+[[tool.pydoc-markdown.processors]]
+type = "crossref"
+
+[tool.pydoc-markdown.renderer]
+type = "markdown"
+render_toc = true
+filename = "docs/reference.md"

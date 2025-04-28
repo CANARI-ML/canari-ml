@@ -2,7 +2,6 @@ import inspect
 
 from icenet.data.loaders.base import IceNetBaseDataLoader
 from canari_ml.data.loaders.serial import SerialLoader
-from canari_ml.data.loaders.dask import DaskMultiWorkerLoader
 
 class CanariMLDataLoaderFactory:
     """A factory class for managing a map of loader names and their corresponding 
@@ -20,7 +19,7 @@ class CanariMLDataLoaderFactory:
         """
         self._loader_map = dict(
             serial=SerialLoader,
-            dask=DaskMultiWorkerLoader,
+            # dask=DaskMultiWorkerLoader, # TODO: Implement this
         )
 
     def add_data_loader(self, loader_name: str, loader_impl: object) -> None:

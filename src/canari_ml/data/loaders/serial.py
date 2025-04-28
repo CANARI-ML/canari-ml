@@ -24,6 +24,24 @@ matplotlib.use("Agg")
 
 
 class SerialLoader(CanariMLBaseDataLoader):
+    """
+    A loader that generates and loads data serially.
+
+    This class extends `CanariMLBaseDataLoader` to provide functionality for
+    generating and loading data sequentially. It supports generating data for
+    multiple datasets (e.g., 'train', 'val', 'test') and can optionally produce
+    plots for each sample. The generation process is configurable with various
+    arguments, including batch size, number of workers, dry mode, and plot output.
+
+    Args:
+        *args: Variable length argument list.
+        plot (optional): Whether to also output plots for each sample. Defaults to False.
+        **kwargs: Arbitrary keyword arguments.
+
+    Attributes:
+        _masks (dict[str, xr.DataArray]): Dictionary of masks for each variable, loaded from configuration.
+        _plot (bool): Flag indicating whether to produce plots during data generation.
+    """
     def __init__(self, *args, plot=False, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._plot = plot
@@ -34,14 +52,36 @@ class SerialLoader(CanariMLBaseDataLoader):
         }
 
     def generate(self) -> None:
+        """
+        Initiate data generation process using the client.
+        """
         self.client_generate(dates_override=self.dates_override, pickup=self.pickup)
 
     def client_generate(
         self,
-        dates_override: object = None,
+        dates_override: dict | None = None,
         pickup: bool = False,
         client: object | None = None,
     ):
+        """
+        Generate data for multiple datasets sequentially.
+
+        This method generates data for 'train', 'val', and 'test' datasets
+        in sequence. It supports overriding dates using `dates_override` argument
+        and can pick up an existing generation process using `pickup`.
+
+        Args:
+            dates_override (optional): Dates to override for each split.
+                Should be a dictionary with keys 'train', 'val', and 'test',
+                where the values are lists of dates. Defaults to None.
+            pickup (optional): Whether to pick up an existing generation process.
+                Defaults to False.
+            client: Client object.
+                    Defaults to None.
+
+        Returns:
+            None
+        """
         # TODO: for each set, validate every variable has an appropriate file
         #  in the configuration arrays, otherwise drop the forecast date
         splits = ("train", "val", "test")
@@ -129,7 +169,24 @@ class SerialLoader(CanariMLBaseDataLoader):
             )
         self._write_dataset_config(counts)
 
-    def generate_sample(self, date: object, prediction: bool = False, parallel=True) -> None:
+    def generate_sample(self, date: object, prediction: bool = False, parallel=True) -> tuple[xr.DataArray, xr.DataArray, xr.DataArray]:
+        """
+        Generate a sample for the given date.
+
+        This method generates a single data sample for the provided date using
+        the configured variables and masks.
+
+        Args:
+            date (datetime.date): The date to generate a sample for.
+            prediction (optional): Whether requesting a sample for predictions instead of targets.
+                                   Defaults to False.
+            parallel (optional): Whether to read the data from multiple `nc` filee in parallel.
+                                 Defaults to True.
+
+        Returns:
+            A tuple containing the input features,
+                output target, and sample weights for the generated sample.
+        """
         ds_kwargs = dict(
             chunks=dict(time=1, yc=self._shape[0], xc=self._shape[1]),
             drop_variables=["month", "plev", "level", "realization"],
@@ -175,8 +232,8 @@ def plot_samples_grid(data_array, title_prefix, fname, titles=None, cmap="RdBu_r
         data_array: 3D array (H, W, N)
         title_prefix: Prefix for figure title
         fname: Output file path (.jpg)
-        titles: List of strings to title each subplot
-        cmap: Matplotlib colormap
+        titles (optional): List of strings to title each subplot
+        cmap (optional): Matplotlib colormap
     """
     n_slices = data_array.shape[-1]
     n_cols = 5
@@ -188,7 +245,7 @@ def plot_samples_grid(data_array, title_prefix, fname, titles=None, cmap="RdBu_r
         constrained_layout=True
     )
 
-    # Normalize axes format
+    # Normalise axes format
     axes = np.atleast_2d(axes)
 
     vmin = np.nanmin(data_array)
@@ -219,23 +276,55 @@ def plot_samples_grid(data_array, title_prefix, fname, titles=None, cmap="RdBu_r
     plt.close(fig)
 
 
-def process_date(idx,
-                 date,
-                 x_store,
-                 y_store,
-                 sw_store,
-                 var_ds,
-                 var_files,
-                 trend_ds,
-                 channels,
-                 meta_channels,
-                 trend_steps,
-                 frequency_attr,
-                 dry,
-                 plot,
-                 plot_dir,
-                 args
-                ):
+def process_date(idx: int,
+                 date: dt.date,
+                 x_store: zarr.Array,
+                 y_store: zarr.Array,
+                 sw_store: zarr.Array,
+                 var_ds: xr.Dataset,
+                 var_files: dict[str, str],
+                 trend_ds: xr.Dataset,
+                 channels: dict[str, int],
+                 meta_channels: list[str],
+                 trend_steps: list[int] | int,
+                 frequency_attr: str,
+                 dry: bool,
+                 plot: bool,
+                 plot_dir: str,
+                 args: tuple,
+                ) -> tuple[int, dt.date, float]:
+    """
+    Process a single date to generate samples and write them to the Zarr store.
+
+    This function generates a sample for the given date using the provided datasets and
+    configuration arguments. It writes the generated sample to the specified Zarr store
+    if not running in dry mode. Optionally, it outputs plots of inputs, outputs, and
+    sample weights for visualisation.
+
+    Args:
+        idx: Index of the current date.
+        date: Date to generate samples for.
+        x_store: Zarr store array for input data.
+        y_store: Zarr store array for output data.
+        sw_store: Zarr store array for sample weights.
+        var_ds: Dataset containing variable data.
+        var_files: Dictionary of variable files with their corresponding paths.
+        trend_ds: Dataset containing linear trend data (if any).
+        channels: Dictionary mapping variable names to the number of channels.
+        meta_channels: List of metadata channel names.
+        trend_steps: Trend steps for linear trends (if applicable).
+        frequency_attr: Attribute indicating the time frequency (e.g., "months" or "days").
+        dry: Whether to run in dry mode. Default is False.
+        plot: Whether to output plots for each sample. Default is False.
+        plot_dir: Directory path for saving plots.
+        args: Additional arguments required for generating samples.
+
+    Returns:
+        A tuple of:
+            * Index of the processed date,
+            * the processed date,
+            * and the time taken to process the date in seconds.
+    """
     start = time.time()
     # Generate sample for the date
     x, y, sample_weights = generate_sample(
@@ -297,6 +386,7 @@ def process_date(idx,
     logging.info(f"Time taken to produce {date}: {duration:.4f} seconds")
     return idx, date, duration
 
+
 def generate_and_write(
     path: str,
     var_files: dict[str, str],
@@ -315,8 +405,14 @@ def generate_and_write(
         var_files: Dictionary of variable files with their corresponding paths.
         dates: List of dates to generate samples for.
         args: Method arguments.
-        dry (optional): Whether to run in dry mode. Defaults to False.
-        plot (optional): Whether to also output plots for each sample. Defaults to False.
+        batch_size (optional): Batch size for processing.
+                               Defaults to 32.
+        workers (optional): Number of worker processes for parallel processing.
+                            Defaults to 4.
+        dry (optional): Whether to run in dry mode.
+                        Defaults to False.
+        plot (optional): Whether to also output plots for each sample.
+                         Defaults to False.
 
     Returns:
         Paths to the output Zarr dataset, the count of processed
@@ -483,13 +579,13 @@ def generate_and_write(
 def generate_sample(
     forecast_date: object,
     var_ds: object,
-    var_files: object,
+    var_files: dict,
     trend_ds: object,
-    channels: object,
+    channels: dict,
     dtype: object,
     loss_weight_days: bool,
-    meta_channels: object,
-    missing_dates: object,
+    meta_channels: list,
+    missing_dates: list,
     n_forecast_steps: int,
     num_channels: int,
     shape: object,
@@ -498,6 +594,36 @@ def generate_sample(
     masks: object,
     prediction: bool = False,
 ):
+    """
+    Generate a sample for train/val/prediction.
+
+    This function creates input features (x), targets (y), and sample weights based on
+    the given parameters.
+
+    Args:
+        forecast_date: The forecast initialisation date.
+        var_ds: The input dataset containing variables like ua700_abs, siconca, etc.
+        var_files: Map of meta variable names to their corresponding file paths.
+        trend_ds: The dataset containing linear trends.
+        channels: Map of variable name to number of channels(excluding meta).
+        dtype: The data type used for the input features, targets, and sample weights.
+        loss_weight_days: If True, apply temporal weighting for loss calculation.
+        meta_channels: Meta channel names to include in the input features.
+        missing_dates: Dates with missing data.
+        n_forecast_steps: The number of forecast steps in target (target leadtime).
+        num_channels: The total number of channels (input features).
+        shape: The spatial shape of the dataset.
+        trend_steps: The step(s) for linear trends. Can be a single integer or a list of integers.
+        frequency_attr: The time frequency attribute, e.g., 'DAY' for daily data.
+        masks: Map of mask names and their corresponding DataArrays.
+        prediction (optional): If True, generate a sample for prediction; otherwise, generate a training sample.
+                               Defaults to False.
+
+    Returns:
+        x: Input features with shape (*shape, num_channels).
+        y: Targets with shape (*shape, n_forecast_steps, 1).
+        sample_weights: Sample weights with shape (*shape, n_forecast_steps, 1).
+    """
     # DAYS/MONTHS/YEARS
     relative_attr = "{}s".format(frequency_attr)
 

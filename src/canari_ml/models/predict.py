@@ -72,9 +72,9 @@ def predict_forecast(
     if not test_set:
         logging.info("Generating forecast inputs from processed/ files")
         for date in start_dates:
-            data_sample = dl.generate_sample(date, prediction=True)
+            x, y, sample_weights = dl.generate_sample(date, prediction=True)
 
-            input_sample = torch.tensor(data_sample[0]).unsqueeze(dim=0)
+            input_sample = torch.tensor(x).unsqueeze(dim=0)
 
             logging.info("Running prediction {}".format(date))
             with torch.no_grad():

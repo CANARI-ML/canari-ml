@@ -47,7 +47,7 @@ class ReprojectArgParser(ProcessingArgParser):
             type=str,
             required=False,
             default="720,720",
-            help="Resolution of output grid (in meters or degrees). Can only specify either `--resolution` or `--shape`, not both",
+            help="Shape of output grid (in pixels, e.g. '720,720'). Can only specify either `--resolution` or `--shape`, not both",
         )
         return self
 

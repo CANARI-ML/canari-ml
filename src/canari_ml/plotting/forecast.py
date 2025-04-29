@@ -155,6 +155,7 @@ def ua700_error_plot(
     proj_crs = pyproj.CRS.from_wkt(crs_wkt)
     proj_ccrs = ccrs.Projection(proj_crs)
     proj_ccrs = ccrs.LambertAzimuthalEqualArea(0, 90)
+    proj_epsg = f"EPSG:{proj_ccrs.to_epsg()}"
 
     # Get figure and geoaxes.
     fig_kwargs = dict(
@@ -171,7 +172,7 @@ def ua700_error_plot(
     ax1, ax2 = axes
 
     # Plot comparison of observation with ground truth.
-    obs_da = reproject_dataset_ease2(obs_da, target_crs=proj_ccrs)
+    obs_da = reproject_dataset_ease2(obs_da, target_crs=proj_epsg)
     ua_min, ua_max = int(obs_da.min().data), int(obs_da.max().data)
     # ua_min, ua_max = -15, 25
     contour_level_step = 7

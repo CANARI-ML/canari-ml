@@ -16,8 +16,8 @@ class ReprojectArgParser(ProcessingArgParser):
             "--source-crs",
             type=str,
             required=False,
-            default="ccrs.PlateCarree()",
-            help="Source dataset CRS definition: Full cartopy.crs expression (e.g., ccrs.PlateCarree()",
+            default="EPSG:4326",
+            help="Source dataset CRS definition: EPSG code (e.g., `EPSG:4326`)",
         )
         return self
 
@@ -26,8 +26,8 @@ class ReprojectArgParser(ProcessingArgParser):
             "--target-crs",
             type=str,
             required=False,
-            default="ccrs.epsg(6931)",
-            help="Source dataset CRS definition: Full cartopy.crs expression (e.g., ccrs.LambertAzimuthalEqualArea(central_longitude=0, central_latitude=90))",
+            default="EPSG:6931",
+            help="Target dataset CRS definition: Full cartopy.crs expression (e.g., `EPSG:6931`)",
         )
         return self
 

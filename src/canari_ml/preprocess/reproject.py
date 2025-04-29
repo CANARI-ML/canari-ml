@@ -43,12 +43,8 @@ def reproject_dataset(
     else:
         ds = xr.open_dataset(netcdf_file, decode_coords="all")
 
-    source_crs = source_crs if source_crs else ccrs.Geodetic()
-    target_crs = (
-        target_crs
-        if target_crs
-        else ccrs.LambertAzimuthalEqualArea(central_longitude=0, central_latitude=90)
-    )
+    source_crs = source_crs if source_crs else "EPSG:4326"
+    target_crs = target_crs if target_crs else "EPSG:6931"
 
     if not hasattr(ds, "spatial_ref"):
         logging.debug(
@@ -57,13 +53,13 @@ def reproject_dataset(
         # This will add a `.spatial_ref`` attribute to the dataset,
         # accessible via `ds.spatial_ref`.
         # Assume that dataset is a lat/lon grid if `source_crs` is not defined
-        ds.rio.write_crs(source_crs.to_epsg(), inplace=True)
+        ds.rio.write_crs(source_crs, inplace=True)
 
     if not isinstance(shape, tuple):
         shape: tuple[int, int] = parse_shape(shape)
 
     ds_reprojected = ds.rio.reproject(
-        target_crs.to_epsg(),
+        target_crs,
         resolution=resolution,
         shape=shape,
         # TODO: Missing antimeridian slice issue with Polar reprojection when using
@@ -133,7 +129,7 @@ def reproject_dataset_ease2(
     if not isinstance(shape, tuple):
         shape: tuple[int, int] = parse_shape(shape)
 
-    if target_crs.to_epsg() == 6931 or target_crs.to_epsg() == 6932:
+    if target_crs == "EPSG:6931" or target_crs == "EPSG:6932":
         # Define grid parameters for EASE-Grid 2.0 standard grid
         # Reference: https://nsidc.org/data/user-resources/help-center/guide-ease-grids#anchor-25-km-resolution-ease-grids
         # `cell_size` is the grid resolution in meters taken from the table in above link
@@ -151,7 +147,7 @@ def reproject_dataset_ease2(
         y0 = 9000000.0
     else:
         raise ValueError(
-            f"target_crs doesn't match expected EASE-Grid 2.0 standard grid:\n\t(`{target_crs.to_epsg()}`)"
+            f"target_crs doesn't match expected EASE-Grid 2.0 standard grid:\n\t(`{target_crs}`)"
         )
 
     # Create an affine transform for the target grid.
@@ -243,8 +239,8 @@ def reproject():
     # Reproject and overwrite the copied data
     reproject_datasets_from_config(
         ds_config,
-        source_crs=parse_crs(args.source_crs),
-        target_crs=parse_crs(args.target_crs),
+        source_crs=args.source_crs,
+        target_crs=args.target_crs,
         resolution=args.resolution,
         shape=args.shape,
         ease2=args.ease2,

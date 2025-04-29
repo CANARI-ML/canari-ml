@@ -195,7 +195,7 @@ def reproject_datasets_from_config(
             ds_reprojected.to_netcdf(datafile)
         except Exception as e:
             print(f"Error reprojecting {datafile}: {e}")
-            return None # Prevent multithread from failing catastrophically
+            raise
         finally:
             # Ensure temp file is deleted
             if os.path.exists(reproject_datafile):

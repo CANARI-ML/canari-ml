@@ -22,6 +22,7 @@ from canari_ml.data.loaders.base import CanariMLBaseDataLoader
 # Speeds up matplotlib rendering a lot!
 matplotlib.use("Agg")
 
+import multiprocessing as mp
 
 class SerialLoader(CanariMLBaseDataLoader):
     """
@@ -278,9 +279,6 @@ def plot_samples_grid(data_array, title_prefix, fname, titles=None, cmap="RdBu_r
 
 def process_date(idx: int,
                  date: dt.date,
-                 x_store: zarr.Array,
-                 y_store: zarr.Array,
-                 sw_store: zarr.Array,
                  var_ds: xr.Dataset,
                  var_files: dict[str, str],
                  trend_ds: xr.Dataset,
@@ -292,7 +290,7 @@ def process_date(idx: int,
                  plot: bool,
                  plot_dir: str,
                  args: tuple,
-                ) -> tuple[int, dt.date, float]:
+                ) -> tuple[xr.DataArray, xr.DataArray, xr.DataArray, float]:
     """
     Process a single date to generate samples and write them to the Zarr store.
 
@@ -321,8 +319,9 @@ def process_date(idx: int,
 
     Returns:
         A tuple of:
-            * Index of the processed date,
-            * the processed date,
+            * x: inputs,
+            * y: target,
+            * sample_weights: sample weights
             * and the time taken to process the date in seconds.
     """
     start = time.time()
@@ -333,17 +332,11 @@ def process_date(idx: int,
     if not dry:
         x[da.isnan(x)] = 0.0
 
-        x, y, sample_weights = dask.compute(
-            x, y, sample_weights, optimize_graph=True
-        )
-
-        # Write to Zarr store
-        x_store[idx] = x
-        y_store[idx] = y
-        sw_store[idx] = sample_weights
-
         # Output plots of inputs, outputs and sample weights
         if plot:
+            x, y, sample_weights = dask.compute(
+                x, y, sample_weights, optimize_graph=True
+            )
             # Build channel names from config
             x_titles = []
             for var_name, num_ch in channels.items():
@@ -384,7 +377,7 @@ def process_date(idx: int,
     end = time.time()
     duration = end - start
     logging.info(f"Time taken to produce {date}: {duration:.4f} seconds")
-    return idx, date, duration
+    return x, y, sample_weights, duration
 
 
 def generate_and_write(
@@ -439,9 +432,8 @@ def generate_and_write(
     ds_kwargs = dict(
         chunks=dict(time=1, yc=shape[0], xc=shape[1]),
         drop_variables=["month", "plev", "realization"],
-        parallel=True,
+        parallel=False,
     )
-
 
     for k, v in var_files.items():
         if k not in meta_channels and not k.endswith("linear_trend"):
@@ -469,109 +461,81 @@ def generate_and_write(
     if plot:
         os.makedirs(plot_dir, exist_ok=True)
 
-    # Prepare Zarr store
-    with zarr.open(path, mode="w") as store:
-        # Prepare arrays for x, y, and sample_weights
-        x_store = store.create_dataset(
-            "x",
-            shape=(len(dates), *shape, num_channels),
-            dtype=dtype,
-            chunks=(batch_size, *shape, num_channels),
-            # compressor=zarr.Blosc(cname="zstd", clevel=3),
-        )
-        y_store = store.create_dataset(
-            "y",
-            shape=(len(dates), *shape, lead_time, 1),
-            dtype=dtype,
-            chunks=(batch_size, *shape, lead_time, 1),
-            # compressor=zarr.Blosc(cname="zstd", clevel=3),
-        )
-        sw_store = store.create_dataset(
-            "sample_weights",
-            shape=(len(dates), *shape, lead_time, 1),
-            dtype=dtype,
-            chunks=(batch_size, *shape, lead_time, 1),
-            # compressor=zarr.Blosc(cname="zstd", clevel=3),
-        )
-        # Use self._workers (assumes you're in a class method)
-        times = []
-        count = 0
+    x_list, y_list, sw_list = [], [], []
+    if workers <= 1:
+        for idx, date in enumerate(dates):
+            x, y, sample_weights, duration = process_date(
+                                                idx,
+                                                date,
+                                                var_ds,
+                                                var_files,
+                                                trend_ds,
+                                                channels,
+                                                meta_channels,
+                                                trend_steps,
+                                                frequency_attr,
+                                                dry,
+                                                plot,
+                                                plot_dir,
+                                                args
+                                                )
+            x_list.append(x)
+            y_list.append(y)
+            sw_list.append(sample_weights)
+            times.append(duration)
+            count += 1
+    else:
+        with ProcessPoolExecutor(max_workers=workers, mp_context=mp.get_context("spawn")) as executor:
+            futures = {
+                executor.submit(process_date,
+                                idx,
+                                date,
+                                var_ds,
+                                var_files,
+                                trend_ds,
+                                channels,
+                                meta_channels,
+                                trend_steps,
+                                frequency_attr,
+                                dry,
+                                plot,
+                                plot_dir,
+                                args
+                                ): (idx, date)
+                for idx, date in enumerate(dates)
+            }
 
-        if workers == 1:
-            for idx, date in enumerate(dates):
-                idx, date, duration = process_date(
-                                                    idx,
-                                                    date,
-                                                    x_store,
-                                                    y_store,
-                                                    sw_store,
-                                                    var_ds,
-                                                    var_files,
-                                                    trend_ds,
-                                                    channels,
-                                                    meta_channels,
-                                                    trend_steps,
-                                                    frequency_attr,
-                                                    dry,
-                                                    plot,
-                                                    plot_dir,
-                                                    args
-                                                  )
-                times.append(duration)
-                count += 1
-        else:
-            # TODO: Switch to Dask based approach - though, workers clash
-            # with pytorch num_workers in dataloader.
-            results = Parallel(n_jobs=workers, backend="loky", timeout=9999, verbose=51)(
-                delayed(process_date)(
-                                        idx,
-                                        date,
-                                        x_store,
-                                        y_store,
-                                        sw_store,
-                                        var_ds,
-                                        var_files,
-                                        trend_ds,
-                                        channels,
-                                        meta_channels,
-                                        trend_steps,
-                                        frequency_attr,
-                                        dry,
-                                        plot,
-                                        plot_dir,
-                                        args
-                ) for idx, date in enumerate(dates)
-            )
-            for idx, date, duration in results:
-                times.append(duration)
-                count += 1
-            # with ProcessPoolExecutor(max_workers=workers) as executor:
-            #     futures = {
-            #         executor.submit(process_date,
-            #                         idx,
-            #                         date,
-            #                         x_store,
-            #                         y_store,
-            #                         sw_store,
-            #                         var_ds,
-            #                         var_files,
-            #                         trend_ds,
-            #                         channels,
-            #                         meta_channels,
-            #                         trend_steps,
-            #                         frequency_attr,
-            #                         dry,
-            #                         plot,
-            #                         plot_dir,
-            #                         args
-            #                         ): (idx, date)
-            #         for idx, date in enumerate(dates)
-            #     }
+        for future in as_completed(futures):
+            x, y, sample_weights, duration = future.result()
+            x_list.append(x)
+            y_list.append(y)
+            sw_list.append(sample_weights)
+            times.append(duration)
+            count += 1
 
-            #     for future in as_completed(futures):
-            #         idx, date, duration = future.result()
-            #         times.append(duration)
-            #         count += 1
+    x_data = da.stack(x_list, axis=0)
+    y_data = da.stack(y_list, axis=0)
+    sw_data = da.stack(sw_list, axis=0)
+
+    ds = xr.Dataset(
+        {
+            "x": (["time", "yc", "xc", "channels"], x_data),
+            "y": (["time", "yc", "xc", "lead_time", "channel"], y_data),
+            "sample_weights": (["time", "yc", "xc", "lead_time", "channel"], sw_data),
+        },
+        coords={"time": dates},
+    )
+
+    chunks=(batch_size, *shape, num_channels)
+    ds["x"] = ds["x"].chunk(chunks)
+    chunks=(batch_size, *shape, lead_time, 1)
+    ds["y"] = ds["y"].chunk(chunks)
+    ds["sample_weights"] = ds["sample_weights"].chunk(chunks)
+
+    # Zarr does not like saving dates as is with dtype=object.
+    ds = ds.assign_coords(time=np.array(dates, dtype="datetime64[ns]"))
+
+    ds.to_zarr(path, mode="w", consolidated=True)
 
     return path, count, times
 

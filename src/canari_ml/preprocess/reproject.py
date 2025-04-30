@@ -1,21 +1,25 @@
 import logging
 import os
+import warnings
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 import cartopy.crs as ccrs
+import iris
+import iris.coord_systems
+import iris.coords
+import iris.cube
+import iris.time
+import iris.util
 import numpy as np
 import rioxarray
 import xarray as xr
-from affine import Affine
+from cf_units import Unit
 from download_toolbox.interface import DatasetConfig
-from joblib import Parallel, delayed
+from ncdata.iris_xarray import cubes_from_xarray, cubes_to_xarray
 from preprocess_toolbox.dataset.cli import init_dataset
-from rasterio.enums import Resampling
-from rasterio.transform import from_origin
-from tqdm import tqdm
-from tqdm.contrib.concurrent import thread_map
 
-from .cli import ReprojectArgParser, parse_crs, parse_shape
+from .cli import ReprojectArgParser, parse_shape
 
 # Get the logger for rasterio (or the relevant library)
 logger = logging.getLogger("rasterio")
@@ -25,88 +29,122 @@ logger.setLevel(logging.WARNING)
 
 
 def reproject_dataset(
-    netcdf_file: str,
-    source_crs: str | None = None,
-    target_crs: str | None = None,
-    resolution: float | tuple[float, float] | None = None,
+    input_: str,
+    cell_size: int,
     shape: str | int | tuple[int, int] | None = None,
-    target_transform: Affine | None = None,
-    coarsen: int = 1,
-    interpolate_nans: bool = False,
+    target_crs: str | None = None,
 ):
     """
-    Reprojects a source dataset from source_crs to target_crs using
-    rioxarray.
+    Reprojects a source dataset from `EPSG:4326` (lat/lon) to target_crs using
+    scitools-iris.
+
+    Based on code from Tony Phillips (BAS), sent via email on 04/03/25.
     """
-    if isinstance(netcdf_file, xr.Dataset) or isinstance(netcdf_file, xr.DataArray):
-        ds = netcdf_file
+    iris.FUTURE.save_split_attrs = True
+    return_dataarray = False
+
+    if isinstance(input_, xr.Dataset):
+        ds = input_
+    elif isinstance(input_, xr.DataArray):
+        ds = input_.to_dataset()
+        return_dataarray = True
+    elif isinstance(input_, str):
+        ds = xr.open_dataset(input, decode_coords="all", engine="h5netcdf")
     else:
-        ds = xr.open_dataset(netcdf_file, decode_coords="all")
+        raise ValueError(f"input must be a string path, xr.Dataset, or xr.DataArray, not {type(input)}")
 
-    source_crs = source_crs if source_crs else "EPSG:4326"
-    target_crs = target_crs if target_crs else "EPSG:6931"
+    # define grid spacing and size of grid in X and Y directions
+    # this example matches the EASE grid 2.0 25 km Northern Hemisphere grid
+    # see: https://nsidc.org/data/user-resources/help-center/guide-ease-grids#anchor-25-km-resolution-ease-grids
+    grid_spacing = cell_size
+    num_grid_points = shape[0]
 
-    if not hasattr(ds, "spatial_ref"):
-        logging.debug(
-            f"No spatial reference found in dataset, setting grid to: {source_crs}"
-        )
-        # This will add a `.spatial_ref`` attribute to the dataset,
-        # accessible via `ds.spatial_ref`.
-        # Assume that dataset is a lat/lon grid if `source_crs` is not defined
-        ds.rio.write_crs(source_crs, inplace=True)
+    target_crs = target_crs.split(":")[1] if target_crs else 6931
 
-    if not isinstance(shape, tuple):
-        shape: tuple[int, int] = parse_shape(shape)
+    # use cartopy to read the EASE grid parameters based on the EPSG code
+    # for a Northern Hemisphere, Lambert Azimuthal grid (as specified at the NSIDC link above)
+    # this avoids having to hard-code any of the parameters
+    ease2_nh = ccrs.epsg(target_crs)
+    ease2_nh_params = ease2_nh.to_dict()
 
-    ds_reprojected = ds.rio.reproject(
-        target_crs,
-        resolution=resolution,
-        shape=shape,
-        # TODO: Missing antimeridian slice issue with Polar reprojection when using
-        # other resampling methods (e.g., bilinear, cubic)
-        resampling=Resampling.nearest,
-        nodata=np.nan,
-        transform=target_transform,
-    )
+    # create the equivalent Iris ellipsoid and CRS using the cartopy metadata
+    ellipsoid = iris.coord_systems.GeogCS(
+        semi_major_axis=ease2_nh.ellipsoid.semi_major_metre,
+        semi_minor_axis=ease2_nh.ellipsoid.semi_minor_metre)
+    crs = iris.coord_systems.LambertAzimuthalEqualArea(
+        latitude_of_projection_origin=ease2_nh_params["lat_0"],
+        longitude_of_projection_origin=ease2_nh_params["lon_0"],
+        false_easting=ease2_nh_params["x_0"],
+        false_northing=ease2_nh_params["y_0"],
+        ellipsoid=ellipsoid)
 
-    if interpolate_nans:
-        # Interpolate missing regions (nans), for CANARI, its below equator, might be
-        # useful if training mask doesn't align exactly?
-        ds_reprojected = ds_reprojected.rio.interpolate_na("nearest")
+    # work out the maximum value of X and Y coordinates for grid cell centres
+    # for the specified grid with coordinates 0, 0 at the grid centre
+    xylim = (num_grid_points / 2.0 - 0.5) * grid_spacing
 
-    if coarsen > 1:
-        ds_reprojected = ds_reprojected.coarsen(
-            x=coarsen, y=coarsen, boundary="trim"
-        ).mean()
+    # create X and Y coordinate values for the grid
+    # note the addition of the false easting and northing from the grid parameters,
+    # though these are actually 0 for this grid anyway
+    x = iris.coords.DimCoord(
+        np.arange(-xylim, xylim+grid_spacing/2, grid_spacing) + ease2_nh_params['x_0'],
+        standard_name="projection_x_coordinate",
+        units="m",
+        coord_system=crs)
+    y = iris.coords.DimCoord(
+        np.arange(xylim, -xylim-grid_spacing/2, -grid_spacing) + ease2_nh_params['y_0'],
+        standard_name="projection_y_coordinate",
+        units="m",
+        coord_system=crs)
 
-    # TODO: Storing grid mapping attributes in the dataset to be CF Compliant
-    # This is more trouble than its worth currently - need to map the different
-    # projections which expect different attributes.
-    # target_crs_dict = target_crs.to_dict()
-    # semi_major_axis=target_crs.ellipsoid.semi_major_metre
-    # semi_minor_axis=target_crs.ellipsoid.semi_minor_metre
-    # latitude_of_projection_origin=target_crs_dict.get('lat_0', 0)
-    # longitude_of_projection_origin=target_crs_dict.get('lon_0', 0)
-    # false_easting=target_crs_dict.get('x_0', 0)
-    # false_northing=target_crs_dict.get('y_0', 0)
+    # create an empty cube representing the grid
+    grid = iris.cube.Cube(np.empty((y.shape[0], x.shape[0])),
+        dim_coords_and_dims=[(y, 0), (x, 1)])
 
-    # grid_mapping_attrs = {
-    #     "grid_mapping_name": "lambert_azimuthal_equal_area",
-    #     "longitude_of_projection_origin": longitude_of_projection_origin,
-    #     "latitude_of_projection_origin": latitude_of_projection_origin,
-    #     "false_easting": false_easting,
-    #     "false_northing": false_northing,
-    #     "semi_major_axis": semi_major_axis,
-    #     "semi_minor_axis": semi_minor_axis,
-    # }
+    # create a binary mask on the EASE grid, with values 1 == NH, 0 == SH
+    xy = np.meshgrid(grid.coord(axis='x').points, grid.coord(axis='y').points)
+    lonlat = ccrs.Geodetic().transform_points(
+        grid.coord_system().as_cartopy_crs(), xy[0], xy[1])
+    lon = lonlat[:, :, 0]
+    lat = lonlat[:, :, 1]
 
-    # # Add a new variable for the grid_mapping to the dataset
-    # ds_reprojected["projection"] = xr.DataArray(np.zeros(()), attrs=grid_mapping_attrs)
+    mask = grid.copy()
+    mask.data.fill(1)
+    mask.data[lat < 0] = np.nan
+    mask.rename("binary_mask")
 
-    # # Link the 'data' variable to the 'projection' variable (through grid_mapping attribute)
-    # ds_reprojected["tas"].attrs["grid_mapping"] = "projection"
+    (cube,) = cubes_from_xarray(ds)
 
-    return ds_reprojected
+    # Extend the mask to include the time dimension
+    time_dim = cube.coord_dims('time')[0]
+    time_len = cube.shape[time_dim]
+    mask_data = np.broadcast_to(mask.data, (time_len,) + mask.data.shape)
+
+    # Ensure the cube coordinates have the EPSG:4326 CRS
+    # Define EPSG:4326 CRS
+    # Ref: https://confluence.ecmwf.int/display/CKB/ERA5%3A+data+documentation#heading-SpatialreferencesystemsandEarthmodel
+    # Assign EPSG:4326 CRS and units to the cube's coordinates
+    for axis in ["latitude", "longitude"]:
+        cube.coord(axis).coord_system = iris.coord_systems.GeogCS(6371229.0)
+        cube.coord(axis).units = Unit("degrees")
+        cube.coord(axis).guess_bounds()
+
+    # cube_reproject = cube.regrid(grid, iris.analysis.Nearest())
+    cube_reproject = cube.regrid(grid, iris.analysis.Linear(extrapolation_mode="linear"))
+
+    cube_reproject.data *= mask_data
+
+    ds_reprojected = cubes_to_xarray(cube_reproject)
+    ds_reprojected = ds_reprojected.rename({"projection_x_coordinate": "x", "projection_y_coordinate": "y"})
+    ds_reprojected.attrs["grid_mapping"] = "spatial_ref"
+
+    # Set the CRS for future rioxarray usage
+    ds_reprojected.rio.write_crs(target_crs, inplace=True)
+
+    if return_dataarray:
+        varname = list(ds_reprojected.data_vars)[0]
+        return ds_reprojected[varname]
+    else:
+        return ds_reprojected
 
 
 def reproject_dataset_ease2(
@@ -119,12 +157,6 @@ def reproject_dataset_ease2(
     if target_crs is None:
         raise ValueError("target_crs must be specified")
     shape = kwargs.get("shape", (720, 720))
-    kwargs["shape"] = shape
-
-    if kwargs.get("resolution", None):
-        raise ValueError(
-            f"Resolution cannot be specified for EASE-Grid 2.0: {kwargs['resolution']}"
-        )
 
     if not isinstance(shape, tuple):
         shape: tuple[int, int] = parse_shape(shape)
@@ -150,74 +182,78 @@ def reproject_dataset_ease2(
             f"target_crs doesn't match expected EASE-Grid 2.0 standard grid:\n\t(`{target_crs}`)"
         )
 
-    # Create an affine transform for the target grid.
-    # from_origin expects (upper-left x, upper-left y, x resolution, y resolution)
-    target_transform = from_origin(x0, y0, cell_size, cell_size)
-
-    # # Define the target affine transform for EASE-Grid 2.0 (Northern Hemisphere)
-    # # Here, the pixel size is 25,000 m, with the top-left corner at (-9000000, 9000000)
-    # target_transform = Affine(25000, 0, -9000000,
-    #                           0, -25000, 9000000)
-
     ds_reprojected = reproject_dataset(
-        *args, target_transform=target_transform, **kwargs
+        *args, cell_size, shape, target_crs
     )
 
     return ds_reprojected
 
 
+def reproject_file(datafile: str, **kwargs) -> None:
+    """
+    Reprojects a single NetCDF file.
+
+    Args:
+        datafile (str): Path to the NetCDF file to reproject.
+        **kwargs: Additional arguments to pass to `reproject_dataset_ease2`.
+
+    Raises:
+        Exception: If an error occurs during reprojection.
+    """
+    try:
+        (datafile_path, datafile_name) = os.path.split(datafile)
+        reproject_source_name = f"_reproject_{datafile_name}"
+        reproject_datafile = Path(datafile_path) / reproject_source_name
+        os.rename(datafile, reproject_datafile)
+
+        logging.debug(f"Reprojecting {reproject_datafile}")
+
+        ds_reprojected = reproject_dataset_ease2(
+            reproject_datafile, **kwargs
+        )
+
+        logging.debug(f"Saving reprojected data to {datafile}... ")
+        ds_reprojected.to_netcdf(datafile)
+    except Exception as e:
+        print(f"Error reprojecting {datafile}: {e}")
+        raise
+    finally:
+        # Ensure temp file is deleted
+        if os.path.exists(reproject_datafile):
+            os.remove(reproject_datafile)
+
+
 def reproject_datasets_from_config(
-    process_config: DatasetConfig, ease2=False, workers: int=1, **kwargs
-):
+    process_config: DatasetConfig, workers: int=1, **kwargs
+) -> None:
+    """
+    Reprojects multiple datasets from input config file.
+
+    Args:
+        process_config: Configuration object containing dataset file paths.
+        workers (optional): Number of parallel workers to use. Defaults to 1.
+        **kwargs: Additional arguments to pass to `reproject_file`.
+    """
     logging.info("Reprojecting dataset")
 
     datafiles = [
         _ for var_files in process_config.var_files.values() for _ in var_files
     ]
 
-    def reproject_file(datafile):
-        try:
-            (datafile_path, datafile_name) = os.path.split(datafile)
-            reproject_source_name = f"_reproject_{datafile_name}"
-            reproject_datafile = Path(datafile_path) / reproject_source_name
-            os.rename(datafile, reproject_datafile)
-
-            logging.debug(f"Reprojecting {reproject_datafile}")
-
-            if ease2:
-                ds_reprojected = reproject_dataset_ease2(
-                    netcdf_file=reproject_datafile, **kwargs
-                )
-            else:
-                ds_reprojected = reproject_dataset(netcdf_file=reproject_datafile, **kwargs)
-
-            logging.debug(f"Saving reprojected data to {datafile}... ")
-            ds_reprojected.to_netcdf(datafile)
-        except Exception as e:
-            print(f"Error reprojecting {datafile}: {e}")
-            raise
-        finally:
-            # Ensure temp file is deleted
-            if os.path.exists(reproject_datafile):
-                os.remove(reproject_datafile)
-
-    # Parallel(n_jobs=workers, backend="threading", verbose=13)(
-    #     delayed(reproject_file)(datafile) for datafile in datafiles
-    # )
-
     logging.info(f"{len(datafiles)} files to reproject")
     if workers > 1:
         logging.info(f"Reprojecting using {workers} workers")
-        # _ = thread_map(reproject_file, datafiles, max_workers=workers)
-        Parallel(n_jobs=workers, backend="loky", timeout=9999, verbose=51)(
-            delayed(reproject_file)(datafile) for datafile in datafiles
-        )
+        with ProcessPoolExecutor(max_workers=workers) as executor:
+            futures = [executor.submit(reproject_file, datafile, **kwargs) for datafile in datafiles]
+
+        _ = [future.result() for future in futures]
     else:
         logging.info("Reprojecting using one worker")
         for datafile in datafiles:
-            reproject_file(datafile)
+            reproject_file(datafile, **kwargs)
 
     logging.info("Reprojection completed")
+
 
 def reproject():
     args = (
@@ -226,9 +262,7 @@ def reproject():
         .add_splits()
         .add_source_crs()
         .add_target_crs()
-        .add_resolution()
         .add_shape()
-        .add_ease2()
         .add_coarsen()
         .add_interpolate_nans()
         .parse_args()
@@ -241,9 +275,7 @@ def reproject():
         ds_config,
         source_crs=args.source_crs,
         target_crs=args.target_crs,
-        resolution=args.resolution,
         shape=args.shape,
-        ease2=args.ease2,
         coarsen=args.coarsen,
         interpolate_nans=args.interpolate_nans,
         workers=args.workers,

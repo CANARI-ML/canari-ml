@@ -31,16 +31,6 @@ class ReprojectArgParser(ProcessingArgParser):
         )
         return self
 
-    def add_resolution(self):
-        self.add_argument(
-            "--resolution",
-            type=float,
-            required=False,
-            default=None,
-            help="Resolution of output grid (in meters or degrees). Can only specify either `--resolution` or `--shape`, not both",
-        )
-        return self
-
     def add_shape(self):
         self.add_argument(
             "--shape",
@@ -48,14 +38,6 @@ class ReprojectArgParser(ProcessingArgParser):
             required=False,
             default="720,720",
             help="Shape of output grid (in pixels, e.g. '720,720'). Can only specify either `--resolution` or `--shape`, not both",
-        )
-        return self
-
-    def add_ease2(self):
-        self.add_argument(
-            "--ease2",
-            action="store_true",
-            help="Enable to output an EASE-Grid 2.0 conformal grid",
         )
         return self
 

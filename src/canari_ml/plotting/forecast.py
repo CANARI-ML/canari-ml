@@ -15,7 +15,7 @@ from matplotlib.animation import FuncAnimation
 from matplotlib.widgets import Button, Slider
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from canari_ml.preprocess.reproject import reproject_dataset_ease2
+from canari_ml.preprocess.reproject import ease2_reference_grid_setup, reproject_dataset
 
 from .cli import ForecastPlotArgParser, PlottingNumpyArgParser
 from .utils import get_axes, get_forecast_obs_data
@@ -171,8 +171,11 @@ def ua700_error_plot(
     fig, axes = get_axes(fig_kwargs=fig_kwargs, gridlines_kwargs=gridlines_kwargs)
     ax1, ax2 = axes
 
+    shape = fc_da.isel(time=0).shape
+
     # Plot comparison of observation with ground truth.
-    obs_da = reproject_dataset_ease2(obs_da, target_crs=proj_epsg)
+    grid, mask = ease2_reference_grid_setup(shape=shape, target_crs=proj_epsg)
+    obs_da = reproject_dataset(obs_da, grid, mask, target_crs=proj_epsg)
     ua_min, ua_max = int(obs_da.min().data), int(obs_da.max().data)
     # ua_min, ua_max = -15, 25
     contour_level_step = 7

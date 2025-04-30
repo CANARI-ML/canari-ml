@@ -128,8 +128,8 @@ def execute_pytorch_training(args, dataset, network, save=True, evaluate=True):
         train_dataloader,
         model_creator_kwargs=dict(
             input_shape=input_shape,
-            loss=losses.MSELoss(),
-            #loss=losses.HuberLoss(),
+            # loss=losses.MSELoss(),
+            loss=losses.HuberLoss(),
             # Note, when using CLI, pass the metric method name prepended by 'val_'
             # e.g. `--checkpoint-monitor val_mse`
             metrics=[

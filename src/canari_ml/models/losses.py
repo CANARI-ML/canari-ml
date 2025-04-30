@@ -110,8 +110,13 @@ class HuberLoss(nn.HuberLoss):
         Compute Huber loss weighted by masking.
 
         """
-        y_hat = inputs.movedim(-1, 1) * sample_weights.movedim(-1, 1)
-        targets = targets.movedim(-1, 1) * sample_weights.movedim(-1, 1)
+        y_hat = inputs.movedim(-2, 1).movedim(-1, 1)
+        targets = targets.movedim(-1, 1).movedim(-1, 1)
+        sample_weights = sample_weights.movedim(-1, 1).movedim(-1, 1)
+
+        y_hat = y_hat * sample_weights
+        targets = targets * sample_weights
+
         return super().forward(y_hat, targets).mean()
 
         # # Computing using nn.HuberLoss base class. This class must be instantiated via:

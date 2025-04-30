@@ -1,0 +1,51 @@
+# Canari-ML
+
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Python Version](https://img.shields.io/badge/python-3.12%20|%203.13-blue)](https://www.python.org/)
+<!-- [![Docs](https://img.shields.io/badge/docs-canari--ml.io-blue)](https://canari-ml.readthedocs.io/) -->
+
+Canari-ML is a machine learning library based on PyTorch lightning for wind forecasting across the North Atlantic.
+
+It is designed to be used in conjunction with the [environmental-forecasting](http://github.com/environmental-forecasting/) initiative which is used for data download and for majority of the pre-processing steps to prepare the source data for training and prediction.
+
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Documentation](#documentation)
+- [License](#license)
+- [Contributing](#contributing)
+
+## Features
+
+- **Models**: Currently, a reference UNet model is implemented for wind forecasting.
+- **Preprocessing**: Utilities for loading, reprojecting, and preprocessing ERA datasets using.
+- **Prediction**: Tools for making predictions on new data using trained models.
+- **Visualisation**: Tools for visualising the results of predictions and model training.
+
+## Installation
+
+`canari-ml` can be installed from the source as it is not on PyPI yet:
+
+```bash
+pip install git+https://github.com/antarctica/canari-ml@main
+```
+
+## Usage
+
+There are various command line entry points for the package which can be found using `canari_ml --help`.
+
+## Documentation
+
+TODO
+
+## License
+
+CANARI-ML is licensed under the MIT license. See [LICENSE](https://github.com/antarctica/canari-ml/blob/main/LICENSE) for more information.
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING](https://github.com/antarctica/canari-ml/blob/main/CONTRIBUTING.md) for more information on how to contribute.
+
+CANARI-ML is a work in progress and will be updated as development progresses.

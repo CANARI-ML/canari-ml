@@ -245,7 +245,10 @@ def ua700_error_plot(
 
     if show_plot:
         slider_start, slider_end = 0.2, 0.6
-        ax_slider = fig.add_axes([slider_start, 0.02, slider_end, 0.03])
+        slider_y = 0.03  # vertical position
+        tick_height = 0.01  # height of the tick in figure coordinates
+
+        ax_slider = fig.add_axes([slider_start, 0.03, slider_end, 0.05])
         time_slider = Slider(
             ax_slider,
             "Forecast date",
@@ -265,13 +268,17 @@ def ua700_error_plot(
         tick_indices = np.linspace(0, len(fc_da.time) - 1, num_ticks, dtype=int)
 
         for idx in tick_indices:
-            rel_x = idx / (len(fc_da.time) - 1)  # normalized position [0, 1]
+            rel_x = idx / (len(fc_da.time) - 1)  # normalised position [0, 1]
             tick_x = slider_start + rel_x * slider_end  # match slider's position (0.2 to 0.8)
 
-            # Create a small axis for the tick line
-            tick_ax = fig.add_axes([tick_x - 0.0005, 0.015, 0.001, 0.01])  # small shift left to center the line
-            tick_ax.plot([0, 0], [0, 1], color='black', lw=0.8)
-            tick_ax.set_axis_off()
+            # Emulate tick links so I know selection points
+            fig.lines.append(plt.Line2D(
+                [tick_x, tick_x],
+                [slider_y, slider_y + tick_height],
+                transform=fig.transFigure,
+                color="black",
+                linewidth=1
+            ))
 
         def update_slider_label(val):
             index = int(val)

@@ -249,8 +249,9 @@ def plot_samples_grid(data_array, title_prefix, fname, titles=None, cmap="RdBu_r
     # Normalise axes format
     axes = np.atleast_2d(axes)
 
-    vmin = np.nanmin(data_array)
-    vmax = np.nanmax(data_array)
+    # vmin = np.nanmin(data_array)
+    # vmax = np.nanmax(data_array)
+    vmin, vmax = 0, 1
 
     im = None
     for i in range(n_rows * n_cols):

@@ -216,4 +216,22 @@ class LitUNet(BaseLightningModule):
         return y_hat
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+        optimizer = torch.optim.AdamW(
+            self.parameters(), lr=self.learning_rate, weight_decay=1e-4
+        )
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, patience=5, factor=0.5, min_lr=1e-5, verbose=True
+        )
+        # Ref OneCycleLR: https://medium.com/@g.martino8/one-cycle-lr-scheduler-a-simple-guide-c3aa9c4cbd9f
+        # scheduler = torch.optim.lr_scheduler.OneCycleLR(
+        #     optimizer, max_lr=0.01, steps_per_epoch=64, epochs=10, three_phase=True
+        # )
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "monitor": "val_loss",
+                "interval": "epoch",
+                "frequency": 1,
+            },
+        }

@@ -100,8 +100,8 @@ def predict_forecast(
         source_key = [k for k in dl.config["sources"].keys() if k != "meta"][0]
 
         test_dates = [
-            dt.date(*[int(v) for v in d.split("_")])
-            for d in dl.config["sources"][source_key]["dates"]["test"]
+            dt.datetime.strptime(d, "%Y-%m-%d")
+            for d in dl.config["sources"][source_key]["splits"]["test"]
         ]
 
         save_prediction(

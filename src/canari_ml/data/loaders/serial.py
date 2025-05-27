@@ -2,6 +2,7 @@ import datetime as dt
 import logging
 import os
 import time
+from collections.abc import Generator
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pprint import pformat
 
@@ -23,6 +24,7 @@ from canari_ml.data.loaders.base import CanariMLBaseDataLoader
 matplotlib.use("Agg")
 
 import multiprocessing as mp
+
 
 class SerialLoader(CanariMLBaseDataLoader):
     """
@@ -280,6 +282,7 @@ def plot_samples_grid(data_array, title_prefix, fname, titles=None, cmap="RdBu_r
 
 def process_date(idx: int,
                  date: dt.date,
+                 n_forecast_steps: int, # `lead_time` variable
                  var_ds: xr.Dataset,
                  var_files: dict[str, str],
                  trend_ds: xr.Dataset,
@@ -303,6 +306,7 @@ def process_date(idx: int,
     Args:
         idx: Index of the current date.
         date: Date to generate samples for.
+        n_forecast_steps: Number of `days/months/...` to forecast for.
         x_store: Zarr store array for input data.
         y_store: Zarr store array for output data.
         sw_store: Zarr store array for sample weights.
@@ -353,10 +357,12 @@ def process_date(idx: int,
 
             # Leadtime labels
             relative_attr = frequency_attr + "s"  # e.g. "months" or "days"
-            lead_titles = [
-                (date + relativedelta(**{relative_attr: i})).strftime("%Y-%m-%d")
-                for i in range(y.shape[2])
-            ]
+            _, _, forecast_steps_gen = get_date_indices(date, var_ds, n_forecast_steps, relative_attr)
+            lead_titles = [date_obj.strftime("%Y-%m-%d") for date_obj in list(forecast_steps_gen)]
+            # lead_titles = [
+            #     (date + relativedelta(**{relative_attr: i})).strftime("%Y-%m-%d")
+            #     for i in range(y.shape[2])
+            # ]
 
             # Plot grids with colorbars and labels
             plot_samples_grid(
@@ -468,6 +474,7 @@ def generate_and_write(
             x, y, sample_weights, duration = process_date(
                                                 idx,
                                                 date,
+                                                lead_time,
                                                 var_ds,
                                                 var_files,
                                                 trend_ds,
@@ -491,6 +498,7 @@ def generate_and_write(
                 executor.submit(process_date,
                                 idx,
                                 date,
+                                lead_time,
                                 var_ds,
                                 var_files,
                                 trend_ds,
@@ -541,6 +549,74 @@ def generate_and_write(
     return path, count, times
 
 
+def get_date_indices(forecast_date: dt.datetime,
+        var_ds: xr.Dataset,
+        n_forecast_steps: int,
+        relative_attr: str,
+        ) -> (int, list[int], Generator):
+    """
+    Compute the indices and dates need as inputs and outputs to the forecast model.
+
+    Given a forecast initialisation date, the input dataset, the number of steps to
+    forecast for, and a relative time attribute (e.g., 'months', 'days').
+
+    Args:
+        forecast_date: The initialisation date for the forecast.
+        var_ds: xarray Dataset.
+        n_forecast_steps: Number of forecast steps (lead times) to generate.
+        relative_attr: The time attribute for stepping forward (e.g., "months", "days").
+
+    Returns:
+        forecast_base_idx: The index of the forecast init date in `var_ds.time`.
+        forecast_idxs: List of indices for each forecast step in `var_ds.time`.
+        forecast_steps: Generator yielding the dates for each forecast step.
+    """
+    forecast_base_idx = list(var_ds.time.values).index(pd.Timestamp(forecast_date))
+    forecast_idxs = [forecast_base_idx + n for n in range(0, n_forecast_steps)]
+
+    def forecast_steps():
+        for leadtime_idx in range(n_forecast_steps):
+            forecast_step = forecast_date + relativedelta(**{relative_attr: leadtime_idx})
+            yield forecast_step
+
+    return forecast_base_idx, forecast_idxs, forecast_steps()
+
+
+def get_channel_idxs(var_name: str,
+    forecast_base_idx: int,
+    num_channels: int,
+    trend_steps: int | list[int]
+    ) -> list[int]:
+    """
+    Compute the time indices for input channels for a given variable.
+
+    Determine which time indices to use for a variable's input channels,
+    depending on whether the variable is a linear trend or a lagged variable.
+
+    Args:
+        var_name: Name of the variable. If it ends with "linear_trend", trend logic is used.
+        forecast_base_idx: Index of the forecast initialisation date in the time dimension.
+        num_channels: Number of channels to generate for this variable.
+        trend_steps: Steps to use for trend channels.
+            If list: use these as offsets from the base index.
+            If int: use a range from 0 to `num_channels-1` as offsets.
+
+    Returns:
+        List of indices corresponding to the time dimension for each channel.
+    """
+    if var_name.endswith("linear_trend"):
+        if type(trend_steps) is list:
+            channel_idxs = [forecast_base_idx + n for n in trend_steps]
+        else:
+            channel_idxs = [forecast_base_idx + n for n in range(0, num_channels)]
+    # If we're not a trend, we're a lag channel looking back historically from the
+    # initialisation date
+    else:
+        channel_idxs = [forecast_base_idx - n for n in range(1, num_channels + 1)]
+
+    return channel_idxs
+
+
 def generate_sample(
     forecast_date: object,
     var_ds: object,
@@ -567,9 +643,9 @@ def generate_sample(
 
     Args:
         forecast_date: The forecast initialisation date.
-        var_ds: The input dataset containing variables like ua700_abs, siconca, etc.
+        var_ds: The input xarray dataset containing variables like ua700_abs, siconca, etc.
         var_files: Map of meta variable names to their corresponding file paths.
-        trend_ds: The dataset containing linear trends.
+        trend_ds: The xarray dataset containing linear trends.
         channels: Map of variable name to number of channels(excluding meta).
         dtype: The data type used for the input features, targets, and sample weights.
         loss_weight_days: If True, apply temporal weighting for loss calculation.
@@ -594,8 +670,9 @@ def generate_sample(
 
     # Prepare data sample
     # To become array of shape (*raw_data_shape, n_forecast_steps)
-    forecast_base_idx = list(var_ds.time.values).index(pd.Timestamp(forecast_date))
-    forecast_idxs = [forecast_base_idx + n for n in range(0, n_forecast_steps)]
+    forecast_base_idx, forecast_idxs, forecast_steps_gen = get_date_indices(
+        forecast_date, var_ds, n_forecast_steps, relative_attr
+    )
 
     y = da.zeros((*shape, n_forecast_steps, 1), dtype=dtype)
     sample_weights = da.zeros((*shape, n_forecast_steps, 1), dtype=dtype)
@@ -619,9 +696,8 @@ def generate_sample(
             y = da.ma.where(y_mask, 0.0, y)
 
     # Masked recomposition of output
-    for leadtime_idx in range(n_forecast_steps):
-        forecast_step = forecast_date + relativedelta(**{relative_attr: leadtime_idx})
-
+    # Loop through the generator with dates we're predicting for
+    for leadtime_idx, forecast_step in enumerate(forecast_steps_gen):
         if any([forecast_step == missing_date for missing_date in missing_dates]):
             sample_weight = da.zeros(shape, dtype)
         else:
@@ -649,16 +725,10 @@ def generate_sample(
 
         v2 += num_channels
 
-        if var_name.endswith("linear_trend"):
-            channel_ds = trend_ds
-            if type(trend_steps) is list:
-                channel_idxs = [forecast_base_idx + n for n in trend_steps]
-            else:
-                channel_idxs = [forecast_base_idx + n for n in range(0, num_channels)]
-        # If we're not a trend, we're a lag channel looking back historically from the initialisation date
-        else:
-            channel_ds = var_ds
-            channel_idxs = [forecast_base_idx - n for n in range(1, num_channels + 1)]
+        channel_idxs = get_channel_idxs(
+            var_name, forecast_base_idx, num_channels, trend_steps
+        )
+        channel_ds = trend_ds if var_name.endswith("linear_trend") else var_ds
 
         channel_data = []
         for idx in channel_idxs:

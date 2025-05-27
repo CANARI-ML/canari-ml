@@ -98,17 +98,17 @@ class LitUNet(BaseLightningModule):
         # This logged result can be accessed later via `self.trainer.callback_metrics("loss")`
         # Reference: https://github.com/Lightning-AI/pytorch-lightning/issues/13147#issuecomment-1138975446
         self.log(
-            "loss", loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True
+            "loss", loss, on_step=True, on_epoch=True, prog_bar=False, sync_dist=True
         )
 
         # Compute metrics
         y_hat = outputs
-        self.train_metrics(
+        train_metrics = self.train_metrics(
             y_hat.squeeze(dim=-2), y.squeeze(dim=-1), sample_weight.squeeze(dim=-1)
         )
         self.log_dict(
-            self.train_metrics,
-            on_step=True,
+            train_metrics,
+            on_step=False,
             on_epoch=True,
             prog_bar=True,
             sync_dist=True,
@@ -126,21 +126,22 @@ class LitUNet(BaseLightningModule):
 
         loss = self.criterion(outputs, y, sample_weight)
 
-        self.val_metrics.update(
+        val_metrics = self.val_metrics(
             y_hat.squeeze(dim=-2), y.squeeze(dim=-1), sample_weight.squeeze(dim=-1)
         )
 
         self.log(
             "val_loss", loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True
         )  # epoch-level loss
+
         self.log_dict(
-            self.val_metrics,
+            val_metrics,
             on_step=False,
             on_epoch=True,
             prog_bar=True,
             sync_dist=True,
         )  # epoch-level metrics
-        return {"val_loss", loss}
+        return {"val_loss": loss}
 
     def test_step(self, batch, batch_idx):
         x, y, sample_weight = batch["x"], batch["y"], batch["sample_weights"]
@@ -149,7 +150,7 @@ class LitUNet(BaseLightningModule):
 
         loss = self.criterion(outputs, y, sample_weight)
 
-        self.test_metrics.update(
+        test_metrics = self.test_metrics(
             y_hat.squeeze(dim=-2), y.squeeze(dim=-1), sample_weight.squeeze(dim=-1)
         )
 
@@ -161,7 +162,15 @@ class LitUNet(BaseLightningModule):
             prog_bar=True,
             sync_dist=True,
         )  # epoch-level loss
-        return loss
+
+        self.log_dict(
+            test_metrics.compute(),
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+            sync_dist=True,
+        )  # epoch-level metrics
+        return {"test_loss": loss}
 
     def on_train_epoch_end(self):
         """
@@ -193,7 +202,7 @@ class LitUNet(BaseLightningModule):
 
     def on_test_epoch_end(self):
         self.log_dict(
-            self.test_metrics.compute(), on_step=False, on_epoch=True, sync_dist=True
+            self.test_metrics, on_step=False, on_epoch=True, sync_dist=True
         )  # epoch-level metrics
         self.test_metrics.reset()
 
@@ -203,7 +212,7 @@ class LitUNet(BaseLightningModule):
         :param batch_idx: Index of batch
         :return: Predictions for given input.
         """
-        x, y, sample_weight = batch
+        x, y, sample_weight = batch["x"], batch["y"], batch["sample_weights"]
         y_hat = self.model(x)
 
         return y_hat

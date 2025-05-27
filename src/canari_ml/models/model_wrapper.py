@@ -4,7 +4,6 @@ from typing import Iterable
 import lightning.pytorch as pl
 import torch
 import torch.nn as nn
-from lightning.pytorch.utilities.types import TRAIN_DATALOADERS
 from torchmetrics import MetricCollection
 
 

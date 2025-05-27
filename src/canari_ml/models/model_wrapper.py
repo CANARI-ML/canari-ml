@@ -54,31 +54,24 @@ class LitUNet(BaseLightningModule):
 
         self.metrics_history = defaultdict(list)
 
-        train_metrics = {}
-        val_metrics = {}
-        test_metrics = {}
+        metrics = {}
 
         for metric in self.metrics:
             metric_name = metric.__name__.lower()
 
             # Overall metrics
-            train_metrics.update({f"{metric_name}": metric()})
-            val_metrics.update({f"val_{metric_name}": metric()})
-            test_metrics.update({f"test_{metric_name}": metric()})
+            metrics.update({f"{metric_name}": metric()})
 
             # Metrics across each leadtime
             if self.enable_leadtime_metrics:
                 for i in range(self.model.lead_time):
-                    val_metrics.update(
-                        {f"val_{metric_name}_{i}": metric(leadtimes_to_evaluate=[i])}
-                    )
-                    test_metrics.update(
-                        {f"test_{metric_name}_{i}": metric(leadtimes_to_evaluate=[i])}
+                    metrics.update(
+                        {f"{metric_name}_{i}": metric(leadtimes_to_evaluate=[i])}
                     )
 
-        self.train_metrics = MetricCollection(train_metrics)
-        self.val_metrics = MetricCollection(val_metrics)
-        self.test_metrics = MetricCollection(test_metrics)
+        self.train_metrics = MetricCollection(metrics, prefix="")
+        self.val_metrics = MetricCollection(metrics, prefix="val_")
+        self.test_metrics = MetricCollection(metrics, prefix="test_")
 
     def forward(self, x):
         """

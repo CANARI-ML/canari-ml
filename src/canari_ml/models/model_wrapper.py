@@ -89,7 +89,7 @@ class LitUNet(BaseLightningModule):
         """
         return self.model(x)
 
-    def training_step(self, batch):
+    def training_step(self, batch, batch_idx):
         """
         Perform a pass through a batch of training data.
         Apply pixel-weighted loss by manually reducing.
@@ -124,7 +124,7 @@ class LitUNet(BaseLightningModule):
 
         return {"loss": loss}
 
-    def validation_step(self, batch):
+    def validation_step(self, batch, batch_idx):
         # x: (b, h, w, channels), y: (b, h, w, lead_time, classes), sample_weight: (b, h, w, lead_time, classes)
         x, y, sample_weight = batch["x"], batch["y"], batch["sample_weights"]
         outputs = self.model(x)
@@ -150,7 +150,7 @@ class LitUNet(BaseLightningModule):
         )  # epoch-level metrics
         return {"val_loss", loss}
 
-    def test_step(self, batch):
+    def test_step(self, batch, batch_idx):
         x, y, sample_weight = batch["x"], batch["y"], batch["sample_weights"]
         outputs = self.model(x)
         y_hat = outputs
@@ -205,7 +205,7 @@ class LitUNet(BaseLightningModule):
         )  # epoch-level metrics
         self.test_metrics.reset()
 
-    def predict_step(self, batch):
+    def predict_step(self, batch, batch_idx):
         """
         :param batch: Batch of input, output, weight triplets
         :param batch_idx: Index of batch

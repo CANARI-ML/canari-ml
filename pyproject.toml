@@ -75,8 +75,10 @@ docs = ["mkdocs", "mkdocstrings[python]", "mkdocs-material", "mkdocs-gen-files",
 [tool.pytest.ini_options]
 addopts = "-ra"
 testpaths = [
-    "tests",
-    "src/tests",
+    "tests"
+]
+pythonpath = [
+  "."
 ]
 
 [[tool.pydoc-markdown.loaders]]

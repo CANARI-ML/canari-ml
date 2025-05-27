@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Iterable
 
 import lightning.pytorch as pl
 import torch
@@ -13,7 +14,7 @@ class BaseLightningModule(pl.LightningModule):
         model: nn.Module,
         criterion: callable,
         learning_rate: float,
-        metrics: object,
+        metrics: Iterable[callable],
         enable_leadtime_metrics: bool = True,
     ):
         super().__init__()

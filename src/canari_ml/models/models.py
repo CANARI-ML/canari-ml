@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .model_wrapper import LitUNet
+from .lightning_modules import LitUNet
 
 # Suppress the specific UserWarning from PyTorch on performance impact due
 # to padding="same"

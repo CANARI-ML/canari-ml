@@ -100,19 +100,19 @@ class LitUNet(BaseLightningModule):
         # This logged result can be accessed later via `self.trainer.callback_metrics("loss")`
         # Reference: https://github.com/Lightning-AI/pytorch-lightning/issues/13147#issuecomment-1138975446
         self.log(
-            "loss", loss, on_step=True, on_epoch=True, prog_bar=False, sync_dist=True
+            "loss", loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True
         )
 
         # Compute metrics
         y_hat = outputs
-        train_metrics = self.train_metrics(
+        self.train_metrics.update(
             y_hat.squeeze(dim=-2), y.squeeze(dim=-1), sample_weight.squeeze(dim=-1)
         )
         self.log_dict(
-            train_metrics,
+            self.train_metrics,
             on_step=False,
             on_epoch=True,
-            prog_bar=True,
+            prog_bar=False,
             sync_dist=True,
         )
 
@@ -128,7 +128,7 @@ class LitUNet(BaseLightningModule):
 
         loss = self.criterion(outputs, y, sample_weight)
 
-        val_metrics = self.val_metrics(
+        self.val_metrics.update(
             y_hat.squeeze(dim=-2), y.squeeze(dim=-1), sample_weight.squeeze(dim=-1)
         )
 
@@ -137,10 +137,10 @@ class LitUNet(BaseLightningModule):
         )  # epoch-level loss
 
         self.log_dict(
-            val_metrics,
+            self.val_metrics,
             on_step=False,
             on_epoch=True,
-            prog_bar=True,
+            prog_bar=False,
             sync_dist=True,
         )  # epoch-level metrics
         return {"val_loss": loss}
@@ -152,7 +152,7 @@ class LitUNet(BaseLightningModule):
 
         loss = self.criterion(outputs, y, sample_weight)
 
-        test_metrics = self.test_metrics(
+        self.test_metrics.update(
             y_hat.squeeze(dim=-2), y.squeeze(dim=-1), sample_weight.squeeze(dim=-1)
         )
 
@@ -166,7 +166,7 @@ class LitUNet(BaseLightningModule):
         )  # epoch-level loss
 
         self.log_dict(
-            test_metrics.compute(),
+            self.test_metrics,
             on_step=False,
             on_epoch=True,
             prog_bar=True,
@@ -204,7 +204,7 @@ class LitUNet(BaseLightningModule):
 
     def on_test_epoch_end(self):
         self.log_dict(
-            self.test_metrics, on_step=False, on_epoch=True, sync_dist=True
+            self.test_metrics.compute(), on_step=False, on_epoch=True, sync_dist=True
         )  # epoch-level metrics
         self.test_metrics.reset()
 

@@ -26,6 +26,7 @@ class BaseLightningModule(pl.LightningModule):
             lead-time related metrics. Defaults to True.
         n_output_classes (int): The number of output classes in the model.
     """
+
     def __init__(
         self,
         model: nn.Module,
@@ -70,7 +71,6 @@ class BaseLightningModule(pl.LightningModule):
         self.val_metrics = metric_collection.clone(prefix="val_")
         self.test_metrics = metric_collection.clone(prefix="test_")
 
-
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Implement forward function.
@@ -85,7 +85,6 @@ class BaseLightningModule(pl.LightningModule):
             Output of the model with shape `(batch_size, num_classes, height, width)`.
         """
         return self.model(x)
-
 
     def on_save_checkpoint(self, checkpoint: dict) -> None:
         """
@@ -107,9 +106,9 @@ class LitUNet(BaseLightningModule):
     r"""
     A LightningModule wrapping the :class:`UNet` implementation of IceNet.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
 
     def training_step(self, batch: dict, batch_idx: int) -> dict:
         r"""

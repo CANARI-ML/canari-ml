@@ -8,6 +8,24 @@ from torchmetrics import MetricCollection
 
 
 class BaseLightningModule(pl.LightningModule):
+    """
+    Base class for all Canari ML models using PyTorch Lightning.
+
+    This module inherits from `pytorch_lightning.LightningModule` and provides the basic
+    functionality required for training, validating, and testing Canari ML models. It also
+    includes support for saving hyperparameters to checkpoints and recording metrics during
+    training and validation.
+
+    Attributes:
+        model (nn.Module): The PyTorch model being wrapped.
+        criterion (callable): The loss function used during training and validation.
+        learning_rate (float): The learning rate used for optimisation.
+        metrics (Iterable[callable]): An iterable of callable objects representing the
+            metrics to be recorded during training and validation.
+        enable_leadtime_metrics (bool, optional): Flag indicating whether to enable lead-time
+            related metrics. Defaults to True.
+        n_output_classes (int): The number of output classes in the model.
+    """
     def __init__(
         self,
         model: nn.Module,

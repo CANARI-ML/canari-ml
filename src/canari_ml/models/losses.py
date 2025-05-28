@@ -41,16 +41,9 @@ class MSELoss(nn.MSELoss):
 
         """
         inputs, targets, sample_weights = inputs, targets, sample_weights
-        print("inputs.shape:", inputs.shape)
-        print("targets.shape:", targets.shape)
-        print("sample_weights.shape:", sample_weights.shape)
         y_hat = inputs.movedim(-2, 1).movedim(-1, 1)
         targets = targets.movedim(-1, 1).movedim(-1, 1)
         sample_weights = sample_weights.movedim(-1, 1).movedim(-1, 1)
-        print("inputs.shape:", y_hat.shape)
-        print("targets.shape:", targets.shape)
-        print("sample_weights.shape:", sample_weights.shape)
-        #exit()
 
         y_hat = y_hat * sample_weights
         targets = targets * sample_weights

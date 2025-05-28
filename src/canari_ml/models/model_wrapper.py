@@ -69,9 +69,11 @@ class LitUNet(BaseLightningModule):
                         {f"{metric_name}_{i}": metric(leadtimes_to_evaluate=[i])}
                     )
 
-        self.train_metrics = MetricCollection(metrics, prefix="")
-        self.val_metrics = MetricCollection(metrics, prefix="val_")
-        self.test_metrics = MetricCollection(metrics, prefix="test_")
+        metric_collection = MetricCollection(metrics)
+        self.train_metrics = metric_collection.clone(prefix="train_")
+        self.val_metrics = metric_collection.clone(prefix="val_")
+        self.test_metrics = metric_collection.clone(prefix="test_")
+
 
     def forward(self, x):
         """

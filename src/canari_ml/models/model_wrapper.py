@@ -48,28 +48,6 @@ class BaseLightningModule(pl.LightningModule):
             model.n_output_classes
         )  # this should be a property of the network
 
-    def on_save_checkpoint(self, checkpoint):
-        # Add name of class and path to the lightning module to checkpoint
-        # TODO: Add code version/git commit tag to it as well
-        checkpoint["lightning_module_name"] = self.__class__.__name__
-        checkpoint["lightning_module_path"] = self.__module__
-
-
-class LitUNet(BaseLightningModule):
-    """
-    A LightningModule wrapping the UNet implementation of IceNet.
-    """
-
-    def __init__(self, *args, **kwargs):
-        """
-        Construct a UNet LightningModule.
-        Note that we keep hyperparameters separate from dataloaders to prevent data leakage at test time.
-        :param model: PyTorch model
-        :param criterion: PyTorch loss function for training instantiated with reduction="none"
-        :param learning_rate: Float learning rate for our optimiser
-        """
-        super().__init__(*args, **kwargs)
-
         self.metrics_history = defaultdict(list)
 
         metrics = {}
@@ -100,6 +78,39 @@ class LitUNet(BaseLightningModule):
         :return: Outputs of model.
         """
         return self.model(x)
+
+
+    def on_save_checkpoint(self, checkpoint):
+        """
+        Override PyTorch Lightning's default `on_save_checkpoint` method to add custom data.
+
+        This method adds the name of the class and the path to the Lightning module to the
+        checkpoint.
+
+        Args:
+            checkpoint (dict): The checkpoint dictionary to which additional data will be added.
+        """
+        # Add name of class and path to the lightning module to checkpoint
+        # TODO: Add code version/git commit tag to it as well
+        checkpoint["lightning_module_name"] = self.__class__.__name__
+        checkpoint["lightning_module_path"] = self.__module__
+
+
+class LitUNet(BaseLightningModule):
+    """
+    A LightningModule wrapping the UNet implementation of IceNet.
+    """
+
+    def __init__(self, *args, **kwargs):
+        """
+        Construct a UNet LightningModule.
+        Note that we keep hyperparameters separate from dataloaders to prevent data leakage at test time.
+        :param model: PyTorch model
+        :param criterion: PyTorch loss function for training instantiated with reduction="none"
+        :param learning_rate: Float learning rate for our optimiser
+        """
+        super().__init__(*args, **kwargs)
+
 
     def training_step(self, batch, batch_idx):
         """

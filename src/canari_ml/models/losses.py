@@ -46,9 +46,10 @@ class MSELoss(nn.MSELoss):
         # targets = targets.movedim(-1, 1).movedim(-1, 1)
         # sample_weights = sample_weights.movedim(-1, 1).movedim(-1, 1)
 
-
-        y_hat = y_hat * sample_weights
-        targets = targets * sample_weights
+        # Computing using nn.MSELoss base class. This class must be instantiated via:
+        # criterion = nn.MSELoss(reduction="none")
+        loss = super().forward(y_hat, targets)
+        loss = loss * sample_weights
 
         # if self.count % 100 == 0:
         #    import matplotlib.pyplot as plt
@@ -83,10 +84,6 @@ class MSELoss(nn.MSELoss):
         #    axes[1, 1].set_title("target: last leadtime")
         #    plt.show()
         #self.count += 1
-
-        # Computing using nn.MSELoss base class. This class must be instantiated via:
-        # criterion = nn.MSELoss(reduction="none")
-        loss = super().forward(y_hat, targets)
 
         # Computing here, in the nn.Module derived class
         # loss = (

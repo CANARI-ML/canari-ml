@@ -24,7 +24,7 @@ class WeightedLoss(nn.Module):
 
         self.loss_fn = LOSS_REGISTRY[loss_type.lower()](reduction="none", **kwargs)
 
-    def forward(self, inputs, targets, sample_weights):
-        loss = self.loss_fn(inputs, targets) * sample_weights
+    def forward(self, predictions, targets, sample_weights):
+        loss = self.loss_fn(predictions, targets) * sample_weights
 
         return loss.mean()

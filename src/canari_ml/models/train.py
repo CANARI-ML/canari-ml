@@ -135,8 +135,6 @@ def execute_pytorch_training(args, dataset, network, save=True, evaluate=True):
                 metrics.MAE,
                 metrics.MSE,
                 metrics.RMSE,
-                # losses.HuberLoss,
-                # losses.MSELoss,
             ],
             learning_rate=args.lr,
             filter_size=args.filter_size,

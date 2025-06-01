@@ -16,7 +16,8 @@ class L1Loss(nn.L1Loss):
 
         # Computing using nn.L1Loss class. This class must be instantiated via:
         # >>> criterion = WeightedL1Loss(reduction="none")
-        loss = super().forward(y_hat.movedim(-1, 1), targets.movedim(-1, 1)) * sample_weights.movedim(-1, 1)
+        y_hat, targets, sample_weights = inputs, targets, sample_weights
+        loss = super().forward(y_hat, targets) * sample_weights
 
         # Computing here, in the derived class
         # loss = (
@@ -40,16 +41,19 @@ class MSELoss(nn.MSELoss):
         Compute MSE loss weighted by masking.
 
         """
-        inputs, targets, sample_weights = inputs, targets, sample_weights
-        y_hat = inputs.movedim(-2, 1).movedim(-1, 1)
-        targets = targets.movedim(-1, 1).movedim(-1, 1)
-        sample_weights = sample_weights.movedim(-1, 1).movedim(-1, 1)
+        y_hat, targets, sample_weights = inputs, targets, sample_weights
+        # y_hat = inputs.movedim(-2, 1).movedim(-1, 1)
+        # targets = targets.movedim(-1, 1).movedim(-1, 1)
+        # sample_weights = sample_weights.movedim(-1, 1).movedim(-1, 1)
+
 
         y_hat = y_hat * sample_weights
         targets = targets * sample_weights
 
-        #if self.count % 100 == 0:
+        # if self.count % 100 == 0:
         #    import matplotlib.pyplot as plt
+        #    import matplotlib
+        #    matplotlib.use('TkAgg')
         #    #img1 = y_hat[0, :, :, 0, 0].cpu().data.numpy()
         #    #img2 = targets[0, :, :, 0, 0].cpu().data.numpy()
         #    img1 = y_hat[0, 0, 0, :, :].cpu().data.numpy()
@@ -103,9 +107,10 @@ class HuberLoss(nn.HuberLoss):
         Compute Huber loss weighted by masking.
 
         """
-        y_hat = inputs.movedim(-2, 1).movedim(-1, 1)
-        targets = targets.movedim(-1, 1).movedim(-1, 1)
-        sample_weights = sample_weights.movedim(-1, 1).movedim(-1, 1)
+        y_hat, targets, sample_weights = inputs, targets, sample_weights
+        # y_hat = inputs.movedim(-2, 1).movedim(-1, 1)
+        # targets = targets.movedim(-1, 1).movedim(-1, 1)
+        # sample_weights = sample_weights.movedim(-1, 1).movedim(-1, 1)
 
         y_hat = y_hat * sample_weights
         targets = targets * sample_weights

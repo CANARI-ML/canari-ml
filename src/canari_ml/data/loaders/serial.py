@@ -232,13 +232,13 @@ def plot_samples_grid(data_array, title_prefix, fname, titles=None, cmap="RdBu_r
     Plot samples in a grid.
 
     Args:
-        data_array: 3D array (H, W, N)
+        data_array: 3D array (N, H, W), where N is the number of channels
         title_prefix: Prefix for figure title
         fname: Output file path (.jpg)
         titles (optional): List of strings to title each subplot
         cmap (optional): Matplotlib colormap
     """
-    n_slices = data_array.shape[-1]
+    n_slices = data_array.shape[0]
     n_cols = 5
     n_rows = int(np.ceil(n_slices / n_cols))
 
@@ -263,7 +263,7 @@ def plot_samples_grid(data_array, title_prefix, fname, titles=None, cmap="RdBu_r
 
         if i < n_slices:
             im = ax.imshow(
-                data_array[:, :, i],
+                data_array[i, :, :],
                 cmap=cmap,
                 vmin=vmin,
                 vmax=vmax,
@@ -358,7 +358,9 @@ def process_date(idx: int,
             # Leadtime labels
             relative_attr = frequency_attr + "s"  # e.g. "months" or "days"
             _, _, forecast_steps_gen = get_date_indices(date, var_ds, n_forecast_steps, relative_attr)
-            lead_titles = [date_obj.strftime("%Y-%m-%d") for date_obj in list(forecast_steps_gen)]
+            forecast_steps = list(forecast_steps_gen)
+            lead_titles = [date_obj.strftime("%Y-%m-%d") for date_obj in forecast_steps]
+
             # lead_titles = [
             #     (date + relativedelta(**{relative_attr: i})).strftime("%Y-%m-%d")
             #     for i in range(y.shape[2])
@@ -371,12 +373,12 @@ def process_date(idx: int,
                 titles=x_titles
             )
             plot_samples_grid(
-                y[:, :, :, 0], f"y - {date}",
+                y[0, :, :, :], f"y - {date}",
                 os.path.join(plot_dir, f"y_{idx}_{date}_grid.jpg"),
                 titles=lead_titles
             )
             plot_samples_grid(
-                sample_weights[:, :, :, 0], f"sample_weights - {date}",
+                sample_weights[0, :, :, :], f"sample_weights - {date}",
                 os.path.join(plot_dir, f"sw_{idx}_{date}_grid.jpg"),
                 titles=lead_titles
             )
@@ -528,16 +530,16 @@ def generate_and_write(
 
     ds = xr.Dataset(
         {
-            "x": (["time", "yc", "xc", "channels"], x_data),
-            "y": (["time", "yc", "xc", "lead_time", "channel"], y_data),
-            "sample_weights": (["time", "yc", "xc", "lead_time", "channel"], sw_data),
+            "x": (["time", "channels", "yc", "xc"], x_data),
+            "y": (["time", "channel", "yc", "xc", "lead_time"], y_data),
+            "sample_weights": (["time", "channel", "yc", "xc", "lead_time"], sw_data),
         },
         coords={"time": dates},
     )
 
-    chunks=(batch_size, *shape, num_channels)
+    chunks=(batch_size, num_channels, *shape, )
     ds["x"] = ds["x"].chunk(chunks)
-    chunks=(batch_size, *shape, lead_time, 1)
+    chunks=(batch_size, 1, *shape, lead_time)
     ds["y"] = ds["y"].chunk(chunks)
     ds["sample_weights"] = ds["sample_weights"].chunk(chunks)
 
@@ -661,9 +663,9 @@ def generate_sample(
                                Defaults to False.
 
     Returns:
-        x: Input features with shape (*shape, num_channels).
-        y: Targets with shape (*shape, n_forecast_steps, 1).
-        sample_weights: Sample weights with shape (*shape, n_forecast_steps, 1).
+        x: Input features with shape (num_channels, *shape).
+        y: Targets with shape (1, *shape, n_forecast_steps).
+        sample_weights: Sample weights with shape (1, *shape, n_forecast_steps).
     """
     # DAYS/MONTHS/YEARS
     relative_attr = "{}s".format(frequency_attr)
@@ -674,8 +676,10 @@ def generate_sample(
         forecast_date, var_ds, n_forecast_steps, relative_attr
     )
 
-    y = da.zeros((*shape, n_forecast_steps, 1), dtype=dtype)
-    sample_weights = da.zeros((*shape, n_forecast_steps, 1), dtype=dtype)
+    n_output_channels = 1 # Just ua700 in output prediction
+
+    y = da.zeros((n_output_channels, *shape, n_forecast_steps), dtype=dtype)
+    sample_weights = da.zeros((n_output_channels, *shape, n_forecast_steps), dtype=dtype)
 
     if not prediction:
         try:
@@ -687,10 +691,10 @@ def generate_sample(
                 "please review ua700 ground-truth: dates {}".format(forecast_idxs)
             )
             raise RuntimeError(sic_ex)
-        y[:, :, :, 0] = sample_output
+        y[0, :, :, :] = sample_output
         if "hemisphere" in masks:
             y_mask = da.stack(
-                [masks["hemisphere"].data for _ in range(0, n_forecast_steps)], axis=-1
+                [masks["hemisphere"].data for _ in range(0, n_output_channels)], axis=0
             )
             y_mask = da.stack([y_mask], axis=-1)
             y = da.ma.where(y_mask, 0.0, y)
@@ -711,12 +715,12 @@ def generate_sample(
             sample_weight = sample_weight.astype(dtype)
 
             # We can pick up nans, which messes up training
-            sample_weight[da.isnan(y[..., leadtime_idx, 0])] = 0.0
+            sample_weight[da.isnan(y[0, ..., leadtime_idx])] = 0.0
 
-        sample_weights[:, :, leadtime_idx, 0] = sample_weight
+        sample_weights[0, :, :, leadtime_idx] = sample_weight
 
     # INPUT FEATURES
-    x = da.zeros((*shape, num_channels), dtype=dtype)
+    x = da.zeros((num_channels, *shape), dtype=dtype)
     v1, v2 = 0, 0
 
     for var_name, num_channels in channels.items():
@@ -747,7 +751,7 @@ def generate_sample(
                 )
                 channel_data.append(da.zeros(shape))
 
-        x[:, :, v1:v2] = da.from_array(channel_data).transpose([1, 2, 0])
+        x[v1:v2, :, :] = da.from_array(channel_data)#.transpose([0, 1, 2])
         v1 += num_channels
 
     for var_name in meta_channels:
@@ -761,9 +765,9 @@ def generate_sample(
         if var_name in ["sin", "cos"]:
             ref_date = "2012-{}-{}".format(forecast_date.month, forecast_date.day)
             trig_val = meta_ds.sel(time=ref_date).to_numpy()
-            x[:, :, v1] = da.broadcast_to([trig_val], shape)
+            x[v1, :, :] = da.broadcast_to([trig_val], shape)
         else:
-            x[:, :, v1] = da.array(meta_ds.to_numpy())
+            x[v1, :, :] = da.array(meta_ds.to_numpy())
         v1 += channels[var_name]
 
     # TODO: we have unwarranted nans which need fixing, probably from broken spatial infilling

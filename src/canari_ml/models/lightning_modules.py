@@ -153,7 +153,7 @@ class LitUNet(BaseLightningModule):
         # Compute metrics
         y_hat = outputs
         self.train_metrics.update(
-            y_hat.squeeze(dim=-2), y.squeeze(dim=-1), sample_weight.squeeze(dim=-1)
+            y_hat, y, sample_weight
         )
         self.log_dict(
             self.train_metrics,
@@ -193,7 +193,7 @@ class LitUNet(BaseLightningModule):
         loss = self.criterion(outputs, y, sample_weight)
 
         self.val_metrics.update(
-            y_hat.squeeze(dim=-2), y.squeeze(dim=-1), sample_weight.squeeze(dim=-1)
+            y_hat, y, sample_weight
         )
 
         self.log(
@@ -234,7 +234,7 @@ class LitUNet(BaseLightningModule):
         loss = self.criterion(outputs, y, sample_weight)
 
         self.test_metrics.update(
-            y_hat.squeeze(dim=-2), y.squeeze(dim=-1), sample_weight.squeeze(dim=-1)
+            y_hat, y, sample_weight
         )
 
         self.log(

@@ -124,7 +124,7 @@ def save_prediction(predictions, dates, output_folder):
                 "Saving {} - forecast output {}".format(date, prediction.shape)
             )
             output_path = os.path.join(output_folder, date.strftime("%Y_%m_%d.npy"))
-            forecast = prediction[batch, :, :, :, :].movedim(-2, 0)
+            forecast = prediction[batch, :, :, :, :]
             forecast_np = forecast.detach().cpu().numpy()
             np.save(output_path, forecast_np)
             idx += 1

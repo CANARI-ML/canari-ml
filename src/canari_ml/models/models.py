@@ -144,13 +144,14 @@ class UNet(nn.Module):
 
         # Final layer
         self.final_layer = nn.Conv2d(
-            channels[64], lead_time, kernel_size=1, padding="same"
+            channels[64],
+            self.n_output_classes * self.lead_time,
+            kernel_size=1,
+            padding="same"
         )
 
-    def forward(self, x):
-        # transpose from shape (b, h, w, c) to (b, c, h, w) for pytorch conv2d layers
-        x = torch.movedim(x, -1, 1)  # move c from last to second dim
 
+    def forward(self, x):
         # Number of `max_pool2d` steps in Encoder layer.
         # i.e., dimension halved, since it must later be doubled, else, will
         # be a dimension mismatch in the decoder layer,
@@ -207,13 +208,19 @@ class UNet(nn.Module):
         # y_hat = torch.sigmoid(output)
         y_hat = output
 
-        # transpose from shape (b, c, h, w) back to (b, h, w, c) to align with training data
-        y_hat = torch.movedim(y_hat, 1, -1)  # move c from second to final dim
+        b, c, h, w = y_hat.shape
 
-        b, h, w, c = y_hat.shape
+        # unpack c=classes*days dimension into classes, days as separate dimensions
+        # If final_layer outputs (b, lead_time, h, w):
+        # y_hat = y_hat.permute(0, 2, 3, 1).contiguous()  # (b, h, w, lead_time)
+        # y_hat = y_hat.reshape((b, self.n_output_classes, h, w, self.lead_time))
+        y_hat = y_hat.reshape(b, self.n_output_classes, self.lead_time, h, w)
+        y_hat = y_hat.permute(0, 1, 3, 4, 2).contiguous()  # (b, classes, h, w, time)
+        # print(y_hat.shape)
 
-        # unpack c=classes*months dimension into classes, months as separate dimensions
-        y_hat = y_hat.reshape((b, h, w, self.n_output_classes, self.lead_time))
+        # # Reshape to: (b, n_output_classes, h, w, lead_time)
+        # y_hat = y_hat.view(b, self.n_output_classes, self.lead_time, h, w)
+        # y_hat = y_hat.permute(0, 1, 3, 4, 2).contiguous()  # (b, n_output_classes, h, w, lead_time)
 
         return y_hat
 

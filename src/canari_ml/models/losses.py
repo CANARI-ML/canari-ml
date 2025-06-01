@@ -3,6 +3,8 @@ import torch.nn as nn
 
 class L1Loss(nn.L1Loss):
     def __init__(self, *args, **kwargs):
+        if "reduction" not in kwargs:
+            kwargs.update({"reduction": "none"})
         super().__init__(*args, **kwargs)
 
     def forward(self, inputs, targets, sample_weights):
@@ -12,17 +14,7 @@ class L1Loss(nn.L1Loss):
         Compute L1 loss weighted by masking.
 
         """
-        y_hat = inputs
-
-        # Computing using nn.L1Loss class. This class must be instantiated via:
-        # >>> criterion = WeightedL1Loss(reduction="none")
-        y_hat, targets, sample_weights = inputs, targets, sample_weights
-        loss = super().forward(y_hat, targets) * sample_weights
-
-        # Computing here, in the derived class
-        # loss = (
-        #             torch.abs( ( y_hat.movedim(-1, 1) - targets.movedim(-1, 1) )*100 )
-        #         )*sample_weights.movedim(-1, 1)
+        loss = super().forward(inputs, targets) * sample_weights
 
         return loss.mean()
 
@@ -32,7 +24,6 @@ class MSELoss(nn.MSELoss):
         if "reduction" not in kwargs:
             kwargs.update({"reduction": "none"})
         super().__init__(*args, **kwargs)
-        self.count = 1
 
     def forward(self, inputs, targets, sample_weights):
         """
@@ -41,55 +32,10 @@ class MSELoss(nn.MSELoss):
         Compute MSE loss weighted by masking.
 
         """
-        y_hat, targets, sample_weights = inputs, targets, sample_weights
-        # y_hat = inputs.movedim(-2, 1).movedim(-1, 1)
-        # targets = targets.movedim(-1, 1).movedim(-1, 1)
-        # sample_weights = sample_weights.movedim(-1, 1).movedim(-1, 1)
-
-        # Computing using nn.MSELoss base class. This class must be instantiated via:
-        # criterion = nn.MSELoss(reduction="none")
-        loss = super().forward(y_hat, targets)
-        loss = loss * sample_weights
-
-        # if self.count % 100 == 0:
-        #    import matplotlib.pyplot as plt
-        #    import matplotlib
-        #    matplotlib.use('TkAgg')
-        #    #img1 = y_hat[0, :, :, 0, 0].cpu().data.numpy()
-        #    #img2 = targets[0, :, :, 0, 0].cpu().data.numpy()
-        #    img1 = y_hat[0, 0, 0, :, :].cpu().data.numpy()
-        #    img2 = targets[0, 0, 0, :, :].cpu().data.numpy()
-        #    print("img1 shape:", img1.shape)
-        #    print("img2 shape:", img2.shape)
-        #    fig, axes = plt.subplots(2, 2, figsize=(12, 6), layout="constrained")
-        #    # Prediction at leadtime 0
-        #    ## Plot current prediction
-        #    im1 = axes[0, 0].imshow(img1, cmap="RdBu_r")
-        #    plt.colorbar(im1, ax=axes[0, 0])
-        #    axes[0, 0].set_title("y_hat: leadtime 0")
-        #    ## Plot target
-        #    im2 = axes[1, 0].imshow(img2, cmap="RdBu_r")
-        #    plt.colorbar(im2, ax=axes[1, 0])
-        #    axes[1, 0].set_title("target: leadtime 0")
-        #    # Prediction at last leadtime
-        #    img1 = y_hat[0, -1, 0, :, :].cpu().data.numpy()
-        #    img2 = targets[0, -1, 0, :, :].cpu().data.numpy()
-        #    ## Plot current prediction
-        #    im1 = axes[0, 1].imshow(img1, cmap="RdBu_r")
-        #    plt.colorbar(im1, ax=axes[0, 1])
-        #    axes[0, 1].set_title("y_hat: last leadtime")
-        #    ## Plot target
-        #    im2 = axes[1, 1].imshow(img2, cmap="RdBu_r")
-        #    plt.colorbar(im2, ax=axes[1, 1])
-        #    axes[1, 1].set_title("target: last leadtime")
-        #    plt.show()
-        #self.count += 1
-
-        # Computing here, in the nn.Module derived class
-        # loss = (
-        #             ( ( y_hat.movedim(-1, 1) - targets.movedim(-1, 1) )*100 )**2
-        #         )*sample_weights.movedim(-1, 1)
+        loss = super().forward(inputs, targets)
+        loss *= sample_weights
         return loss.mean()
+
 
 class HuberLoss(nn.HuberLoss):
     def __init__(self, *args, **kwargs):
@@ -104,7 +50,6 @@ class HuberLoss(nn.HuberLoss):
         Compute Huber loss weighted by masking.
 
         """
-        y_hat, targets, sample_weights = inputs, targets, sample_weights
-        loss = super().forward(y_hat, targets)
-        loss = loss * sample_weights
+        loss = super().forward(inputs, targets)
+        loss *= sample_weights
         return loss.mean()

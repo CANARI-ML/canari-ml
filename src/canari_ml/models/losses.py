@@ -1,55 +1,30 @@
 import torch.nn as nn
 
-
-class L1Loss(nn.L1Loss):
-    def __init__(self, *args, **kwargs):
-        if "reduction" not in kwargs:
-            kwargs.update({"reduction": "none"})
-        super().__init__(*args, **kwargs)
-
-    def forward(self, inputs, targets, sample_weights):
-        """
-        Weighted L1 loss.
-
-        Compute L1 loss weighted by masking.
-
-        """
-        loss = super().forward(inputs, targets) * sample_weights
-
-        return loss.mean()
+LOSS_REGISTRY = {
+    "l1": nn.L1Loss,
+    "mse": nn.MSELoss,
+    "huber": nn.HuberLoss,
+}
 
 
-class MSELoss(nn.MSELoss):
-    def __init__(self, *args, **kwargs):
-        if "reduction" not in kwargs:
-            kwargs.update({"reduction": "none"})
-        super().__init__(*args, **kwargs)
+class WeightedLoss(nn.Module):
+    """
+    Weighted loss.
 
-    def forward(self, inputs, targets, sample_weights):
-        """
-        Weighted MSE loss.
+    Compute loss weighted by masking.
+    """
 
-        Compute MSE loss weighted by masking.
+    reduction: str
 
-        """
-        loss = super().forward(inputs, targets)
-        loss *= sample_weights
-        return loss.mean()
+    def __init__(self, loss_type="mse", **kwargs) -> None:
+        super().__init__()
 
+        if loss_type not in LOSS_REGISTRY:
+            raise ValueError(f"Unsupported loss type: {loss_type}")
 
-class HuberLoss(nn.HuberLoss):
-    def __init__(self, *args, **kwargs):
-        if "reduction" not in kwargs:
-            kwargs.update({"reduction": "none"})
-        super().__init__(*args, **kwargs)
+        self.loss_fn = LOSS_REGISTRY[loss_type.lower()](reduction="none", **kwargs)
 
     def forward(self, inputs, targets, sample_weights):
-        """
-        Weighted Huber loss.
+        loss = self.loss_fn(inputs, targets) * sample_weights
 
-        Compute Huber loss weighted by masking.
-
-        """
-        loss = super().forward(inputs, targets)
-        loss *= sample_weights
         return loss.mean()

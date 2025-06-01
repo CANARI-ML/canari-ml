@@ -105,17 +105,6 @@ class HuberLoss(nn.HuberLoss):
 
         """
         y_hat, targets, sample_weights = inputs, targets, sample_weights
-        # y_hat = inputs.movedim(-2, 1).movedim(-1, 1)
-        # targets = targets.movedim(-1, 1).movedim(-1, 1)
-        # sample_weights = sample_weights.movedim(-1, 1).movedim(-1, 1)
-
-        y_hat = y_hat * sample_weights
-        targets = targets * sample_weights
-
-        return super().forward(y_hat, targets).mean()
-
-        # # Computing using nn.HuberLoss base class. This class must be instantiated via:
-        # # criterion = nn.HuberLoss(reduction="none")
-        # loss = super().forward(y_hat, targets)
-
-        # return loss.mean()
+        loss = super().forward(y_hat, targets)
+        loss = loss * sample_weights
+        return loss.mean()

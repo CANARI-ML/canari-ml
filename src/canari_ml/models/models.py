@@ -247,8 +247,8 @@ class UNet(nn.Module):
 
         # Convert raw logits to result
         # Can do without since we're working with regression w/ continuous values
-        y_hat = torch.sigmoid(output)
-        # y_hat = output
+        # y_hat = torch.sigmoid(output)
+        y_hat = output
 
         b, c, h, w = y_hat.shape
 

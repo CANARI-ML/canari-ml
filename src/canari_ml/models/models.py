@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from collections.abc import Callable
 from .lightning_modules import LitUNet
 
 # Suppress the specific UserWarning from PyTorch on performance impact due
@@ -12,13 +13,13 @@ warnings.filterwarnings(
     "ignore", message="Using padding='same' with even kernel lengths and odd dilation"
 )
 
-def get_padding(x: torch.Tensor, stride: int = 16) -> tuple:
+def get_padding(x: torch.Tensor, stride: int = 16) -> tuple[int, int, int, int]:
     """Calculate padding for the input tensor to make its height and width multiples
     of the given stride.
 
     Args:
-        x: Input tensor.
-        stride: The stride value used to calculate the required padding.
+        x: Input tensor of shape (..., H, W).
+        stride: Stride value to align dimensions to. Defaults to 16.
 
     Returns:
         Four integers representing the padding amounts in the format
@@ -45,7 +46,7 @@ def get_padding(x: torch.Tensor, stride: int = 16) -> tuple:
     return (pad_left, pad_right, pad_top, pad_bottom)
 
 def apply_padding(x: torch.Tensor, padding: tuple) -> torch.Tensor:
-    """Apply given padding to the input tensor.
+    """Apply zero-padding to the input tensor.
 
     Args:
         x: Input tensor to be padded.
@@ -76,32 +77,59 @@ def undo_padding(x: torch.Tensor, padding: tuple) -> torch.Tensor:
     """
     pad_left, pad_right, pad_top, pad_bottom = padding
     if pad_top + pad_bottom > 0:
-        x = x[:,:,pad_top:-pad_bottom,:]
+        x = x[:, :, pad_top:-pad_bottom, :]
     if pad_left + pad_right > 0:
-        x = x[:,:,:,pad_left:-pad_right]
+        x = x[:, :, :, pad_left:-pad_right]
     return x
 
 class Interpolate(nn.Module):
+    """Module for upsampling using interpolation.
+
+    Attributes:
+        scale_factor: Scaling factor for upsampling.
+        mode: Interpolation mode (e.g., 'nearest', 'bilinear').
+    """
     def __init__(self, scale_factor, mode):
         super().__init__()
         self.interp = F.interpolate
-        self.scale_factor = scale_factor
-        self.mode = mode
+        self.scale_factor: float = scale_factor
+        self.mode: str = mode
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply interpolation to input tensor.
+
+        Args:
+            x: Input tensor.
+
+        Returns:
+            Upsampled tensor.
+        """
         x = self.interp(x, scale_factor=self.scale_factor, mode=self.mode)
         return x
 
 
 class UNet(nn.Module):
+    """U-Net architecture for CANARI-ML forecasting.
+
+    This implementation supports dynamic input sizes through padding and reshapes
+    the output to include a lead time dimension.
+
+    Attributes:
+        input_channels: Number of input channels.
+        filter_size: Size of convolutional filters (Default is 3).
+        n_filters_factor: Factor to scale the number of filters in each layer.
+        lead_time: Number of forecast or output time steps.
+        n_output_classes: Number of output channels per time step.
+        dropout_probability: Dropout probability used in encoder and decoder.
+    """
     def __init__(
         self,
-        input_channels,
-        filter_size=3,
-        n_filters_factor=1,
+        input_channels: int,
+        filter_size: int = 3,
+        n_filters_factor: float = 1,
         lead_time=7,
-        n_output_classes=1,
-        dropout_probability=0.3,
+        n_output_classes: int = 1,
+        dropout_probability: float = 0.3,
         **kwargs,
     ):
         super(UNet, self).__init__()
@@ -151,7 +179,16 @@ class UNet(nn.Module):
         )
 
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Performs a forward pass through the U-Net.
+
+        Args:
+            x: Input tensor of shape (B, C, H, W).
+
+        Returns:
+            Output tensor of shape (B, C_out, H, W, T), where
+                C_out = n_output_classes and T = lead_time.
+        """
         # Number of `max_pool2d` steps in Encoder layer.
         # i.e., dimension halved, since it must later be doubled, else, will
         # be a dimension mismatch in the decoder layer,
@@ -205,26 +242,32 @@ class UNet(nn.Module):
 
         # Convert raw logits to result
         # Can do without since we're working with regression w/ continuous values
-        # y_hat = torch.sigmoid(output)
-        y_hat = output
+        y_hat = torch.sigmoid(output)
+        # y_hat = output
 
         b, c, h, w = y_hat.shape
 
         # unpack c=classes*days dimension into classes, days as separate dimensions
-        # If final_layer outputs (b, lead_time, h, w):
-        # y_hat = y_hat.permute(0, 2, 3, 1).contiguous()  # (b, h, w, lead_time)
-        # y_hat = y_hat.reshape((b, self.n_output_classes, h, w, self.lead_time))
-        y_hat = y_hat.reshape(b, self.n_output_classes, self.lead_time, h, w)
+        # Reshape to: (b, n_output_classes, h, w, lead_time)
+        y_hat = y_hat.reshape(b, self.n_output_classes, self.lead_time, h, w) 
         y_hat = y_hat.permute(0, 1, 3, 4, 2).contiguous()  # (b, classes, h, w, time)
-        # print(y_hat.shape)
-
-        # # Reshape to: (b, n_output_classes, h, w, lead_time)
-        # y_hat = y_hat.view(b, self.n_output_classes, self.lead_time, h, w)
-        # y_hat = y_hat.permute(0, 1, 3, 4, 2).contiguous()  # (b, n_output_classes, h, w, lead_time)
 
         return y_hat
 
-    def conv_block(self, in_channels, out_channels, final=False):
+    def conv_block(
+        self, in_channels: int, out_channels: int, final: bool = False
+    ) -> nn.Sequential:
+        """Builds a standard convolutional block.
+
+        Args:
+            in_channels: Number of input channels.
+            out_channels: Number of output channels.
+            final (optional): If True, adds a third conv + ReLU instead of batch norm.
+                Defaults to False.
+
+        Returns:
+            Sequential container with conv layers.
+        """
         block = nn.Sequential(
             nn.Conv2d(
                 in_channels, out_channels, kernel_size=self.filter_size, padding="same"
@@ -239,9 +282,9 @@ class UNet(nn.Module):
             batch_norm = nn.Sequential(
                 nn.BatchNorm2d(num_features=out_channels),
             )
-            return nn.Sequential().extend(block).extend(batch_norm)
+            block.append(batch_norm)
         else:
-            final_block = nn.Sequential(
+            block.extend([
                 nn.Conv2d(
                     out_channels,
                     out_channels,
@@ -249,10 +292,20 @@ class UNet(nn.Module):
                     padding="same",
                 ),
                 nn.ReLU(inplace=True),
-            )
-            return nn.Sequential().extend(block).extend(final_block)
+            ])
+        return nn.Sequential(*block)
 
-    def bottleneck_block(self, in_channels, out_channels):
+
+    def bottleneck_block(self, in_channels: int, out_channels: int) -> nn.Sequential:
+        """Builds the bottleneck block between encoder and decoder.
+
+        Args:
+            in_channels: Number of input channels.
+            out_channels: Number of output channels.
+
+        Returns:
+            Bottleneck block with conv, ReLU, and batch norm.
+        """
         return nn.Sequential(
             nn.Conv2d(
                 in_channels, out_channels, kernel_size=self.filter_size, padding="same"
@@ -265,7 +318,16 @@ class UNet(nn.Module):
             nn.BatchNorm2d(num_features=out_channels),
         )
 
-    def upconv_block(self, in_channels, out_channels):
+    def upconv_block(self, in_channels: int, out_channels: int) -> nn.Sequential:
+        """Builds an upsampling block using interpolation followed by convolution.
+
+        Args:
+            in_channels: Number of input channels.
+            out_channels: Number of output channels.
+
+        Returns:
+            Upsampling block.
+        """
         return nn.Sequential(
             Interpolate(scale_factor=2, mode="nearest"),
             nn.Conv2d(in_channels, out_channels, kernel_size=2, padding="same"),
@@ -277,24 +339,38 @@ class UNet(nn.Module):
 
 
 def unet_batchnorm(
-    input_shape: object,
-    loss: object,
-    metrics: object,
+    input_shape: tuple[int, int, int],
+    loss: nn.Module | Callable,
+    metrics: dict[str, Callable] | Callable,
     learning_rate: float = 1e-4,
-    custom_optimizer: object = None,
     filter_size: float = 3,
     n_filters_factor: float = 1,
     lead_time: int = 1,
-) -> object:
-    # construct unet
+) -> LitUNet:
+    """Constructs a U-Net model wrapped in a PyTorch Lightning module.
+
+    This function creates a U-Net architecture, applies the specified loss function
+    and metrics, and returns a `LitUNet` Lightning module for training.
+
+    Args:
+        input_shape: Shape of the input tensor (channels, height, width).
+        loss: Loss function module or callable (e.g., nn.MSELoss, custom loss).
+        metrics: Metric or dictionary of metrics to use for evaluation.
+        learning_rate (optional): Learning rate for the optimizer. Defaults to 1e-4.
+        filter_size (optional): Convolution filter size. Defaults to 3.
+        n_filters_factor (optional): Scale factor for number of filters per block. Defaults to 1.
+        lead_time (optional): Number of future time steps to predict. Defaults to 1.
+
+    Returns:
+        PyTorch Lightning module that wraps the U-Net model for training.
+    """
     model = UNet(
-        input_channels=input_shape[-1],
+        input_channels=input_shape[0],
         filter_size=filter_size,
         n_filters_factor=n_filters_factor,
         lead_time=lead_time,
     )
 
-    # criterion = BCELoss(reduction="none")
     # criterion = L1Loss(reduction="none")
     # criterion = MSELoss(reduction="none")
 

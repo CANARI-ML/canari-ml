@@ -116,7 +116,7 @@ def execute_pytorch_training(args, dataset, network, save=True, evaluate=True):
     #         network.add_callback(callback)
     #         using_wandb = True
 
-    input_shape = (*dataset.shape, dataset.num_channels) # 720, 720, 4
+    input_shape = (dataset.num_channels, *dataset.shape) # 4, 720, 720
     ratio = args.ratio if args.ratio else 1.0
     # Do not yet support ratio != 1.0 with pytorch
     train_dataloader, validation_dataloader, _ = dataset.get_data_loaders(ratio=1.0)

@@ -148,6 +148,8 @@ class UNet(nn.Module):
             start_out_channels * 2**pow: reduced_channels * 2**pow for pow in range(4)
         }
 
+        self.cached_padding: tuple[int, int, int, int] | None = None  # Add this line
+
         self.dropout = nn.Dropout2d(dropout_probability)
 
         # Encoder
@@ -202,10 +204,13 @@ class UNet(nn.Module):
         h, w = x.shape[-2:]
         # Pad data if the input image dimensions is not a multiple of stride
         if h % stride or w % stride:
-           padding = get_padding(x, stride=stride)
-           x = apply_padding(x, padding)
+            if self.cached_padding is None:
+                self.cached_padding = get_padding(x, stride=stride)
+                self.cached_input_shape = (h, w)
+
+            x = apply_padding(x, self.cached_padding)
         else:
-           padding = None
+            self.cached_padding = None
 
         # Encoder
         bn1 = self.conv1(x)
@@ -237,8 +242,8 @@ class UNet(nn.Module):
         output = self.final_layer(up9)
 
         # Undo padding of the network output to recover the original input shape
-        if padding:
-           output = undo_padding(output, padding)
+        if self.cached_padding:
+           output = undo_padding(output, self.cached_padding)
 
         # Convert raw logits to result
         # Can do without since we're working with regression w/ continuous values

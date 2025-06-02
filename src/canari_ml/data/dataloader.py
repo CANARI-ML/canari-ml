@@ -97,8 +97,7 @@ class CANARIMLDataSetTorch(IceNetDataSet):
                 "Running in configuration only mode, tfrecords were not generated for this dataset"
             )
 
-    def get_data_loaders(self, ratio=None):
-        num_workers = 4
+    def get_data_loaders(self, num_workers=4, ratio=None):
         persistent_workers = True if num_workers else False
 
         root_path = self._config["dataset_path"]

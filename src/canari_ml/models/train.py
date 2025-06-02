@@ -20,6 +20,7 @@ def evaluate_model(
 
     # _, val_ds, test_ds = dataset.get_split_datasets(ratio=dataset_ratio)
     _, validation_dataloader, test_dataloader = dataset.get_data_loaders(
+        num_workers=8,
         ratio=dataset_ratio
     )
     eval_data = validation_dataloader

@@ -227,7 +227,9 @@ class SerialLoader(CanariMLBaseDataLoader):
         return x.compute(), y.compute(), sw.compute()
 
 
-def plot_samples_grid(data_array, title_prefix, fname, titles=None, cmap="RdBu_r"):
+def plot_samples_grid(
+    data_array, title_prefix, fname, titles=None, vmin=0, vmax=1, cmap="RdBu_r"
+):
     """
     Plot samples in a grid.
 
@@ -238,7 +240,7 @@ def plot_samples_grid(data_array, title_prefix, fname, titles=None, cmap="RdBu_r
         titles (optional): List of strings to title each subplot
         cmap (optional): Matplotlib colormap
     """
-    n_slices = data_array.shape[0]
+    n_slices = data_array.shape[-1]
     n_cols = 5
     n_rows = int(np.ceil(n_slices / n_cols))
 
@@ -251,10 +253,6 @@ def plot_samples_grid(data_array, title_prefix, fname, titles=None, cmap="RdBu_r
     # Normalise axes format
     axes = np.atleast_2d(axes)
 
-    # vmin = np.nanmin(data_array)
-    # vmax = np.nanmax(data_array)
-    vmin, vmax = 0, 1
-
     im = None
     for i in range(n_rows * n_cols):
         row, col = divmod(i, n_cols)
@@ -263,7 +261,7 @@ def plot_samples_grid(data_array, title_prefix, fname, titles=None, cmap="RdBu_r
 
         if i < n_slices:
             im = ax.imshow(
-                data_array[i, :, :],
+                data_array[:, :, i],
                 cmap=cmap,
                 vmin=vmin,
                 vmax=vmax,
@@ -271,6 +269,8 @@ def plot_samples_grid(data_array, title_prefix, fname, titles=None, cmap="RdBu_r
             )
             if titles:
                 ax.set_title(titles[i], fontsize=8)
+        else:
+            ax.set_visible(False)
 
     if im is not None:
         fig.colorbar(im, ax=axes.ravel().tolist(), orientation="horizontal", shrink=0.2, pad=0.05)
@@ -367,20 +367,33 @@ def process_date(idx: int,
             # ]
 
             # Plot grids with colorbars and labels
+            # x has dims: (time*classes, height, width)
+            # Reorder, since I've coded it for y which has time as the
+            # last dimension.
+            x_reordered = np.moveaxis(x, 0, -1) #(height, width, time*classes)
             plot_samples_grid(
-                x, f"x - {date}",
+                x_reordered, f"x - {date}",
                 os.path.join(plot_dir, f"x_{idx}_{date}_grid.jpg"),
-                titles=x_titles
+                titles=x_titles,
+                vmin=0,
+                vmax=1,
             )
+            # y has dims: (output_classes, height, width, leadtime)
+            # Where, output_classes is just `ua700` right now
             plot_samples_grid(
                 y[0, :, :, :], f"y - {date}",
                 os.path.join(plot_dir, f"y_{idx}_{date}_grid.jpg"),
-                titles=lead_titles
+                titles=lead_titles,
+                vmin=0,
+                vmax=1,
             )
+            # sample_weights has dims: (output_classes, height, width, leadtime)
             plot_samples_grid(
                 sample_weights[0, :, :, :], f"sample_weights - {date}",
                 os.path.join(plot_dir, f"sw_{idx}_{date}_grid.jpg"),
-                titles=lead_titles
+                titles=lead_titles,
+                vmin=0,
+                vmax=1,
             )
 
     end = time.time()

@@ -65,7 +65,7 @@ version = { attr = "canari_ml.__version__" }
 readme = { file = ["README.md"] }
 
 [project.optional-dependencies]
-dev = ["coverage", "pre-commit", "ruff", "tox", "pytest", "build"]
+dev = ["coverage", "pre-commit", "ruff", "tox", "pytest", "build", "torch-tb-profiler"]
 docs = ["mkdocs", "mkdocstrings[python]", "mkdocs-material", "mkdocs-gen-files", "mkdocs-literate-nav", "mkdocs-section-index"]
 
 [project.urls]

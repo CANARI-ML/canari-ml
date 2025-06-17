@@ -223,8 +223,12 @@ class SerialLoader(CanariMLBaseDataLoader):
             self._masks, prediction
         ]
 
-        x, y, sw = generate_sample(date, var_ds, var_files, trend_ds, *args)
-        return x.compute(), y.compute(), sw.compute()
+        if prediction:
+            x, base_ua700, y, sw = generate_sample(date, var_ds, var_files, trend_ds, *args)
+            return x.compute(), base_ua700.compute(), y.compute(), sw.compute()
+        else:
+            x, y, sw = generate_sample(date, var_ds, var_files, trend_ds, *args)
+            return x.compute(), y.compute(), sw.compute()
 
 
 def plot_samples_grid(
@@ -384,8 +388,8 @@ def process_date(idx: int,
                 y[0, :, :, :], f"y - {date}",
                 os.path.join(plot_dir, f"y_{idx}_{date}_grid.jpg"),
                 titles=lead_titles,
-                vmin=0,
-                vmax=1,
+                vmin=-0.5,
+                vmax=0.5,
             )
             # sample_weights has dims: (output_classes, height, width, leadtime)
             plot_samples_grid(
@@ -694,10 +698,18 @@ def generate_sample(
     y = da.zeros((n_output_channels, *shape, n_forecast_steps), dtype=dtype)
     sample_weights = da.zeros((n_output_channels, *shape, n_forecast_steps), dtype=dtype)
 
+    # Get ua700 for the day/month before the forecast initialisation date
+    base_ua700 = var_ds.ua700_abs.isel(time=forecast_base_idx - 1)
     if not prediction:
         try:
-            sample_output = var_ds.ua700_abs.isel(time=forecast_idxs)
-            sample_output = sample_output.transpose("yc", "xc", "time") # New
+            sample_output = var_ds.ua700_abs.isel(time=forecast_idxs).transpose("yc", "xc", "time")
+
+            # Add time dimension to end
+            base_ua700_expanded = base_ua700.expand_dims(time=sample_output.time)
+
+            # Set model target values to be delta to the day/month before the
+            # forecast initialisation date
+            sample_output = sample_output - base_ua700_expanded
         except KeyError as sic_ex:
             logging.exception(
                 "Issue selecting data for non-prediction sample, "
@@ -799,4 +811,7 @@ def generate_sample(
         sample_weights[nan_mask_sw] = 0
         y[nan_mask_y] = 0
 
-    return x, y, sample_weights
+    if prediction:
+        return x, base_ua700, y, sample_weights
+    else:
+        return x, y, sample_weights

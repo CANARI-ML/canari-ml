@@ -72,16 +72,22 @@ def predict_forecast(
     if not test_set:
         logging.info("Generating forecast inputs from processed/ files")
         for date in start_dates:
-            x, y, sample_weights = dl.generate_sample(date, prediction=True)
+            x, base_ua700, y, sample_weights = dl.generate_sample(date, prediction=True)
 
+            # input_sample shape: (1, channels, height, width)
             input_sample = torch.tensor(x).unsqueeze(dim=0)
+            # Expand input_sample to match prediction shape's lead time dimension
+            base_ua700_expanded = torch.tensor(base_ua700.data).unsqueeze(dim=-1)
 
             logging.info("Running prediction {}".format(date))
             with torch.no_grad():
                 predictions = lightning_module(input_sample).unsqueeze(dim=0)
 
+                # Add input state to predicted delta to get absolute forecast
+                absolute_forecast = predictions + base_ua700_expanded
+
             save_prediction(
-                predictions=predictions,
+                predictions=absolute_forecast,
                 dates=[date],
                 output_folder=output_folder,
             )

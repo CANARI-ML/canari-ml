@@ -49,6 +49,7 @@ classifiers = [
 [project.scripts]
 canari_ml_dataset_create = "canari_ml.data.loader:create_network_dataset"
 canari_ml_preprocess_reproject = "canari_ml.preprocess.reproject:reproject"
+canari_ml_preprocess_add_region_weights = "canari_ml.data.masks.era5:add_region_weights"
 canari_ml_train = "canari_ml.models.train:pytorch_main"
 canari_ml_predict = "canari_ml.models.predict:main"
 canari_ml_plot_numpy = "canari_ml.plotting.forecast:plot_numpy"

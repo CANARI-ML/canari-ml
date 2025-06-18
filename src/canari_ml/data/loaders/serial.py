@@ -687,6 +687,8 @@ def generate_sample(
     # DAYS/MONTHS/YEARS
     relative_attr = "{}s".format(frequency_attr)
 
+    masks["hemisphere"] = masks["hemisphere"].astype(bool)
+
     # Prepare data sample
     # To become array of shape (*raw_data_shape, n_forecast_steps)
     forecast_base_idx, forecast_idxs, forecast_steps_gen = get_date_indices(
@@ -732,6 +734,8 @@ def generate_sample(
         else:
             # No masking when sample_weight = 1
             sample_weight = np.ones(shape, dtype)
+            if "weighted_regions" in masks:
+                sample_weight = masks["weighted_regions"].data
             if "hemisphere" in masks:
                 # Zero loss across the mask hemisphere
                 # (i.e., outside of northern hemisphere)

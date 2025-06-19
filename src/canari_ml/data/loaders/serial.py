@@ -13,10 +13,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xarray as xr
-import zarr
 from dateutil.relativedelta import relativedelta
-from icenet.data.loaders.base import DATE_FORMAT, IceNetBaseDataLoader
-from joblib import Parallel, delayed
+from icenet.data.loaders.base import DATE_FORMAT
 
 from canari_ml.data.loaders.base import CanariMLBaseDataLoader
 

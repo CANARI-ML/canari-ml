@@ -60,7 +60,7 @@ where = ["src"]
 
 [tool.setuptools_scm]
 version_scheme = "guess-next-dev"
-local_scheme = "no-local-version"
+local_scheme = "node-and-date"
 
 [tool.setuptools.dynamic]
 readme = { file = ["README.md"] }
@@ -104,8 +104,7 @@ filename = "docs/reference.md"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-tag_format = "v$major.$minor.$patch$prerelease"
-version_scheme = "semver2"
-version = "0.0.1-alpha.0"
+version_scheme = "pep440"
+version = "0.0.1a0"
 update_changelog_on_bump = true
-major_version_zero = true
+major_version_zero = true # Using this for initial dev before hitting v1.0.0

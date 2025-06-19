@@ -13,10 +13,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xarray as xr
-import zarr
 from dateutil.relativedelta import relativedelta
-from icenet.data.loaders.base import DATE_FORMAT, IceNetBaseDataLoader
-from joblib import Parallel, delayed
+from icenet.data.loaders.base import DATE_FORMAT
 
 from canari_ml.data.loaders.base import CanariMLBaseDataLoader
 
@@ -223,16 +221,22 @@ class SerialLoader(CanariMLBaseDataLoader):
             self._masks, prediction
         ]
 
-        x, y, sw = generate_sample(date, var_ds, var_files, trend_ds, *args)
-        return x.compute(), y.compute(), sw.compute()
+        if prediction:
+            x, base_ua700, y, sw = generate_sample(date, var_ds, var_files, trend_ds, *args)
+            return x.compute(), base_ua700.compute(), y.compute(), sw.compute()
+        else:
+            x, y, sw = generate_sample(date, var_ds, var_files, trend_ds, *args)
+            return x.compute(), y.compute(), sw.compute()
 
 
-def plot_samples_grid(data_array, title_prefix, fname, titles=None, cmap="RdBu_r"):
+def plot_samples_grid(
+    data_array, title_prefix, fname, titles=None, vmin=0, vmax=1, cmap="RdBu_r"
+):
     """
     Plot samples in a grid.
 
     Args:
-        data_array: 3D array (H, W, N)
+        data_array: 3D array (N, H, W), where N is the number of channels
         title_prefix: Prefix for figure title
         fname: Output file path (.jpg)
         titles (optional): List of strings to title each subplot
@@ -251,10 +255,6 @@ def plot_samples_grid(data_array, title_prefix, fname, titles=None, cmap="RdBu_r
     # Normalise axes format
     axes = np.atleast_2d(axes)
 
-    # vmin = np.nanmin(data_array)
-    # vmax = np.nanmax(data_array)
-    vmin, vmax = 0, 1
-
     im = None
     for i in range(n_rows * n_cols):
         row, col = divmod(i, n_cols)
@@ -271,6 +271,8 @@ def plot_samples_grid(data_array, title_prefix, fname, titles=None, cmap="RdBu_r
             )
             if titles:
                 ax.set_title(titles[i], fontsize=8)
+        else:
+            ax.set_visible(False)
 
     if im is not None:
         fig.colorbar(im, ax=axes.ravel().tolist(), orientation="horizontal", shrink=0.2, pad=0.05)
@@ -354,31 +356,47 @@ def process_date(idx: int,
                 else:
                     for lag in range(num_ch):
                         x_titles.append(f"{var_name}_lag{lag}")
+                    x_titles.reverse()
 
             # Leadtime labels
             relative_attr = frequency_attr + "s"  # e.g. "months" or "days"
             _, _, forecast_steps_gen = get_date_indices(date, var_ds, n_forecast_steps, relative_attr)
-            lead_titles = [date_obj.strftime("%Y-%m-%d") for date_obj in list(forecast_steps_gen)]
+            forecast_steps = list(forecast_steps_gen)
+            lead_titles = [date_obj.strftime("%Y-%m-%d") for date_obj in forecast_steps]
+
             # lead_titles = [
             #     (date + relativedelta(**{relative_attr: i})).strftime("%Y-%m-%d")
             #     for i in range(y.shape[2])
             # ]
 
             # Plot grids with colorbars and labels
+            # x has dims: (time*classes, height, width)
+            # Reorder, since I've coded it for y which has time as the
+            # last dimension.
+            x_reordered = np.moveaxis(x, 0, -1) #(height, width, time*classes)
             plot_samples_grid(
-                x, f"x - {date}",
+                x_reordered, f"x - {date}",
                 os.path.join(plot_dir, f"x_{idx}_{date}_grid.jpg"),
-                titles=x_titles
+                titles=x_titles,
+                vmin=0,
+                vmax=1,
             )
+            # y has dims: (output_classes, height, width, leadtime)
+            # Where, output_classes is just `ua700` right now
             plot_samples_grid(
-                y[:, :, :, 0], f"y - {date}",
+                y[0, :, :, :], f"y - {date}",
                 os.path.join(plot_dir, f"y_{idx}_{date}_grid.jpg"),
-                titles=lead_titles
+                titles=lead_titles,
+                vmin=-0.5,
+                vmax=0.5,
             )
+            # sample_weights has dims: (output_classes, height, width, leadtime)
             plot_samples_grid(
-                sample_weights[:, :, :, 0], f"sample_weights - {date}",
+                sample_weights[0, :, :, :], f"sample_weights - {date}",
                 os.path.join(plot_dir, f"sw_{idx}_{date}_grid.jpg"),
-                titles=lead_titles
+                titles=lead_titles,
+                vmin=0,
+                vmax=1,
             )
 
     end = time.time()
@@ -528,16 +546,16 @@ def generate_and_write(
 
     ds = xr.Dataset(
         {
-            "x": (["time", "yc", "xc", "channels"], x_data),
-            "y": (["time", "yc", "xc", "lead_time", "channel"], y_data),
-            "sample_weights": (["time", "yc", "xc", "lead_time", "channel"], sw_data),
+            "x": (["time", "channels", "yc", "xc"], x_data),
+            "y": (["time", "channel", "yc", "xc", "lead_time"], y_data),
+            "sample_weights": (["time", "channel", "yc", "xc", "lead_time"], sw_data),
         },
         coords={"time": dates},
     )
 
-    chunks=(batch_size, *shape, num_channels)
+    chunks=(batch_size, num_channels, *shape, )
     ds["x"] = ds["x"].chunk(chunks)
-    chunks=(batch_size, *shape, lead_time, 1)
+    chunks=(batch_size, 1, *shape, lead_time)
     ds["y"] = ds["y"].chunk(chunks)
     ds["sample_weights"] = ds["sample_weights"].chunk(chunks)
 
@@ -661,12 +679,14 @@ def generate_sample(
                                Defaults to False.
 
     Returns:
-        x: Input features with shape (*shape, num_channels).
-        y: Targets with shape (*shape, n_forecast_steps, 1).
-        sample_weights: Sample weights with shape (*shape, n_forecast_steps, 1).
+        x: Input features with shape (num_channels, *shape).
+        y: Targets with shape (1, *shape, n_forecast_steps).
+        sample_weights: Sample weights with shape (1, *shape, n_forecast_steps).
     """
     # DAYS/MONTHS/YEARS
     relative_attr = "{}s".format(frequency_attr)
+
+    masks["hemisphere"] = masks["hemisphere"].astype(bool)
 
     # Prepare data sample
     # To become array of shape (*raw_data_shape, n_forecast_steps)
@@ -674,23 +694,33 @@ def generate_sample(
         forecast_date, var_ds, n_forecast_steps, relative_attr
     )
 
-    y = da.zeros((*shape, n_forecast_steps, 1), dtype=dtype)
-    sample_weights = da.zeros((*shape, n_forecast_steps, 1), dtype=dtype)
+    n_output_channels = 1 # Just ua700 in output prediction
 
+    y = da.zeros((n_output_channels, *shape, n_forecast_steps), dtype=dtype)
+    sample_weights = da.zeros((n_output_channels, *shape, n_forecast_steps), dtype=dtype)
+
+    # Get ua700 for the day/month before the forecast initialisation date
+    base_ua700 = var_ds.ua700_abs.isel(time=forecast_base_idx - 1)
     if not prediction:
         try:
-            sample_output = var_ds.ua700_abs.isel(time=forecast_idxs)
-            sample_output = sample_output.transpose("yc", "xc", "time") # New
+            sample_output = var_ds.ua700_abs.isel(time=forecast_idxs).transpose("yc", "xc", "time")
+
+            # Add time dimension to end
+            base_ua700_expanded = base_ua700.expand_dims(time=sample_output.time)
+
+            # Set model target values to be delta to the day/month before the
+            # forecast initialisation date
+            sample_output = sample_output - base_ua700_expanded
         except KeyError as sic_ex:
             logging.exception(
                 "Issue selecting data for non-prediction sample, "
                 "please review ua700 ground-truth: dates {}".format(forecast_idxs)
             )
             raise RuntimeError(sic_ex)
-        y[:, :, :, 0] = sample_output
+        y[0, :, :, :] = sample_output
         if "hemisphere" in masks:
             y_mask = da.stack(
-                [masks["hemisphere"].data for _ in range(0, n_forecast_steps)], axis=-1
+                [masks["hemisphere"].data for _ in range(0, n_output_channels)], axis=0
             )
             y_mask = da.stack([y_mask], axis=-1)
             y = da.ma.where(y_mask, 0.0, y)
@@ -703,6 +733,8 @@ def generate_sample(
         else:
             # No masking when sample_weight = 1
             sample_weight = np.ones(shape, dtype)
+            if "weighted_regions" in masks:
+                sample_weight = masks["weighted_regions"].data
             if "hemisphere" in masks:
                 # Zero loss across the mask hemisphere
                 # (i.e., outside of northern hemisphere)
@@ -711,12 +743,12 @@ def generate_sample(
             sample_weight = sample_weight.astype(dtype)
 
             # We can pick up nans, which messes up training
-            sample_weight[da.isnan(y[..., leadtime_idx, 0])] = 0.0
+            sample_weight[da.isnan(y[0, ..., leadtime_idx])] = 0.0
 
-        sample_weights[:, :, leadtime_idx, 0] = sample_weight
+        sample_weights[0, :, :, leadtime_idx] = sample_weight
 
     # INPUT FEATURES
-    x = da.zeros((*shape, num_channels), dtype=dtype)
+    x = da.zeros((num_channels, *shape), dtype=dtype)
     v1, v2 = 0, 0
 
     for var_name, num_channels in channels.items():
@@ -747,7 +779,7 @@ def generate_sample(
                 )
                 channel_data.append(da.zeros(shape))
 
-        x[:, :, v1:v2] = da.from_array(channel_data).transpose([1, 2, 0])
+        x[v1:v2, :, :] = da.from_array(channel_data)#.transpose([0, 1, 2])
         v1 += num_channels
 
     for var_name in meta_channels:
@@ -761,9 +793,9 @@ def generate_sample(
         if var_name in ["sin", "cos"]:
             ref_date = "2012-{}-{}".format(forecast_date.month, forecast_date.day)
             trig_val = meta_ds.sel(time=ref_date).to_numpy()
-            x[:, :, v1] = da.broadcast_to([trig_val], shape)
+            x[v1, :, :] = da.broadcast_to([trig_val], shape)
         else:
-            x[:, :, v1] = da.array(meta_ds.to_numpy())
+            x[v1, :, :] = da.array(meta_ds.to_numpy())
         v1 += channels[var_name]
 
     # TODO: we have unwarranted nans which need fixing, probably from broken spatial infilling
@@ -782,4 +814,7 @@ def generate_sample(
         sample_weights[nan_mask_sw] = 0
         y[nan_mask_y] = 0
 
-    return x, y, sample_weights
+    if prediction:
+        return x, base_ua700, y, sample_weights
+    else:
+        return x, y, sample_weights

@@ -15,16 +15,15 @@ dependencies = [
   "cf-units",
   "dask",
   "distributed",
-  "download-toolbox @ git+https://github.com/environmental-forecasting/download-toolbox@icenet_0.4",
+  "download-toolbox==0.0.5",
   "h5py",
-  "icenet @ git+https://github.com/icenet-ai/icenet@9042bf6",
-  "joblib",
+  "icenet @ git+https://github.com/icenet-ai/icenet@cb8a483ab5c8a6283799ec95a86d3099e4708f2e",
   "imageio-ffmpeg",
   "lightning",
   "matplotlib",
   "ncdata",
   "pip",
-  "preprocess-toolbox @ git+https://github.com/environmental-forecasting/preprocess-toolbox@icenet_0.4",
+  "preprocess-toolbox==0.0.4",
   "rioxarray",
   "scitools-iris",
   "seaborn",
@@ -49,6 +48,7 @@ classifiers = [
 [project.scripts]
 canari_ml_dataset_create = "canari_ml.data.loader:create_network_dataset"
 canari_ml_preprocess_reproject = "canari_ml.preprocess.reproject:reproject"
+canari_ml_preprocess_add_region_weights = "canari_ml.data.masks.era5:add_region_weights"
 canari_ml_train = "canari_ml.models.train:pytorch_main"
 canari_ml_predict = "canari_ml.models.predict:main"
 canari_ml_plot_numpy = "canari_ml.plotting.forecast:plot_numpy"
@@ -59,13 +59,14 @@ canari_ml_plot_ua700_error = "canari_ml.plotting.forecast:plot_ua700_error"
 where = ["src"]
 
 [tool.setuptools_scm]
+version_scheme = "guess-next-dev"
+local_scheme = "node-and-date"
 
 [tool.setuptools.dynamic]
-version = { attr = "canari_ml.__version__" }
 readme = { file = ["README.md"] }
 
 [project.optional-dependencies]
-dev = ["coverage", "pre-commit", "ruff", "tox", "pytest", "build"]
+dev = ["coverage", "pre-commit", "ruff", "tox", "pytest", "build", "torch-tb-profiler", "commitizen"]
 docs = ["mkdocs", "mkdocstrings[python]", "mkdocs-material", "mkdocs-gen-files", "mkdocs-literate-nav", "mkdocs-section-index"]
 
 [project.urls]
@@ -100,3 +101,10 @@ type = "crossref"
 type = "markdown"
 render_toc = true
 filename = "docs/reference.md"
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version_scheme = "pep440"
+version = "0.0.1a1"
+update_changelog_on_bump = true
+major_version_zero = true # Using this for initial dev before hitting v1.0.0

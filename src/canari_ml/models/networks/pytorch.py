@@ -13,8 +13,10 @@ from lightning.pytorch.callbacks import (
     TQDMProgressBar,
 )
 from lightning.pytorch.loggers import CSVLogger, TensorBoardLogger
+from lightning.pytorch.profilers import PyTorchProfiler
 
 from ...lightning.checkpoints import ModelCheckpointOnImprovement
+
 
 
 class PytorchNetwork(BaseNetwork):
@@ -77,11 +79,16 @@ class PytorchNetwork(BaseNetwork):
 
         lit_module = model_creator(**model_creator_kwargs)
 
-        logger = TensorBoardLogger("tb_logs", name=logger_name)
+        tb_dir = "tb_logs"
+        logger = TensorBoardLogger(tb_dir, name=logger_name)
         # logger = CSVLogger("logs", name=logger_name)    # Uses basic CSV logging
 
         # Print model summary
         print(lit_module.model)
+
+        profiler = PyTorchProfiler(
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(tb_dir)
+        )
 
         # precision options:
         # ('transformer-engine', 'transformer-engine-float16', '16-true', '16-mixed',
@@ -91,6 +98,7 @@ class PytorchNetwork(BaseNetwork):
         trainer = pl.Trainer(
             accelerator="auto",
             devices=1,
+            # strategy="ddp",
             precision="16-mixed",  # Enable 16-bit precision (mixed precision training)
             # precision="16-true",  # Enable true 16-bit precision
             # precision="bf16-true",  # Enable true bfloat 16-bit precision
@@ -101,6 +109,8 @@ class PytorchNetwork(BaseNetwork):
             enable_checkpointing=False,  # Disable built-in checkpointing, using callback instead
             logger=logger,
             deterministic=True,
+            # benchmark=True,
+            # profiler=profiler,
             # enable_progress_bar=False,
             callbacks=[
                 # RichProgressBar(leave=True),

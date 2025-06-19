@@ -20,6 +20,7 @@ def evaluate_model(
 
     # _, val_ds, test_ds = dataset.get_split_datasets(ratio=dataset_ratio)
     _, validation_dataloader, test_dataloader = dataset.get_data_loaders(
+        num_workers=8,
         ratio=dataset_ratio
     )
     eval_data = validation_dataloader
@@ -116,7 +117,7 @@ def execute_pytorch_training(args, dataset, network, save=True, evaluate=True):
     #         network.add_callback(callback)
     #         using_wandb = True
 
-    input_shape = (*dataset.shape, dataset.num_channels) # 720, 720, 4
+    input_shape = (dataset.num_channels, *dataset.shape) # 4, 720, 720
     ratio = args.ratio if args.ratio else 1.0
     # Do not yet support ratio != 1.0 with pytorch
     train_dataloader, validation_dataloader, _ = dataset.get_data_loaders(ratio=1.0)
@@ -128,16 +129,13 @@ def execute_pytorch_training(args, dataset, network, save=True, evaluate=True):
         train_dataloader,
         model_creator_kwargs=dict(
             input_shape=input_shape,
-            # loss=losses.MSELoss(),
-            loss=losses.HuberLoss(),
+            loss=losses.WeightedLoss(loss_type="mse"),
             # Note, when using CLI, pass the metric method name prepended by 'val_'
             # e.g. `--checkpoint-monitor val_mse`
             metrics=[
                 metrics.MAE,
                 metrics.MSE,
                 metrics.RMSE,
-                # losses.HuberLoss,
-                # losses.MSELoss,
             ],
             learning_rate=args.lr,
             filter_size=args.filter_size,

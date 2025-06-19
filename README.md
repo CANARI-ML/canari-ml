@@ -46,6 +46,47 @@ CANARI-ML is licensed under the MIT license. See [LICENSE](https://github.com/an
 
 ## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING](https://github.com/antarctica/canari-ml/blob/main/CONTRIBUTING.md) for more information on how to contribute.
+Contributions are welcome!
+
+Please follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) standard for commit messages. Any that do not follow this standard will not be merged into the main branch and may be rejected.
+
+Please see [CONTRIBUTING](https://github.com/antarctica/canari-ml/blob/main/CONTRIBUTING.md) for more information on how to contribute.
 
 CANARI-ML is a work in progress and will be updated as development progresses.
+
+## Release
+
+This repo uses the [Commitizen](https://commitizen-tools.github.io/commitizen/) package (installed as dev dependency) to manage changelogs and package version control.
+
+To bump to the next stable version:
+
+```bash
+cz bump
+```
+
+Examples:
+
+v0.0.1 → v0.0.2
+
+To release an alpha version:
+
+```bash
+cz bump --prerelease alpha
+```
+
+Examples:
+
+v1.0.4 → v1.0.5-alpha.0
+v1.0.5-alpha.0 → v1.0.5-alpha.1
+
+To start a new patch-level prerelease explicitly:
+
+```bash
+cz bump --increment patch --prerelease alpha
+```
+
+Examples:
+
+v1.2.4-alpha.3 → v1.2.5-alpha.0
+
+For full documentation on its usage, please peruse the [Commitizen docs](https://commitizen-tools.github.io/commitizen/commands/bump/).

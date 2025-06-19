@@ -4,8 +4,10 @@ from preprocess_toolbox.processor import NormalisingChannelProcessor
 
 
 class ERA5PreProcessor(NormalisingChannelProcessor):
+    """Based on `NormalisingChannelProcessor` class from preprocess-toolbox"""
+
     def pre_normalisation(self, var_name: str, da: object):
-        if 'expver' in da.coords:
+        if "expver" in da.coords:
             logging.warning("expvers {} in coordinates, will process out but "
                             "this needs further work: expver needs storing for "
                             "later overwriting".format(da.expver))

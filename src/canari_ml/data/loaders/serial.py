@@ -358,6 +358,7 @@ def process_date(idx: int,
                 else:
                     for lag in range(num_ch):
                         x_titles.append(f"{var_name}_lag{lag}")
+                    x_titles.reverse()
 
             # Leadtime labels
             relative_attr = frequency_attr + "s"  # e.g. "months" or "days"

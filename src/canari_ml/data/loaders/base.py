@@ -255,7 +255,7 @@ class CanariMLBaseDataLoader(DataCollection):
             )
             logging.debug(f"Lag time for variable {var_name} is {self._lag_time}:")
 
-            self._channels[var_prefix] = int(var_lag) + 1
+            self._channels[var_prefix] = int(var_lag)
             self._add_channel_files(
                 var_prefix,
                 self._config["sources"][identity]["processed_files"][var_prefix],

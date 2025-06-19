@@ -59,13 +59,14 @@ canari_ml_plot_ua700_error = "canari_ml.plotting.forecast:plot_ua700_error"
 where = ["src"]
 
 [tool.setuptools_scm]
+version_scheme = "guess-next-dev"
+local_scheme = "no-local-version"
 
 [tool.setuptools.dynamic]
-version = { attr = "canari_ml.__version__" }
 readme = { file = ["README.md"] }
 
 [project.optional-dependencies]
-dev = ["coverage", "pre-commit", "ruff", "tox", "pytest", "build", "torch-tb-profiler"]
+dev = ["coverage", "pre-commit", "ruff", "tox", "pytest", "build", "torch-tb-profiler", "commitizen"]
 docs = ["mkdocs", "mkdocstrings[python]", "mkdocs-material", "mkdocs-gen-files", "mkdocs-literate-nav", "mkdocs-section-index"]
 
 [project.urls]
@@ -100,3 +101,11 @@ type = "crossref"
 type = "markdown"
 render_toc = true
 filename = "docs/reference.md"
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "v$major.$minor.$patch$prerelease"
+version_scheme = "semver2"
+version = "0.0.1-alpha.0"
+update_changelog_on_bump = true
+major_version_zero = true

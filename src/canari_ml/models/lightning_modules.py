@@ -368,3 +368,6 @@ class LitUNet(BaseLightningModule):
                 "frequency": 1,
             },
         }
+
+    # def configure_optimizers(self):
+    #     return torch.optim.Adam(self.parameters(), lr=self.learning_rate)

@@ -98,6 +98,7 @@ class PytorchNetwork(BaseNetwork):
         trainer = pl.Trainer(
             accelerator="auto",
             devices=1,
+            # strategy="ddp",
             precision="16-mixed",  # Enable 16-bit precision (mixed precision training)
             # precision="16-true",  # Enable true 16-bit precision
             # precision="bf16-true",  # Enable true bfloat 16-bit precision
@@ -108,7 +109,7 @@ class PytorchNetwork(BaseNetwork):
             enable_checkpointing=False,  # Disable built-in checkpointing, using callback instead
             logger=logger,
             deterministic=True,
-            benchmark=True,
+            # benchmark=True,
             # profiler=profiler,
             # enable_progress_bar=False,
             callbacks=[

@@ -17,6 +17,7 @@ dependencies = [
   "distributed",
   "download-toolbox==0.0.5",
   "h5py",
+  "hydra-core",
   "icenet @ git+https://github.com/icenet-ai/icenet@cb8a483ab5c8a6283799ec95a86d3099e4708f2e",
   "imageio-ffmpeg",
   "lightning",
@@ -46,6 +47,8 @@ classifiers = [
 ]
 
 [project.scripts]
+canari_ml = "canari_ml.cli:main"
+canari_ml_download = "canari_ml.download:main"
 canari_ml_dataset_create = "canari_ml.data.loader:create_network_dataset"
 canari_ml_preprocess_reproject = "canari_ml.preprocess.reproject:reproject"
 canari_ml_preprocess_add_region_weights = "canari_ml.data.masks.era5:add_region_weights"

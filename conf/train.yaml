@@ -1,0 +1,11 @@
+train:
+    seed: 42
+    max_epochs: 50
+    n_filters_factor: 1.0
+    filter_size: 3
+    learning_rate: 1E-4
+    workers: 4
+    batch_size: 4
+    checkpoint_mode: min
+    checkpoint_monitor: val_rmse
+    verbose: true

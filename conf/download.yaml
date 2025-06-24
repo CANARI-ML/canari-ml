@@ -9,7 +9,7 @@ download:
     frequency: DAY
     output_group_by: YEAR
     hemisphere: north
-    output_config_path: data.aws.${download.frequency}.${download.hemisphere}.json
+    output_config_path: ${source_data_dir}/data.aws.${download.frequency}.${download.hemisphere}.json
     variables:
         - zg
         - ua

@@ -177,18 +177,23 @@ def create_cached_dataset(cfg):
 )
 def main(cfg):
     OmegaConf.register_new_resolver("subtract", lambda x, y: x - y)
-    # print(OmegaConf.to_yaml(cfg))
+    print(OmegaConf.to_yaml(cfg))
 
+    # Initialise loader
     preprocess_init(cfg)
 
-    preprocess_reproject(cfg)
-    preprocess_era5(cfg)
+    # Run preprocessing steps
+    preprocess_reproject(cfg)   # Reprojection
+    # preprocess_era5(cfg)        # Normalisation, ERA5 data specific: z to zg conversion
 
-    preprocess_add_era5(cfg)
-    preprocess_add_hemisphere_mask(cfg)
-    preprocess_add_region_weights(cfg)
+    # # Add reprojected and normalised data to the initialised loader
+    # preprocess_add_era5(cfg)
+    # # Add masking and region weights to dataloader
+    # preprocess_add_hemisphere_mask(cfg)
+    # preprocess_add_region_weights(cfg)
 
-    create_cached_dataset(cfg)
+    # # Create cached dataset for performance
+    # create_cached_dataset(cfg)
     print("All preprocessing completed.")
 
 

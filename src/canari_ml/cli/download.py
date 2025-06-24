@@ -1,4 +1,3 @@
-import subprocess
 from datetime import datetime as dt
 from pathlib import Path
 
@@ -6,14 +5,16 @@ import hydra
 from dateutil.relativedelta import relativedelta
 from omegaconf import OmegaConf
 
+from .utils import run_command
+
 
 @hydra.main(
     version_base=None,
-    config_path=str(Path(__file__).parent / "../../conf"),
+    config_path=str(Path(__file__).parent / "../../../conf"),
     config_name="config"
 )
 def main(cfg):
-    # print(OmegaConf.to_yaml(cfg))
+    print(OmegaConf.to_yaml(cfg))
 
     start_date = dt.strptime(cfg.download.date_range.start, "%Y-%m-%d").date()
     end_date = dt.strptime(cfg.download.date_range.end, "%Y-%m-%d").date()
@@ -61,8 +62,7 @@ def main(cfg):
 
         current_start_date += relativedelta(months=1)
 
-        print(f"Running command: {' '.join(command)}")
-        subprocess.run(command)
+        run_command(command)
 
     print("All downloads completed.")
 

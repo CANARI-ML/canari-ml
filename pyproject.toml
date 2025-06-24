@@ -49,7 +49,7 @@ classifiers = [
 ]
 
 [project.scripts]
-canari_ml = "canari_ml.cli:main"
+canari_ml = "canari_ml.cli.cli:main"
 canari_ml_download = "canari_ml.download:main"
 canari_ml_dataset_create = "canari_ml.data.loader:create_network_dataset"
 canari_ml_preprocess_reproject = "canari_ml.preprocess.reproject:reproject"

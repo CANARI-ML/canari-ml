@@ -1,30 +1,10 @@
-import subprocess
 from pathlib import Path
 
 import hydra
 from omegaconf import OmegaConf
 
+from .utils import run_command
 
-@hydra.main(
-    version_base=None,
-    config_path=str(Path(__file__).parent / "../../conf"),
-    config_name="config"
-)
-def main(cfg):
-    OmegaConf.register_new_resolver("subtract", lambda x, y: x - y)
-    # print(OmegaConf.to_yaml(cfg))
-
-    preprocess_init(cfg)
-
-    preprocess_reproject(cfg)
-    preprocess_era5(cfg)
-
-    preprocess_add_era5(cfg)
-    preprocess_add_hemisphere_mask(cfg)
-    preprocess_add_region_weights(cfg)
-
-    create_cached_dataset(cfg)
-    print("All preprocessing completed.")
 
 def preprocess_init(cfg):
     # Initialise preprocess-toolbox
@@ -36,8 +16,7 @@ def preprocess_init(cfg):
     if cfg.preprocess_params.verbose:
         command.append("-v")
 
-    print(f"Running command: {' '.join(command)}")
-    subprocess.run(command)
+    run_command(command)
 
 
 def preprocess_reproject(cfg):
@@ -73,9 +52,7 @@ def preprocess_reproject(cfg):
     if cfg.preprocess_params.verbose:
         command.append("-v")
 
-    command = [str(v) for v in command]
-    print(f"Running command: {' '.join(map(str, command))}")
-    subprocess.run(command)
+    run_command(command)
 
 
 def preprocess_era5(cfg):
@@ -113,9 +90,7 @@ def preprocess_era5(cfg):
     if anomaly_vars:
         command.extend(["--anom", anomaly_vars])
 
-    command = [str(v) for v in command]
-    print(f"Running command: {' '.join(map(str, command))}")
-    subprocess.run(command)
+    run_command(command)
 
 
 def preprocess_add_era5(cfg):
@@ -128,8 +103,7 @@ def preprocess_add_era5(cfg):
     if cfg.preprocess_params.verbose:
         command.append("-v")
 
-    print(f"Running command: {' '.join(command)}")
-    subprocess.run(command)
+    run_command(command)
 
 
 def preprocess_add_hemisphere_mask(cfg):
@@ -144,8 +118,7 @@ def preprocess_add_hemisphere_mask(cfg):
     if cfg.preprocess_params.verbose:
         command.append("-v")
 
-    print(f"Running command: {' '.join(command)}")
-    subprocess.run(command)
+    run_command(command)
 
 
 def preprocess_add_region_weights(cfg):
@@ -172,9 +145,7 @@ def preprocess_add_region_weights(cfg):
     if cfg.preprocess_params.verbose:
         command.append("-v")
 
-    command = [str(v) for v in command]
-    print(f"Running command: {' '.join(command)}")
-    subprocess.run(command)
+    run_command(command)
 
 
 def create_cached_dataset(cfg):
@@ -196,9 +167,29 @@ def create_cached_dataset(cfg):
     if cfg.preprocess_cache.plot:
         command.append("--plot")
 
-    command = [str(v) for v in command]
-    print(f"Running command: {' '.join(command)}")
-    subprocess.run(command)
+    run_command(command)
+
+
+@hydra.main(
+    version_base=None,
+    config_path=str(Path(__file__).parent / "../../../conf"),
+    config_name="config",
+)
+def main(cfg):
+    OmegaConf.register_new_resolver("subtract", lambda x, y: x - y)
+    # print(OmegaConf.to_yaml(cfg))
+
+    preprocess_init(cfg)
+
+    preprocess_reproject(cfg)
+    preprocess_era5(cfg)
+
+    preprocess_add_era5(cfg)
+    preprocess_add_hemisphere_mask(cfg)
+    preprocess_add_region_weights(cfg)
+
+    create_cached_dataset(cfg)
+    print("All preprocessing completed.")
 
 
 if __name__ == "__main__":

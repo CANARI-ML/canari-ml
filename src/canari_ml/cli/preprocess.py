@@ -1,9 +1,14 @@
+import logging
+import sys
 from pathlib import Path
 
 import hydra
 from omegaconf import OmegaConf
 
 from .utils import run_command
+
+
+logger = logging.getLogger(__name__)
 
 
 def preprocess_init(cfg):
@@ -45,6 +50,8 @@ def preprocess_reproject(cfg):
         cfg.preprocess_reproject.shape,
         "--config-path",
         cfg.preprocess_reproject.output_config_path,
+        "--destination-path",
+        cfg.preprocess_reproject.output_dir,
         cfg.preprocess_reproject.source,
         cfg.preprocess_reproject.destination_id,
     ]
@@ -75,6 +82,8 @@ def preprocess_era5(cfg):
         cfg.preprocess_era5.output_config_path,
         "--implementation",
         cfg.preprocess_era5.__target__,
+        "--destination-path",
+        cfg.preprocess_era5.output_dir,
         cfg.preprocess_era5.source,
         cfg.preprocess_era5.destination_id,
     ]
@@ -113,6 +122,8 @@ def preprocess_add_hemisphere_mask(cfg):
         cfg.preprocess_reproject.output_config_path,
         cfg.preprocess_mask.name,
         cfg.preprocess_mask.__target__,
+        "--destination-path",
+        cfg.preprocess_era5.output_dir,
     ]
 
     if cfg.preprocess_params.verbose:
@@ -132,6 +143,8 @@ def preprocess_add_region_weights(cfg):
         cfg.preprocess_region_weight.base_weight,
         "--weight-smoothing-sigma",
         cfg.preprocess_region_weight.weight_smoothing_sigma,
+        "--destination-path",
+        cfg.preprocess_era5.output_dir,
     ]
 
     for region_weight in cfg.preprocess_region_weight.region_weights:
@@ -157,6 +170,8 @@ def create_cached_dataset(cfg):
         cfg.preprocess_params.workers,
         "--forecast-length",
         cfg.inputs.forecast_length,
+        "--destination-path",
+        cfg.preprocess_cache.output_dir,
         cfg.preprocess_params.config_file,
         cfg.preprocess_cache.dataset_name,
     ]
@@ -175,26 +190,45 @@ def create_cached_dataset(cfg):
     config_path=str(Path(__file__).parent / "../../../conf"),
     config_name="config",
 )
-def main(cfg):
+def preprocess_all_steps(cfg):
     OmegaConf.register_new_resolver("subtract", lambda x, y: x - y)
-    print(OmegaConf.to_yaml(cfg))
 
-    # Initialise loader
-    preprocess_init(cfg)
+    cfg_yaml = OmegaConf.to_yaml(cfg)
+
+    logger.info("HYDRA Configuration YAML:\n")
+    logger.info(cfg_yaml)
 
     # Run preprocessing steps
     preprocess_reproject(cfg)   # Reprojection
-    # preprocess_era5(cfg)        # Normalisation, ERA5 data specific: z to zg conversion
+    preprocess_era5(cfg)        # Normalisation, ERA5 data specific: z to zg conversion
 
+    # Initialise loader
+    preprocess_init(cfg)
     # # Add reprojected and normalised data to the initialised loader
-    # preprocess_add_era5(cfg)
+    preprocess_add_era5(cfg)
     # # Add masking and region weights to dataloader
-    # preprocess_add_hemisphere_mask(cfg)
-    # preprocess_add_region_weights(cfg)
+    preprocess_add_hemisphere_mask(cfg)
+    preprocess_add_region_weights(cfg)
 
-    # # Create cached dataset for performance
-    # create_cached_dataset(cfg)
+    # Create cached dataset for performance
+    create_cached_dataset(cfg)
     print("All preprocessing completed.")
+
+
+def main():
+    # Set job name for downloader
+    sys.argv.append("hydra.job.name=preprocess")
+
+    # Use config to set logger to act like print
+    # I've defined it in `conf/hydra/job_logging/basic_message.yaml`
+    sys.argv.append("hydra/job_logging=basic_message")
+
+    # Use custom run dir for downloads instead of HYDRA default
+    sys.argv.append(
+        "hydra.run.dir='outputs/${hydra.job.name}/${now:%Y-%m-%d}/${now:%H-%M-%S}'"
+    )
+    # sys.argv.append("outputs/${hydra.job.name}/${now:%Y-%m-%d_%H-%M-%S}")
+    preprocess_all_steps()
 
 
 if __name__ == "__main__":

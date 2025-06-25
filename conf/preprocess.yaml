@@ -17,6 +17,7 @@ preprocess_splits:
 preprocess_reproject:
     source: ${download.output_config_path}
     destination_id: proc.aws
+    output_dir: ${reprojected_data_dir}
     output_config_path: reproject.${preprocess_params.config_name}.json
     source_crs: EPSG:4326
     target_crs: EPSG:6931
@@ -26,6 +27,7 @@ preprocess_era5:
     __target__: "canari_ml.data.processors.cds:ERA5PreProcessor"
     source: ${preprocess_reproject.output_config_path}
     destination_id: ${preprocess_params.config_name}
+    output_dir: ${normalised_data_dir}
     output_config_path: processed.${preprocess_params.config_name}.json
 
 preprocess_mask:
@@ -44,4 +46,5 @@ preprocess_region_weight:
 preprocess_cache:
     output_batch_size: 4
     dataset_name: ${preprocess_params.config_name}
+    output_dir: ${cache_dir}
     plot: true

@@ -28,6 +28,9 @@ def create_get_args() -> object:
     ap.add_argument("loader_configuration", type=str)
     ap.add_argument("network_dataset_name", type=str)
 
+    ap.add_argument("-p", "--destination-path",
+                    help="Folder that any output data collections will be put in",
+                    type=str, default="network_datasets")
     ap.add_argument("-c",
                     "--cfg-only",
                     help="Do not generate data, only config",
@@ -65,7 +68,7 @@ def create_get_args() -> object:
                     type=int,
                     default=8)
 
-    ap.add_argument("-p",
+    ap.add_argument("-pu",
                     "--pickup",
                     help="Skip existing zarr files",
                     default=False,
@@ -100,6 +103,7 @@ def create_network_dataset():
         args.implementation,
         args.loader_configuration,
         args.network_dataset_name,
+        base_path=args.destination_path,
         dry=args.dry,
         lag_time=args.lag,
         lead_time=args.forecast_length,

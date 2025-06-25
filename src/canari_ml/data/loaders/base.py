@@ -47,12 +47,12 @@ class CanariMLBaseDataLoader(DataCollection):
         lead_time: int = None,
         loss_weight_days: bool = True,
         output_batch_size: int = 32,
-        path: str = os.path.join(".", "network_datasets"),
+        base_path: str = os.path.join(".", "network_datasets"),
         pickup: bool = False,
         var_lag_override: object = None,
         **kwargs,
     ):
-        super().__init__(*args, identifier=identifier, base_path=path, **kwargs)
+        super().__init__(*args, identifier=identifier, base_path=base_path, **kwargs)
 
         self._channels = dict()
         self._channel_files = dict()

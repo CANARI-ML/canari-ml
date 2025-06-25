@@ -9,6 +9,10 @@ from omegaconf import OmegaConf
 
 from .utils import run_command
 
+
+logger = logging.getLogger(__name__)
+
+
 @hydra.main(
     version_base=None,
     config_path=str(Path(__file__).parent / "../../../conf"),
@@ -16,8 +20,6 @@ from .utils import run_command
 )
 def download(cfg):
     cfg_yaml = OmegaConf.to_yaml(cfg)
-
-    logger = logging.getLogger(__name__)
 
     logger.info("HYDRA Configuration YAML:\n")
     logger.info(cfg_yaml)
@@ -74,7 +76,7 @@ def download(cfg):
 
 
 def main():
-    # Set job name for  downloader
+    # Set job name for downloader
     sys.argv.append("hydra.job.name=download")
 
     # Use config to set logger to act like print
@@ -82,7 +84,9 @@ def main():
     sys.argv.append("hydra/job_logging=basic_message")
 
     # Use custom run dir for downloads instead of HYDRA default
-    sys.argv.append("hydra.run.dir='outputs/${hydra.job.name}/${now:%Y-%m-%d}/${now:%H-%M-%S}'")
+    sys.argv.append(
+        "hydra.run.dir='outputs/${hydra.job.name}/${now:%Y-%m-%d}/${now:%H-%M-%S}'"
+    )
     # sys.argv.append("outputs/${hydra.job.name}/${now:%Y-%m-%d_%H-%M-%S}")
 
     # Disable HYDRA logging for downloader script

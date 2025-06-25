@@ -33,6 +33,7 @@ dependencies = [
   "tqdm",
   "wheel",
   "xarray[io]>=2024.3.0",
+  "zarr<3",
 ]
 classifiers = [
   "Development Status :: 3",

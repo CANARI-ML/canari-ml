@@ -16,6 +16,8 @@ def preprocess_init(cfg):
     command = [
         "preprocess_loader_init",
         cfg.preprocess_params.config_name,
+        "--config-path",
+        cfg.preprocess_params.config_file,
     ]
 
     if cfg.preprocess_params.verbose:
@@ -48,10 +50,10 @@ def preprocess_reproject(cfg):
         cfg.preprocess_reproject.target_crs,
         "--shape",
         cfg.preprocess_reproject.shape,
-        "--config-path",
-        cfg.preprocess_reproject.output_config_path,
         "--destination-path",
         cfg.preprocess_reproject.output_dir,
+        "--config-path",
+        cfg.preprocess_reproject.output_config_path,
         cfg.preprocess_reproject.source,
         cfg.preprocess_reproject.destination_id,
     ]
@@ -78,12 +80,12 @@ def preprocess_era5(cfg):
         cfg.preprocess_splits.split_head,
         "--split-tail",
         cfg.preprocess_splits.split_tail,
-        "--config-path",
-        cfg.preprocess_era5.output_config_path,
         "--implementation",
         cfg.preprocess_era5.__target__,
         "--destination-path",
         cfg.preprocess_era5.output_dir,
+        "--config-path",
+        cfg.preprocess_era5.output_config_path,
         cfg.preprocess_era5.source,
         cfg.preprocess_era5.destination_id,
     ]
@@ -107,6 +109,8 @@ def preprocess_add_era5(cfg):
         "preprocess_add_processed",
         cfg.preprocess_params.config_name,
         cfg.preprocess_era5.output_config_path,
+        "--config-path",
+        cfg.preprocess_params.config_file,
     ]
 
     if cfg.preprocess_params.verbose:
@@ -122,8 +126,14 @@ def preprocess_add_hemisphere_mask(cfg):
         cfg.preprocess_reproject.output_config_path,
         cfg.preprocess_mask.name,
         cfg.preprocess_mask.__target__,
+        "--loader-path",
+        cfg.preprocess_params.config_file,
         "--destination-path",
-        cfg.preprocess_era5.output_dir,
+        cfg.preprocess_mask.output_dir,
+        "--mask-dataset-config-path",
+        cfg.preprocess_mask.output_mask_dataset_config_path,
+        "--mask-config-path",
+        cfg.preprocess_mask.output_mask_config_path,
     ]
 
     if cfg.preprocess_params.verbose:
@@ -143,8 +153,14 @@ def preprocess_add_region_weights(cfg):
         cfg.preprocess_region_weight.base_weight,
         "--weight-smoothing-sigma",
         cfg.preprocess_region_weight.weight_smoothing_sigma,
+        "--loader-path",
+        cfg.preprocess_params.config_file,
         "--destination-path",
-        cfg.preprocess_era5.output_dir,
+        cfg.preprocess_region_weight.output_dir,
+        "--mask-dataset-config-path",
+        cfg.preprocess_region_weight.output_mask_dataset_config_path,
+        "--mask-config-path",
+        cfg.preprocess_region_weight.output_mask_config_path,
     ]
 
     for region_weight in cfg.preprocess_region_weight.region_weights:
@@ -172,6 +188,8 @@ def create_cached_dataset(cfg):
         cfg.inputs.forecast_length,
         "--destination-path",
         cfg.preprocess_cache.output_dir,
+        "--config-path",
+        cfg.preprocess_cache.output_config_path,
         cfg.preprocess_params.config_file,
         cfg.preprocess_cache.dataset_name,
     ]

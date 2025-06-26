@@ -31,7 +31,10 @@ def create_get_args() -> object:
     ap.add_argument("-p", "--destination-path",
                     help="Folder that any output data collections will be put in",
                     type=str, default="network_datasets")
-    ap.add_argument("-c",
+    ap.add_argument("-c", "--config-path",
+                    dest="config",
+                    help="Path at which to output the configuration when rendered")
+    ap.add_argument("-co",
                     "--cfg-only",
                     help="Do not generate data, only config",
                     default=False,
@@ -104,6 +107,7 @@ def create_network_dataset():
         args.loader_configuration,
         args.network_dataset_name,
         base_path=args.destination_path,
+        config_path=args.config,
         dry=args.dry,
         lag_time=args.lag,
         lead_time=args.forecast_length,

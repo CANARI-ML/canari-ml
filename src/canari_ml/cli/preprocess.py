@@ -209,7 +209,6 @@ def create_cached_dataset(cfg):
     config_name="config",
 )
 def preprocess_all_steps(cfg):
-    OmegaConf.register_new_resolver("subtract", lambda x, y: x - y)
 
     cfg_yaml = OmegaConf.to_yaml(cfg)
 
@@ -234,6 +233,8 @@ def preprocess_all_steps(cfg):
 
 
 def main():
+    OmegaConf.register_new_resolver("subtract", lambda x, y: x - y)
+
     # Set job name for downloader
     sys.argv.append("hydra.job.name=preprocess")
 

@@ -10,6 +10,19 @@ description = "Library for North-Atlantic jet stream forecasting"
 license = { file = "LICENSE" }
 authors = [{ name = "Bryn Noel Ubald" }]
 maintainers = [{ email = "bryald@bas.ac.uk" }]
+classifiers = [
+  "Development Status :: 3",
+  "Environment :: Console",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering",
+  "License :: OSI Approved :: MIT License",
+  "Natural Language :: English",
+  "Operating System :: POSIX",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
 dependencies = [
   "cartopy",
   "cf-units",
@@ -35,19 +48,10 @@ dependencies = [
   "xarray[io]>=2024.3.0",
   "zarr<3",
 ]
-classifiers = [
-  "Development Status :: 3",
-  "Environment :: Console",
-  "Intended Audience :: Science/Research",
-  "Topic :: Scientific/Engineering",
-  "License :: OSI Approved :: MIT License",
-  "Natural Language :: English",
-  "Operating System :: POSIX",
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
-]
+
+[project.optional-dependencies]
+dev = ["coverage", "pre-commit", "ruff", "tox", "pytest", "build", "torch-tb-profiler", "commitizen"]
+docs = ["mkdocs", "mkdocstrings[python]", "mkdocs-material", "mkdocs-gen-files", "mkdocs-literate-nav", "mkdocs-section-index"]
 
 [project.scripts]
 canari_ml = "canari_ml.cli.cli:main"
@@ -70,10 +74,6 @@ local_scheme = "node-and-date"
 
 [tool.setuptools.dynamic]
 readme = { file = ["README.md"] }
-
-[project.optional-dependencies]
-dev = ["coverage", "pre-commit", "ruff", "tox", "pytest", "build", "torch-tb-profiler", "commitizen"]
-docs = ["mkdocs", "mkdocstrings[python]", "mkdocs-material", "mkdocs-gen-files", "mkdocs-literate-nav", "mkdocs-section-index"]
 
 [project.urls]
 "Source" = "https://github.com/antarctica/canari-ml"

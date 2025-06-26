@@ -31,7 +31,7 @@ dependencies = [
   "download-toolbox==0.0.5",
   "h5py",
   "hydra-core",
-  "icenet @ git+https://github.com/icenet-ai/icenet@cb8a483ab5c8a6283799ec95a86d3099e4708f2e",
+  "icenet@git+https://github.com/icenet-ai/icenet#egg=6caa234907904bfa76b8724d8c83cd989230494a",
   "imageio-ffmpeg",
   "lightning",
   "matplotlib",

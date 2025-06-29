@@ -1,19 +1,19 @@
 preprocess_era5_step:
-    name: "Preprocess ERA5"
-    command: preprocess_dataset
-    positional:
-      - ${preprocess_era5.source}
-      - ${preprocess_era5.destination_id}
-    optional:
-      --processing-splits: ${preprocess_splits.splits}
-      --split-names: ${preprocess_splits.split_names}
-      -ss: ${preprocess_splits.split_starts}
-      -se: ${preprocess_splits.split_ends}
-      --split-head: ${preprocess_splits.split_head}
-      --split-tail: ${preprocess_splits.split_tail}
-      --implementation: ${preprocess_era5.__target__}
-      --destination-path: ${preprocess_era5.output_dir}
-      --config-path: ${preprocess_era5.output_config_path}
-      --abs: ${inputs.absolute_vars}
-      --anom: ${inputs.anomaly_vars}
-      -v: ${preprocess_params.verbose}
+  name: "Preprocess ERA5"
+  command: preprocess_dataset
+  positional:
+    - ${preprocess_era5.source}
+    - ${preprocess_era5.destination_id}
+  optional:
+    --processing-splits: ${preprocess_splits.splits}
+    --split-names: ${preprocess_splits.split_names}
+    -ss: ${preprocess_splits.split_starts}
+    -se: ${preprocess_splits.split_ends}
+    --split-head: ${preprocess_splits.split_head}
+    --split-tail: ${preprocess_splits.split_tail}
+    --implementation: ${preprocess_era5.__target__}
+    --destination-path: ${preprocess_era5.output_dir}
+    --config-path: ${preprocess_era5.output_config_path}
+    --abs: ${inputs.absolute_vars}
+    --anom: ${inputs.anomaly_vars}
+    -v: ${preprocess_params.verbose}

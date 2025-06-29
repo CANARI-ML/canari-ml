@@ -1,57 +1,57 @@
 preprocess_params:
-    verbose: true
-    workers: 8
-    cache_only: false
-    delete_cache: true
-    config_name: train_data.${download.frequency}.${download.hemisphere}
-    config_file: ${preprocessed_data_dir}/loader.${preprocess_params.config_name}.json
+  verbose: true
+  workers: 8
+  cache_only: false
+  delete_cache: true
+  config_name: train_data.${download.frequency}.${download.hemisphere}
+  config_file: ${preprocessed_data_dir}/loader.${preprocess_params.config_name}.json
 
 preprocess_splits:
-    splits: train
-    split_names: train,val,test
-    split_starts: ${inputs.train_start},${inputs.val_start},${inputs.test_start}
-    split_ends: ${inputs.train_end},${inputs.val_end},${inputs.test_end}
-    split_head: ${inputs.lag_length}
-    split_tail: ${subtract:${inputs.forecast_length}, 1}
+  splits: train
+  split_names: train,val,test
+  split_starts: ${inputs.train_start},${inputs.val_start},${inputs.test_start}
+  split_ends: ${inputs.train_end},${inputs.val_end},${inputs.test_end}
+  split_head: ${inputs.lag_length}
+  split_tail: ${subtract:${inputs.forecast_length}, 1}
 
 preprocess_reproject:
-    source: ${download.output_config_path}
-    destination_id: proc.aws
-    output_dir: ${reprojected_data_dir}
-    output_config_path: ${preprocess_reproject.output_dir}/reproject.${preprocess_params.config_name}.json
-    source_crs: EPSG:4326
-    target_crs: EPSG:6931
-    shape: 500
+  source: ${download.output_config_path}
+  destination_id: proc.aws
+  output_dir: ${reprojected_data_dir}
+  output_config_path: ${preprocess_reproject.output_dir}/reproject.${preprocess_params.config_name}.json
+  source_crs: EPSG:4326
+  target_crs: EPSG:6931
+  shape: 500
 
 preprocess_era5:
-    __target__: "canari_ml.data.processors.cds:ERA5PreProcessor"
-    source: ${preprocess_reproject.output_config_path}
-    destination_id: ${preprocess_params.config_name}
-    output_dir: ${normalised_data_dir}
-    output_config_path: ${preprocess_era5.output_dir}/processed.${preprocess_params.config_name}.json
+  __target__: "canari_ml.data.processors.cds:ERA5PreProcessor"
+  source: ${preprocess_reproject.output_config_path}
+  destination_id: ${preprocess_params.config_name}
+  output_dir: ${normalised_data_dir}
+  output_config_path: ${preprocess_era5.output_dir}/processed.${preprocess_params.config_name}.json
 
 preprocess_mask:
-    __target__: "canari_ml.data.masks.era5:Masks"
-    name: "hemisphere"
-    output_dir: ${normalised_data_dir}
-    output_mask_dataset_config_path: ${preprocess_mask.output_dir}/dataset_config.masks.${preprocess_params.config_name}.json
-    output_mask_config_path: ${preprocess_mask.output_dir}/processed.masks.${preprocess_params.config_name}.json
+  __target__: "canari_ml.data.masks.era5:Masks"
+  name: "hemisphere"
+  output_dir: ${normalised_data_dir}
+  output_mask_dataset_config_path: ${preprocess_mask.output_dir}/dataset_config.masks.${preprocess_params.config_name}.json
+  output_mask_config_path: ${preprocess_mask.output_dir}/processed.masks.${preprocess_params.config_name}.json
 
 preprocess_region_weight:
-    __target__: "canari_ml.data.masks.era5:Masks"
-    name: "weighted_regions"
-    output_dir: ${preprocess_mask.output_dir}
-    output_mask_dataset_config_path: ${preprocess_mask.output_mask_dataset_config_path}
-    output_mask_config_path: ${preprocess_mask.output_mask_config_path}
-    base_weight: 0.1
-    region_weights:
-        - "20,80,-100,45,0.25"
-        - "40,60,-75,15,0.65"
-    weight_smoothing_sigma: 10
+  __target__: "canari_ml.data.masks.era5:Masks"
+  name: "weighted_regions"
+  output_dir: ${preprocess_mask.output_dir}
+  output_mask_dataset_config_path: ${preprocess_mask.output_mask_dataset_config_path}
+  output_mask_config_path: ${preprocess_mask.output_mask_config_path}
+  base_weight: 0.1
+  region_weights:
+    - "20,80,-100,45,0.25"
+    - "40,60,-75,15,0.65"
+  weight_smoothing_sigma: 10
 
 preprocess_cache:
-    output_batch_size: 4
-    dataset_name: ${preprocess_params.config_name}
-    output_dir: ${cache_dir}
-    output_config_path: ${cache_dir}/cached.${preprocess_params.config_name}.json
-    plot: true
+  output_batch_size: 4
+  dataset_name: ${preprocess_params.config_name}
+  output_dir: ${cache_dir}
+  output_config_path: ${cache_dir}/cached.${preprocess_params.config_name}.json
+  plot: true

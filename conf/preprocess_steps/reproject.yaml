@@ -1,0 +1,20 @@
+reproject_step:
+    name: "Reproject ERA5"
+    command: canari_ml_preprocess_reproject
+    positional:
+      - ${preprocess_reproject.source}
+      - ${preprocess_reproject.destination_id}
+    optional:
+      --workers: ${preprocess_params.workers}
+      --processing-splits: ${preprocess_splits.splits}
+      --split-names: ${preprocess_splits.split_names}
+      -ss: ${preprocess_splits.split_starts}
+      -se: ${preprocess_splits.split_ends}
+      --split-head: ${preprocess_splits.split_head}
+      --split-tail: ${preprocess_splits.split_tail}
+      --source-crs: ${preprocess_reproject.source_crs}
+      --target-crs: ${preprocess_reproject.target_crs}
+      --shape: ${preprocess_reproject.shape}
+      --destination-path: ${preprocess_reproject.output_dir}
+      --config-path: ${preprocess_reproject.output_config_path}
+      -v: ${preprocess_params.verbose}

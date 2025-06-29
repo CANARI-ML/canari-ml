@@ -1,0 +1,17 @@
+add_region_weights_step:
+    name: "Add Region Weights"
+    command: canari_ml_preprocess_add_region_weights
+    positional:
+      - ${preprocess_params.config_name}
+      - ${preprocess_reproject.output_config_path}
+      - ${preprocess_region_weight.name}
+      - ${preprocess_region_weight.__target__}
+    optional:
+      --base-weight: ${preprocess_region_weight.base_weight}
+      --weight-smoothing-sigma: ${preprocess_region_weight.weight_smoothing_sigma}
+      --loader-path: ${preprocess_params.config_file}
+      --destination-path: ${preprocess_region_weight.output_dir}
+      --mask-dataset-config-path: ${preprocess_region_weight.output_mask_dataset_config_path}
+      --mask-config-path: ${preprocess_region_weight.output_mask_config_path}
+      --region-weights: ${preprocess_region_weight.region_weights}
+      -v: ${preprocess_params.verbose}

@@ -1,8 +1,34 @@
 defaults:
-    - paths.yaml
-    - download.yaml
-    - preprocess.yaml
-    - _self_
+  - paths
+  - download
+  - preprocess
+  - preprocess_steps/reproject
+  - preprocess_steps/preprocess_era5
+  - preprocess_steps/init_loader
+  - preprocess_steps/add_era5
+  - preprocess_steps/add_mask
+  - preprocess_steps/add_region_weights
+  - preprocess_steps/cache
+  - _self_
+
+# Create dict of steps for training & prediction
+preprocess_train_steps:
+    # Accessible as dict like: {step_key: step}
+    reproject: ${preprocess_steps.reproject_step}
+    preprocess_era5: ${preprocess_steps.preprocess_era5_step}
+    init_loader: ${preprocess_steps.init_loader_step}
+    add_era5: ${preprocess_steps.add_era5_step}
+    add_mask: ${preprocess_steps.add_mask_step}
+    # add_region_weights: ${preprocess_steps.add_region_weights_step}
+    cache: ${preprocess_steps.cache_step}
+
+preprocess_predict_steps:
+    reproject: ${preprocess_steps.reproject_step}
+    preprocess_era5: ${preprocess_steps.preprocess_era5_step}
+    init_loader: ${preprocess_steps.init_loader_step}
+    add_era5: ${preprocess_steps.add_era5_step}
+    add_mask: ${preprocess_steps.add_mask_step}
+    cache: ${preprocess_steps.cache_step}
 
 inputs:
     forecast_length: 3

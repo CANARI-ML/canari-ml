@@ -1,0 +1,8 @@
+init_loader_step:
+    name: "Initialise Loader"
+    command: preprocess_loader_init
+    positional:
+      - ${preprocess_params.config_name}
+    optional:
+      --config-path: ${preprocess_params.config_file}
+      -v: ${preprocess_params.verbose}

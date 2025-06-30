@@ -12,8 +12,8 @@ preprocess_era5_step:
     --split-head: ${preprocess_splits.split_head}
     --split-tail: ${preprocess_splits.split_tail}
     --implementation: ${preprocess_era5.__target__}
-    --destination-path: ${preprocess_era5.output_dir}
-    --config-path: ${preprocess_era5.output_config_path}
     --abs: ${inputs.absolute_vars}
     --anom: ${inputs.anomaly_vars}
+    --destination-path: ${preprocess_era5.output.data_dir}
+    --config-path: ${preprocess_era5.output.config_path}
     -v: ${preprocess_params.verbose}

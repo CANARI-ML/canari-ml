@@ -1,14 +1,14 @@
 add_mask_step:
-    name: "Add Hemisphere Mask"
-    command: preprocess_add_mask
-    positional:
-      - ${preprocess_params.config_name}
-      - ${preprocess_reproject.output_config_path}
-      - ${preprocess_mask.name}
-      - ${preprocess_mask.__target__}
-    optional:
-      --loader-path: ${preprocess_params.config_file}
-      --destination-path: ${preprocess_mask.output_dir}
-      --mask-dataset-config-path: ${preprocess_mask.output_mask_dataset_config_path}
-      --mask-config-path: ${preprocess_mask.output_mask_config_path}
-      -v: ${preprocess_params.verbose}
+  name: "Add Hemisphere Mask"
+  command: preprocess_add_mask
+  positional:
+    - ${preprocess_params.config_name}
+    - ${preprocess_reproject.output.config_path}
+    - ${preprocess_mask.name}
+    - ${preprocess_mask.__target__}
+  optional:
+    --loader-path: ${preprocess_params.config_file}
+    --destination-path: ${preprocess_mask.output.data_dir}
+    --mask-dataset-config-path: ${preprocess_mask.output.mask_dataset_config_path}
+    --mask-config-path: ${preprocess_mask.output.mask_config_path}
+    -v: ${preprocess_params.verbose}

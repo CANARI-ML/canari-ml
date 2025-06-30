@@ -15,6 +15,6 @@ reproject_step:
     --source-crs: ${preprocess_reproject.source_crs}
     --target-crs: ${preprocess_reproject.target_crs}
     --shape: ${preprocess_reproject.shape}
-    --destination-path: ${preprocess_reproject.output_dir}
-    --config-path: ${preprocess_reproject.output_config_path}
+    --destination-path: ${preprocess_reproject.output.data_dir}
+    --config-path: ${preprocess_reproject.output.config_path}
     -v: ${preprocess_params.verbose}

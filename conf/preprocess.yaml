@@ -12,7 +12,7 @@ preprocess_main:
     config_file: ${preprocessed_data_dir}/loader.${preprocess_main.params.config_name}.json
   hydra_properties:
     job_name: preprocess_${now:%Y-%m-%d}_${now:%H-%M-%S}
-    run_dir: ${data_root}/run_${preprocess_main.hash}/
+    run_dir: ${data_root}/run_${preprocess_main.hash}
 
 preprocess_splits:
   splits: train

@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 from hashlib import shake_256
 from pathlib import Path
@@ -131,6 +132,29 @@ def preprocess_run_commands(cfg: DictConfig) -> None:
 
     logger.info("All preprocessing completed.")
 
+    # Symlink all high-level outputs to HYDRA run dir
+    main_output_nodes = [
+        cfg.preprocess_reproject.output.data_dir,  # Reprojection data dir
+        cfg.preprocess_era5.output.data_dir,  # ERA5 Preprocessed data dir
+        cfg.preprocess_main.params.config_file,  # Loader JSON config file
+        cfg.preprocess_cache.output.data_dir,  # Dataset Cache directory
+    ]
+    run_dir = cfg.preprocess_main.hydra_properties.run_dir
+
+    for target in main_output_nodes:
+        symlink_path = os.path.join(run_dir, os.path.basename(target))
+        if not os.path.exists(target):
+            raise ValueError(
+                f"Target path `{target}` does not exist.\nError in preprocessing?"
+            )
+        elif os.path.exists(symlink_path):
+            logger.warning(f"Symlink already exists: `{symlink_path}`, skipping.")
+        else:
+            logger.info(f"Symlinking:\n\t`{target}` -> `{symlink_path}`")
+            os.symlink(target, symlink_path)
+
+    logger.info("Done.")
+
 
 def main():
     # Set job name for downloader
@@ -141,9 +165,7 @@ def main():
     sys.argv.append("hydra/job_logging=basic_message")
 
     # Use custom run dir for downloads instead of HYDRA default
-    sys.argv.append(
-        "hydra.run.dir=${preprocess_main.hydra_properties.run_dir}"
-    )
+    sys.argv.append("hydra.run.dir=${preprocess_main.hydra_properties.run_dir}")
     # sys.argv.append("outputs/${hydra.job.name}/${now:%Y-%m-%d_%H-%M-%S}")
     preprocess_run_commands()
 

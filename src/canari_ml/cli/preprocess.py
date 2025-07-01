@@ -134,7 +134,7 @@ def preprocess_run_commands(cfg: DictConfig) -> None:
 
 def main():
     # Set job name for downloader
-    sys.argv.append("hydra.job.name=preprocess")
+    sys.argv.append("hydra.job.name=${preprocess_main.hydra_properties.job_name}")
 
     # Use config to set logger to act like print
     # I've defined it in `conf/hydra/job_logging/basic_message.yaml`
@@ -142,7 +142,7 @@ def main():
 
     # Use custom run dir for downloads instead of HYDRA default
     sys.argv.append(
-        "hydra.run.dir='outputs/${hydra.job.name}/${now:%Y-%m-%d}/${now:%H-%M-%S}'"
+        "hydra.run.dir=${preprocess_main.hydra_properties.run_dir}"
     )
     # sys.argv.append("outputs/${hydra.job.name}/${now:%Y-%m-%d_%H-%M-%S}")
     preprocess_run_commands()

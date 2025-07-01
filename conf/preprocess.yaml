@@ -1,7 +1,6 @@
 preprocess_main:
   # Python preprocess script adds the `hash` to this key
   hash: ${compute_loader_hash:[${preprocess_reproject},${preprocess_era5},${preprocess_mask},${preprocess_region_weight},${preprocess_cache}]}
-  # hash: "0000"
   params:
     verbose: true
     workers: 8
@@ -11,6 +10,9 @@ preprocess_main:
     config_suffix: ${download.frequency}.${download.hemisphere}
     config_name: ${preprocess_main.hash}.${preprocess_main.params.config_suffix}
     config_file: ${preprocessed_data_dir}/loader.${preprocess_main.params.config_name}.json
+  hydra_properties:
+    job_name: preprocess_${now:%Y-%m-%d}_${now:%H-%M-%S}
+    run_dir: ${data_root}/run_${preprocess_main.hash}/
 
 preprocess_splits:
   splits: train

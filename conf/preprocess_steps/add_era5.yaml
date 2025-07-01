@@ -2,8 +2,8 @@ add_era5_step:
   name: "Add ERA5 Data"
   command: preprocess_add_processed
   positional:
-    - ${preprocess_params.config_name}
+    - ${preprocess_main.params.config_name}
     - ${preprocess_era5.output.config_path}
   optional:
-    --config-path: ${preprocess_params.config_file}
-    -v: ${preprocess_params.verbose}
+    --config-path: ${preprocess_main.params.config_file}
+  step_hash: ${preprocess_era5.step_hash}

@@ -11,53 +11,65 @@ from .utils import run_command
 
 logger = logging.getLogger(__name__)
 
-OmegaConf.register_new_resolver("subtract", lambda x, y: x - y)
 
+def generate_hash(inputs: list) -> str:
+    """Generate a SHAKE-256 hash from input data.
 
-def get_cmd_props(step_cfg: DictConfig) -> tuple:
-    """Get command properties and generate a hash for the step.
-
-    Extracts necessary information from the given configuration dictionary,
-    removes output paths from optional variables, constructs an input
-    dictionary, and generates a SHAKE256 hash of fixed length to uniquely identify
-    this step.
+    Reference [this page](Ref: https://www.doc.ic.ac.uk/~nuric/posts/coding/how-to-hash-a-dictionary-in-python/)
 
     Args:
-        cfg: The configuration dictionary containing command, positional, and
-        optional arguments.
+        inputs: List of input data to be hashed. The contents are serialized
+            using orjson with sorted keys for deterministic output.
 
     Returns:
-        A tuple containing the command, positional arguments, optional arguments,
-        and the generated hash for the step.
+        4-character hexadecimal digest of the hash.
     """
-    """Ref: https://www.doc.ic.ac.uk/~nuric/posts/coding/how-to-hash-a-dictionary-in-python/"""
-    cmd: str = step_cfg.get("command")
-    positional: ListConfig = step_cfg.get("positional", ListConfig(content=[]))
-    optional: DictConfig = step_cfg.get("optional", DictConfig(content={}))
+    hash_input = orjson.dumps(inputs, option=orjson.OPT_SORT_KEYS)
+    hash_value = shake_256(hash_input).hexdigest(length=4)
+    return hash_value
 
-    # Mask: Remove output paths from optional variables
-    optional_dict: dict = OmegaConf.to_container(optional, resolve=False)
-    optional_resolved_dict: dict = OmegaConf.to_container(optional, resolve=True)
-    optional_masked = {}
-    for k, v in optional_dict.items():
-        # Check for and remove keys with values of something like
-        # ` ${preprocess_reproject.output.config_path}`
-        if isinstance(v, str) and ".output." in v:
-                logging.debug(f"Removing output dirs in hash generation: {k}: {v}")
-                continue
-        optional_masked[k] = optional_resolved_dict[k]
 
-    step_inputs = {
-        "cmd": cmd,
-        "positional": OmegaConf.to_container(positional, resolve=True),
-        "optional": optional_masked,
-    }
-    step_inputs_dict = step_inputs
-    cmd_string = orjson.dumps(step_inputs_dict, option=orjson.OPT_SORT_KEYS)
-    # Using shake_256 instead of shake_128 for hopefully higher collision resistance
-    # Especially considering I'm limiting hash length
-    step_hash = shake_256(cmd_string).hexdigest(length=4) # Will generate a 2xlength hash
-    return cmd, positional, optional, step_hash
+def compute_step_hash(nodes: ListConfig) -> str:
+    """Compute hash from multiple OmegaConf nodes.
+
+    Args:
+        nodes: List of OmegaConf nodes to process.
+
+    Returns:
+        Hash generated from the combined input data of all nodes
+        converted to dicts.
+    """
+    combined_inputs = []
+
+    for node in nodes:
+        node_dict = OmegaConf.to_container(node, resolve=True)
+        combined_inputs.append(node_dict)
+
+    return generate_hash(combined_inputs)
+
+
+def compute_loader_hash(steps: ListConfig) -> str:
+    """Compute hash from step hashes of multiple OmegaConf nodes.
+
+    Args:
+        steps: List of OmegaConf nodes containing step_hash attributes.
+            Each step's step_hash is collected and used as input for the
+            final hash.
+
+    Returns:
+        Hash generated from the combined step hashes of all provided steps.
+    """
+    combined_inputs = []
+
+    for step in steps:
+        combined_inputs.append(step.step_hash)
+
+    return generate_hash(combined_inputs)
+
+
+OmegaConf.register_new_resolver("subtract", lambda x, y: x - y)
+OmegaConf.register_new_resolver("compute_step_hash", compute_step_hash)
+OmegaConf.register_new_resolver("compute_loader_hash", compute_loader_hash)
 
 
 @hydra.main(
@@ -76,6 +88,7 @@ def preprocess_run_commands(cfg: DictConfig) -> None:
     Args:
         cfg: Hydra auto-loaded configuration.
     """
+
     cfg_yaml = OmegaConf.to_yaml(cfg)
 
     logger.info("Loaded HYDRA Configuration YAML:\n")
@@ -90,27 +103,33 @@ def preprocess_run_commands(cfg: DictConfig) -> None:
         step_name = step_cfg.get("name", "Unnamed step")
 
         # Get command and arguments, and hash them
-        cmd, positional, optional, step_hash = get_cmd_props(step_cfg)
+        # cmd, positional, optional = get_cmd_props(cfg, step_cfg)
+        cmd: str = step_cfg.get("command")
+        positional: ListConfig = step_cfg.get("positional", ListConfig(content=[]))
+        optional: DictConfig = step_cfg.get("optional", DictConfig(content={}))
+        optional: DictConfig = step_cfg.get("optional", DictConfig(content={}))
+        step_hash: DictConfig = step_cfg.get("step_hash", DictConfig(content={}))
 
         logger.info(f"\nRunning step: {step_name}")
         logger.info(f"Command: {cmd}")
         logger.info(f"Positional args: {positional}")
         logger.info(f"Optional args: {optional}")
-        logger.info(f"Step hash: {step_hash}\n")
+        if step_hash:
+            logger.info(f"Step hash: {step_hash}\n")
 
         command = [cmd] + [str(arg) for arg in positional]
         for opt_key, opt_val in optional.items():
             if opt_val != "":
-                command.append(opt_key)
+                command.append(str(opt_key))
                 if opt_val is not True:
                     command.append(str(opt_val))
 
-        if cfg.preprocess_params.verbose:
+        if cfg.preprocess_main.params.verbose:
             command.append("-v")
 
         run_command(command)
 
-        logger.info("All preprocessing completed.")
+    logger.info("All preprocessing completed.")
 
 
 def main():

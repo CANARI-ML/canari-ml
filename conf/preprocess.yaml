@@ -1,67 +1,83 @@
-preprocess_params:
-  verbose: true
-  workers: 8
-  cache_only: false
-  delete_cache: true
-  config_name: train_data.${download.frequency}.${download.hemisphere}
-  config_file: ${preprocessed_data_dir}/loader.${preprocess_params.config_name}.json
+preprocess_main:
+  # Python preprocess script adds the `hash` to this key
+  hash: ${compute_loader_hash:[${preprocess_reproject},${preprocess_era5},${preprocess_mask},${preprocess_region_weight},${preprocess_cache}]}
+  # hash: "0000"
+  params:
+    verbose: true
+    workers: 8
+    cache_only: false
+    delete_cache: true
+    # Main preprocess config output params
+    config_suffix: ${download.frequency}.${download.hemisphere}
+    config_name: ${preprocess_main.hash}.${preprocess_main.params.config_suffix}
+    config_file: ${preprocessed_data_dir}/loader.${preprocess_main.params.config_name}.json
 
 preprocess_splits:
   splits: train
   split_names: train,val,test
-  split_starts: ${inputs.train_start},${inputs.val_start},${inputs.test_start}
-  split_ends: ${inputs.train_end},${inputs.val_end},${inputs.test_end}
+  split_starts: ${inputs.date_range.train.start},${inputs.date_range.val.start},${inputs.date_range.test.start}
+  split_ends: ${inputs.date_range.train.end},${inputs.date_range.val.end},${inputs.date_range.test.end}
   split_head: ${inputs.lag_length}
   split_tail: ${subtract:${inputs.forecast_length}, 1}
 
 preprocess_reproject:
-  source: ${download.output_config_path}
-  destination_id: era5
-  source_crs: EPSG:4326
-  target_crs: EPSG:6931
-  shape: 500
-  # Python adds a `step_hash` to this key
+  # Python preprocess script computes the `step_hash` to this key
+  step_hash: ${compute_step_hash:[${download_params}, ${download}, ${inputs}, ${preprocess_reproject.arguments}]}
+  arguments:
+    source: ${download.output_config_path}
+    destination_id: era5
+    source_crs: EPSG:4326
+    target_crs: EPSG:6931
+    shape: 500
   output:
-    data_dir: ${reprojected_data_dir}
-    config_path: ${preprocess_reproject.output.data_dir}/reproject.${preprocess_params.config_name}.json
+    data_dir: ${reprojected_data_dir}/reproject_${preprocess_reproject.step_hash}
+    config_path: ${preprocess_reproject.output.data_dir}/reproject.${preprocess_main.params.config_suffix}.json
 
 preprocess_era5:
-  __target__: "canari_ml.data.processors.cds:ERA5PreProcessor"
-  source: ${preprocess_reproject.output.config_path}
-  destination_id: ${preprocess_params.config_name}
-  # Python adds a `step_hash` to this key
+  # Python preprocess script computes the `step_hash` to this key
+  step_hash: ${compute_step_hash:[${download_params}, ${download}, ${inputs}, ${preprocess_era5.arguments}]}
+  arguments:
+    implementation: "canari_ml.data.processors.cds:ERA5PreProcessor"
+    source: ${preprocess_reproject.output.config_path}
+    destination_id: ${preprocess_main.params.config_suffix}
   output:
-    data_dir: ${normalised_data_dir}
-    config_path: ${preprocess_era5.output.data_dir}/processed_era5.${preprocess_params.config_name}.json
+    data_dir: ${normalised_data_dir}/normalised_${preprocess_era5.step_hash}
+    config_path: ${preprocess_era5.output.data_dir}/processed_era5.${preprocess_main.params.config_suffix}.json
 
 preprocess_mask:
-  __target__: "canari_ml.data.masks.era5:Masks"
-  name: "hemisphere"
-  # Python adds a `step_hash` to this key
+  # Python preprocess script computes the `step_hash` to this key
+  step_hash: ${compute_step_hash:[${download_params}, ${download}, ${inputs}, ${preprocess_mask.arguments}]}
+  arguments:
+    name: "hemisphere"
+    implementation: "canari_ml.data.masks.era5:Masks"
   output:
-    data_dir: ${normalised_data_dir}
-    mask_dataset_config_path: ${preprocess_mask.output.data_dir}/dataset_config.masks.${preprocess_params.config_name}.json
-    mask_config_path: ${preprocess_mask.output.data_dir}/processed_era5.masks.${preprocess_params.config_name}.json
+    data_dir: ${normalised_data_dir}/normalised_${preprocess_era5.step_hash}/mask_${preprocess_mask.step_hash}
+    mask_dataset_config_path: ${preprocess_mask.output.data_dir}/dataset_config.masks.${preprocess_main.params.config_suffix}.json
+    mask_config_path: ${preprocess_mask.output.data_dir}/processed_era5.masks.${preprocess_main.params.config_suffix}.json
 
 preprocess_region_weight:
-  __target__: "canari_ml.data.masks.era5:Masks"
-  name: "weighted_regions"
-  base_weight: 0.1
-  region_weights:
-    - "20,80,-100,45,0.25"
-    - "40,60,-75,15,0.65"
-  weight_smoothing_sigma: 10
-  # Python adds a `step_hash` to this key
+  # Python preprocess script computes the `step_hash` to this key
+  step_hash: ${compute_step_hash:[${download_params}, ${download}, ${inputs}, ${preprocess_region_weight.arguments}]}
+  arguments:
+    name: "weighted_regions"
+    implementation: "canari_ml.data.masks.era5:Masks"
+    base_weight: 0.1
+    region_weights:
+        - "20,80,-100,45,0.25"
+        - "40,60,-75,15,0.65"
+    weight_smoothing_sigma: 10
   output:
-    data_dir: ${preprocess_mask.output.data_dir}
-    mask_dataset_config_path: ${preprocess_mask.output_mask_dataset_config_path}
-    mask_config_path: ${preprocess_mask.output_mask_config_path}
+    data_dir: ${normalised_data_dir}/normalised_${preprocess_era5.step_hash}/mask_${preprocess_region_weight.step_hash}
+    mask_dataset_config_path: ${preprocess_region_weight.output.data_dir}/dataset_config.masks.${preprocess_main.params.config_suffix}.json
+    mask_config_path: ${preprocess_region_weight.output.data_dir}/processed_era5.masks.${preprocess_main.params.config_suffix}.json
 
 preprocess_cache:
-  output_batch_size: 4
-  dataset_name: ${preprocess_params.config_name}
-  plot: true
-  # Python adds a `step_hash` to this key
+  # Python preprocess script computes the `step_hash` to this key
+  step_hash: ${compute_step_hash:[${download_params}, ${download}, ${inputs}, ${preprocess_region_weight.arguments}]}
+  arguments:
+    dataset_name: ${preprocess_main.params.config_name}
+    output_batch_size: 4
+    plot: true
   output:
-    data_dir: ${cache_dir}
-    config_path: ${cache_dir}/cached.${preprocess_params.config_name}.json
+    data_dir: ${cache_dir}/cache_${preprocess_cache.step_hash}
+    config_path: ${preprocess_cache.output.data_dir}/cached.${preprocess_main.params.config_suffix}.json

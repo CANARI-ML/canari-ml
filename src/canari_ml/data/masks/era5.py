@@ -379,6 +379,8 @@ class Masks(Processor):
 
         if mask_dataset_config_path:
             mask_ds_kwargs |= dict(config_path=mask_dataset_config_path)
+            dir_path = os.path.dirname(mask_dataset_config_path)
+            os.makedirs(dir_path, exist_ok=True)
 
 
         mask_ds = MaskDatasetConfig(**mask_ds_kwargs)

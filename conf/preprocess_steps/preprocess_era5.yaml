@@ -1,5 +1,6 @@
 preprocess_era5_step:
   name: "Preprocess ERA5"
+  parent: ${preprocess_era5}
   command: preprocess_dataset
   positional:
     - ${preprocess_era5.arguments.source}

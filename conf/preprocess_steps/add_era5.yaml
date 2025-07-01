@@ -1,9 +1,12 @@
 add_era5_step:
   name: "Add ERA5 Data"
+  parent: ${preprocess_era5}
+  # Whether this can be skipped if it already exists
+  skippable: false
   command: preprocess_add_processed
   positional:
     - ${preprocess_main.params.config_name}
     - ${preprocess_era5.output.config_path}
   optional:
-    --config-path: ${preprocess_main.params.config_file}
+    --config-path: ${preprocess_main.output.config_file}
   step_hash: ${preprocess_era5.step_hash}

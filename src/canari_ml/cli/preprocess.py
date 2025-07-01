@@ -118,6 +118,22 @@ def preprocess_run_commands(cfg: DictConfig) -> None:
         if step_hash:
             logger.info(f"Step hash: {step_hash}\n")
 
+        outputs_exist = False
+        for output_location in step_cfg.parent.output.values():
+            # Check if skippable key exists
+            # Necessary for masks as an example which writes to initialised loader config
+            skippable = step_cfg.get("skippable", True)
+            if os.path.exists(output_location) and skippable:
+                logger.warning(
+                    f"Skipping, output already exists: \n\t{output_location}"
+                )
+                outputs_exist = True
+                break   # No need to check further
+
+        # Skip running the command only if all outputs already exist
+        if outputs_exist:
+            continue
+
         command = [cmd] + [str(arg) for arg in positional]
         for opt_key, opt_val in optional.items():
             if opt_val != "":
@@ -136,7 +152,7 @@ def preprocess_run_commands(cfg: DictConfig) -> None:
     main_output_nodes = [
         cfg.preprocess_reproject.output.data_dir,  # Reprojection data dir
         cfg.preprocess_era5.output.data_dir,  # ERA5 Preprocessed data dir
-        cfg.preprocess_main.params.config_file,  # Loader JSON config file
+        cfg.preprocess_main.output.config_file,  # Loader JSON config file
         cfg.preprocess_cache.output.data_dir,  # Dataset Cache directory
     ]
     run_dir = cfg.preprocess_main.hydra_properties.run_dir
@@ -153,7 +169,8 @@ def preprocess_run_commands(cfg: DictConfig) -> None:
             logger.info(f"Symlinking:\n\t`{target}` -> `{symlink_path}`")
             os.symlink(target, symlink_path)
 
-    logger.info("Done.")
+
+    logger.info("\n" + "=="*50 + "\nPreprocessing Completed. Tata!\n" + "=="*50)
 
 
 def main():

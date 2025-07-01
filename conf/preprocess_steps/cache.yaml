@@ -1,8 +1,9 @@
 cache_step:
   name: "Create Cached Dataset"
+  parent: ${preprocess_cache}
   command: canari_ml_dataset_create
   positional:
-    - ${preprocess_main.params.config_file}
+    - ${preprocess_main.output.config_file}
     - ${preprocess_cache.arguments.dataset_name}
   optional:
     --output-batch-size: ${preprocess_cache.arguments.output_batch_size}

@@ -1,5 +1,6 @@
 reproject_step:
   name: "Reproject ERA5"
+  parent: ${preprocess_reproject}
   command: canari_ml_preprocess_reproject
   positional:
     - ${preprocess_reproject.arguments.source}

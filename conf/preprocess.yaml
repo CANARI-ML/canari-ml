@@ -33,7 +33,7 @@ preprocess_reproject:
     target_crs: EPSG:6931
     shape: 500
   output:
-    data_dir: ${reprojected_data_dir}/01.reproject_${preprocess_reproject.step_hash}
+    data_dir: ${reprojected_data_dir}/01_reproject_${preprocess_reproject.step_hash}
     config_path: ${preprocess_reproject.output.data_dir}/reproject.${preprocess_main.params.config_suffix}.json
 
 preprocess_era5:
@@ -44,7 +44,7 @@ preprocess_era5:
     source: ${preprocess_reproject.output.config_path}
     destination_id: ${preprocess_main.params.config_suffix}
   output:
-    data_dir: ${normalised_data_dir}/02.normalised_${preprocess_era5.step_hash}
+    data_dir: ${normalised_data_dir}/02_normalised_${preprocess_era5.step_hash}
     config_path: ${preprocess_era5.output.data_dir}/processed_era5.${preprocess_main.params.config_suffix}.json
 
 preprocess_mask:
@@ -82,5 +82,5 @@ preprocess_cache:
     output_batch_size: 4
     plot: true
   output:
-    data_dir: ${cache_dir}/03.cache_${preprocess_cache.step_hash}
+    data_dir: ${cache_dir}/03_cache_${preprocess_cache.step_hash}
     config_path: ${preprocess_cache.output.data_dir}/cached.${preprocess_main.params.config_suffix}.json

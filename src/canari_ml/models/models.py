@@ -348,7 +348,7 @@ def unet_batchnorm(
     loss: nn.Module | Callable,
     metrics: dict[str, Callable] | Callable,
     learning_rate: float = 1e-4,
-    filter_size: float = 3,
+    filter_size: int = 3,
     n_filters_factor: float = 1,
     lead_time: int = 1,
 ) -> LitUNet:

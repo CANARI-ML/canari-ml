@@ -1,0 +1,15 @@
+defaults:
+  - model_checkpoint
+  - early_stopping
+  - _self_
+
+model_checkpoint:
+  dirpath: ${hydra:runtime.output_dir}/checkpoints
+  filename: "{epoch}"
+  monitor: val_rmse
+  mode: min
+
+early_stopping:
+  monitor: val_rmse
+  patience: 10 # No. of validation checks w/o improvement
+  mode: min

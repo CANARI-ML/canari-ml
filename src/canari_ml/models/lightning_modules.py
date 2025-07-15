@@ -353,7 +353,7 @@ class LitUNet(BaseLightningModule):
             self.parameters(), lr=self.learning_rate, weight_decay=1e-4
         )
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, patience=5, factor=0.5, min_lr=1e-5, verbose=True
+            optimizer, patience=5, factor=0.5, min_lr=1e-5
         )
         # Ref OneCycleLR: https://medium.com/@g.martino8/one-cycle-lr-scheduler-a-simple-guide-c3aa9c4cbd9f
         # scheduler = torch.optim.lr_scheduler.OneCycleLR(

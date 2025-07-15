@@ -1,0 +1,18 @@
+# Comments from lightning docs:
+# https://lightning.ai/docs/pytorch/2.5.2/api/lightning.pytorch.callbacks.ModelCheckpoint.html
+model_checkpoint:
+  _target_: lightning.pytorch.callbacks.ModelCheckpoint
+  dirpath: null   # Directory to save the model file
+  filename: null  # Checkpoint filename. Can contain named formatting options to be auto-filled.
+  monitor: null   # Quantity to monitor. By default it is None which saves a checkpoint only for the last epoch.
+  verbose: True   # Verbosity mode.
+  save_last: True # When True, saves a last.ckpt copy whenever a checkpoint file gets saved.
+  save_top_k: 1   # if save_top_k == k, the best k models according to the quantity monitored will be saved. If save_top_k == 0, no models are saved. If save_top_k == -1, all models are saved.
+  mode: null      # one of {min, max}.
+  auto_insert_metric_name: True # When True, the checkpoints filenames will contain the metric name.
+  save_weights_only: False      # if True, then only the model’s weights will be saved. Otherwise, the optimizer states, lr-scheduler states, etc are added in the checkpoint too.
+  every_n_train_steps: null     # Number of training steps between checkpoints. If every_n_train_steps == None or every_n_train_steps == 0, we skip saving during training.
+  train_time_interval: null     # Checkpoints are monitored at the specified time interval.
+  every_n_epochs: null          # Number of epochs between checkpoints. This value must be None or non-negative.
+  save_on_train_epoch_end: null # Whether to run checkpointing at the end of the training epoch.
+  enable_version_counter: False # Whether to append a version to the existing file name. If this is False, then the checkpoint files will be overwritten.

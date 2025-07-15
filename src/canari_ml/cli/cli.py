@@ -17,7 +17,7 @@ import argparse
 import sys
 import os
 
-from canari_ml.cli import download, preprocess
+from canari_ml.cli import download, preprocess, train
 
 
 def main():
@@ -32,6 +32,7 @@ def main():
     # preprocess_subparsers = preprocess_parser.add_subparsers(dest="subcommand")
     # preprocess_subparsers.add_parser("translate", add_help=False)
     # preprocess_subparsers.add_parser("rotate", add_help=False)
+    subparsers.add_parser("train", add_help=False)
 
     # Let argparse only parse known args
     args, unknown_args = parser.parse_known_args()
@@ -42,6 +43,8 @@ def main():
         download.main()
     elif args.command == "preprocess":
         preprocess.main()
+    elif args.command == "train":
+        train.main()
     # elif args.command == "preprocess":
     #     if args.subcommand in ["translate", "rotate"]:
     #         getattr(preprocess, f"{args.subcommand}_main")()

@@ -1,0 +1,19 @@
+network:
+  _target_: canari_ml.models.models.UNet
+  _partial_: true
+  filter_size: 3
+  n_filters_factor: 1.0
+  n_output_classes: 1
+
+litmodule:
+  _target_: canari_ml.models.lightning_modules.LitUNet
+  _partial_: true
+  criterion:
+    _target_: canari_ml.models.losses.WeightedLoss
+    loss_type: mse
+  learning_rate: 0.0001
+  metrics:
+    - canari_ml.models.metrics.MAE
+    - canari_ml.models.metrics.MSE
+    - canari_ml.models.metrics.RMSE
+  enable_leadtime_metrics: false

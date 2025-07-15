@@ -1,5 +1,7 @@
+import importlib
 import logging
 import subprocess
+
 
 def run_command(command):
     logger = logging.getLogger(__name__)
@@ -19,3 +21,10 @@ def run_command(command):
 
     if process.returncode != 0:
         raise RuntimeError("Command failed with exit code %d" % process.returncode)
+
+
+def dynamic_import(path):
+    # Split into module and class name
+    module_name, class_name = path.rsplit(".", 1)
+    module = importlib.import_module(module_name)
+    return getattr(module, class_name)

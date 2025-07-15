@@ -1,0 +1,3 @@
+_target_: pytorch_lightning.loggers.TensorBoardLogger
+save_dir: "tb_logs"
+name: ${train.run_name}_${train.seed}

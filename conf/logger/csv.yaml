@@ -1,0 +1,3 @@
+_target_: pytorch_lightning.loggers.CSVLogger
+save_dir: "logs"
+name: ${train.run_name}_${train.seed}

@@ -238,7 +238,6 @@ class HYDRAPytorchNetwork(BaseNetwork):
         self,
         cfg,
         *args,
-        tensorboard_logdir: str | None = None,
         verbose: bool = False,
         **kwargs,
     ):
@@ -270,16 +269,7 @@ class HYDRAPytorchNetwork(BaseNetwork):
             "seed": cfg.train.seed,
         }
 
-        self._tensorboard_logdir = tensorboard_logdir
-
         super().__init__(**super_kwargs)
-
-        # if pre_load_path is not None and not os.path.exists(pre_load_path):
-        #     raise RuntimeError(
-        #         "{} is not available, so you cannot preload the "
-        #         "network with it!".format(pre_load_path)
-        #     )
-        # self._pre_load_path = pre_load_path
 
         self._verbose = verbose
 
@@ -289,15 +279,7 @@ class HYDRAPytorchNetwork(BaseNetwork):
         super()._attempt_seed_setup()
         pl.seed_everything(self._seed)
 
-    def train(
-        self,
-        # epochs: int,
-        # lit_module,
-        # dataset,
-        # train_dataloader: object,
-        # validation_dataloader: object = None,
-        # save: bool = True,
-    ):
+    def train(self):
         # Module initialisation
         cfg = self._cfg # HYDRA loaded configuration
         dataset = self._dataset
@@ -319,56 +301,21 @@ class HYDRAPytorchNetwork(BaseNetwork):
             self._output_dir, "{}_{}_history.json".format(self.run_name, self.seed)
         )
 
-        logger_name = f"{self.run_name}_{self.seed}"
-
-        tb_dir = "tb_logs"
-        logger = TensorBoardLogger(tb_dir, name=logger_name)
-        # logger = CSVLogger("logs", name=logger_name)    # Uses basic CSV logging
-
         # Print model summary
         print(litmodule.model)
 
-        profiler = PyTorchProfiler(
-            on_trace_ready=torch.profiler.tensorboard_trace_handler(tb_dir)
-        )
-
         # Trainer set-up
-        # Initialise callback functions from HYDRA configuration
-        callbacks = self.add_callback(cfg.callbacks)
+        trainer_kwargs = {
+            "logger": hydra.utils.instantiate(cfg.logger),
+            # Initialise callback functions from HYDRA configuration
+            "callbacks": self.add_callback(cfg.callbacks),
+        }
 
-        # precision options:
-        # ('transformer-engine', 'transformer-engine-float16', '16-true', '16-mixed',
-        # 'bf16-true', 'bf16-mixed', '32-true', '64-true', 64, 32, 16, '64', '32',
-        # '16', 'bf16')
-        # set up trainer configuration
-        trainer = pl.Trainer(
-            accelerator="auto",
-            devices=1,
-            # strategy="ddp",
-            precision="16-mixed",  # Enable 16-bit precision (mixed precision training)
-            # precision="16-true",  # Enable true 16-bit precision
-            # precision="bf16-true",  # Enable true bfloat 16-bit precision
-            log_every_n_steps=5,
-            max_epochs=cfg.train.max_epochs,
-            # auto_lr_find=True,
-            num_sanity_val_steps=0,
-            # enable_checkpointing=False,  # Disable built-in checkpointing, using callback instead
-            logger=logger,
-            deterministic=True,
-            # benchmark=True,
-            # profiler=profiler,
-            # enable_progress_bar=False,
-            # callbacks=[],
-            callbacks=callbacks,
-            # callbacks=self._callbacks,
-            # callbacks=[
-            #     # RichProgressBar(leave=True),
-            #     # TQDMProgressBar(leave=True),
-            # ],
-            fast_dev_run=False,  # Runs single batch through train and validation
-            #    when running trainer.test()
-            # Note: Cannot use with automatic best checkpointing
-        )
+        profiler = hydra.utils.instantiate(cfg.profiler) if "profiler" in cfg else None
+        trainer_kwargs.update({"profiler": profiler})
+
+        trainer_partial = hydra.utils.instantiate(cfg.trainer)
+        trainer = trainer_partial(**trainer_kwargs)
 
         # Run training
         trainer.fit(

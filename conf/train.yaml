@@ -2,6 +2,8 @@ defaults:
   - _self_
   - model: default
   - callbacks: default
+  - logger: tensorboard
+  - trainer: default
   - override hydra/job_logging: colorlog_custom
   - override hydra/hydra_logging: colorlog
 

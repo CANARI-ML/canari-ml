@@ -1,0 +1,12 @@
+_target_: lightning.pytorch.Trainer
+_partial_: true
+accelerator: "auto"
+devices: 1
+precision: "16-mixed"
+log_every_n_steps: 5
+max_epochs: ${train.max_epochs}
+num_sanity_val_steps: 0
+deterministic: true
+fast_dev_run: false
+logger: ${logger}
+callbacks: ${callbacks}

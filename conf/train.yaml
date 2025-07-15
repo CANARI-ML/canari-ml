@@ -11,10 +11,10 @@ hydra:
   job:
     name: train
   run:
-    dir: outputs/${train.run_name}/runs/
+    dir: outputs/${train.run_name}/training/
   sweep:
-    dir: outputs/${train.run_name}/multiruns/
-    subdir: ${hydra.job.num}
+    dir: outputs/${train.run_name}/training_ensemble/
+    subdir: ${train.seed}
 
 train:
   dataset: ???

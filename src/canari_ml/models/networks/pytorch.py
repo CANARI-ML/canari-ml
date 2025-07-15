@@ -317,6 +317,9 @@ class HYDRAPytorchNetwork(BaseNetwork):
         trainer_partial = hydra.utils.instantiate(cfg.trainer)
         trainer = trainer_partial(**trainer_kwargs)
 
+        # Store seed in trainer
+        trainer.logger.log_hyperparams({"seed": cfg.train.seed})
+
         # Run training
         trainer.fit(
             litmodule,

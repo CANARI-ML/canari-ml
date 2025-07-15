@@ -9,7 +9,7 @@ model_checkpoint:
   save_last: True # When True, saves a last.ckpt copy whenever a checkpoint file gets saved.
   save_top_k: 1   # if save_top_k == k, the best k models according to the quantity monitored will be saved. If save_top_k == 0, no models are saved. If save_top_k == -1, all models are saved.
   mode: null      # one of {min, max}.
-  auto_insert_metric_name: True # When True, the checkpoints filenames will contain the metric name.
+  auto_insert_metric_name: False # When True, the checkpoints filenames will contain the metric name.
   save_weights_only: False      # if True, then only the model’s weights will be saved. Otherwise, the optimizer states, lr-scheduler states, etc are added in the checkpoint too.
   every_n_train_steps: null     # Number of training steps between checkpoints. If every_n_train_steps == None or every_n_train_steps == 0, we skip saving during training.
   train_time_interval: null     # Checkpoints are monitored at the specified time interval.

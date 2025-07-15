@@ -4,6 +4,7 @@ defaults:
   - callbacks: default
   - logger: tensorboard
   - trainer: default
+  - override hydra/launcher: basic
   - override hydra/job_logging: colorlog_custom
   - override hydra/hydra_logging: colorlog
 
@@ -25,3 +26,5 @@ train:
   batch_size: 4
   shuffling: true
   verbose: true
+  wandb_group: unet
+  wandb_project: CANARI

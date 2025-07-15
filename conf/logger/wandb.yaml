@@ -1,0 +1,12 @@
+_target_: lightning.pytorch.loggers.WandbLogger
+project: ${train.wandb_project}
+group: ${train.wandb_group}
+job_type: train
+name: ${train.run_name}_${train.seed}
+save_dir: "./wandb_logs"
+log_model: true
+tags:
+  - ${train.run_name}
+  - seed_${train.seed}
+reinit: create_new  # Shorthand for the “reinit” setting. Determines the behavior of wandb.init() when a run is active.
+                    # Handle system stats not gathered w/ wandb if ensemble runs using multirun

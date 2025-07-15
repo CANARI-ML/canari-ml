@@ -45,6 +45,7 @@ dependencies = [
   "seaborn",
   "shapely",
   "tqdm",
+  "wandb",
   "wheel",
   "xarray[io]>=2024.3.0",
   "zarr<3",

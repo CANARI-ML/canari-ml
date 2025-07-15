@@ -2,11 +2,12 @@
 
 import logging
 import os
+import time
 
 import hydra
 import lightning.pytorch as pl
-import pandas as pd
 import orjson
+import pandas as pd
 import torch
 from icenet.model.networks.base import BaseNetwork
 from lightning.pytorch.callbacks import (
@@ -14,7 +15,7 @@ from lightning.pytorch.callbacks import (
     RichProgressBar,
     TQDMProgressBar,
 )
-from lightning.pytorch.loggers import CSVLogger, TensorBoardLogger
+from lightning.pytorch.loggers import CSVLogger, TensorBoardLogger, WandbLogger
 from lightning.pytorch.profilers import PyTorchProfiler
 
 from canari_ml.cli.utils import dynamic_import
@@ -287,9 +288,11 @@ class HYDRAPytorchNetwork(BaseNetwork):
         input_shape = (dataset.num_channels, *dataset.shape) # channels, height, width
         train_dataloader, validation_dataloader, _ = dataset.get_data_loaders(ratio=1.0)
 
+        # Initialise neural network
         network_partial = hydra.utils.instantiate(cfg.model.network)
         network = network_partial(input_channels=input_shape[0], lead_time=lead_time)
 
+        # Initialise Lightning module
         litmodule_partial = hydra.utils.instantiate(cfg.model.litmodule)
         metric_import_paths = cfg.model.litmodule.metrics
         metrics = [dynamic_import(path) for path in metric_import_paths]
@@ -304,21 +307,37 @@ class HYDRAPytorchNetwork(BaseNetwork):
         # Print model summary
         print(litmodule.model)
 
+        # # Finish prior running wandb instances (if any)
+        # if wandb.run is not None:
+        #     wandb.finish()
+
+        # Initialise logger
+        logger = hydra.utils.instantiate(cfg.logger)
+        wandb_run_id = None
+        if isinstance(logger, WandbLogger) and logger.experiment is not None:
+            wandb_run_id = logger.experiment.id
+            print("W&B Run:", logger.experiment.name)
+
         # Trainer set-up
         trainer_kwargs = {
-            "logger": hydra.utils.instantiate(cfg.logger),
+            "logger": logger,
             # Initialise callback functions from HYDRA configuration
             "callbacks": self.add_callback(cfg.callbacks),
         }
 
+        # Initialise profiler if enabled
         profiler = hydra.utils.instantiate(cfg.profiler) if "profiler" in cfg else None
         trainer_kwargs.update({"profiler": profiler})
 
+        # Initialise Lightning Trainer
         trainer_partial = hydra.utils.instantiate(cfg.trainer)
         trainer = trainer_partial(**trainer_kwargs)
 
-        # Store seed in trainer
-        trainer.logger.log_hyperparams({"seed": cfg.train.seed})
+        # Store seed and wandb experiment id (if enabled) in checkpoint
+        hyperparams = {"seed": self.seed}
+        if wandb_run_id:
+            hyperparams["wandb_run_id"] = wandb_run_id
+        trainer.logger.log_hyperparams(hyperparams)
 
         # Run training
         trainer.fit(
@@ -328,9 +347,14 @@ class HYDRAPytorchNetwork(BaseNetwork):
             ckpt_path=None,
         )
 
-        # Save history of metrics
-        with open(history_path, "w") as fh:
-            logging.info(f"Saving metrics history to: {history_path}")
-            pd.DataFrame(litmodule.metrics_history).to_json(fh)
+        # # Save history of metrics
+        # with open(history_path, "w") as fh:
+        #     logging.info(f"Saving metrics history to: {history_path}")
+        #     pd.DataFrame(litmodule.metrics_history).to_json(fh)
+
+        # Finish running wandb instances (if wandb is being used)
+        if isinstance(logger, WandbLogger):
+            logger.experiment.finish()
+            # logger.finalize(status="success")
 
         return trainer

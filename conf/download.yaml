@@ -1,23 +1,45 @@
-download_params:
-  verbose: true
-  workers: 8
-  delete_cache: false
-  cache_only: false
-  overwrite_config: true
+defaults:
+  - _self_
+  - paths
+  - override hydra/job_logging: colorlog_custom
+  - override hydra/hydra_logging: colorlog
 
-download:
-  frequency: DAY
-  output_group_by: YEAR
-  hemisphere: north
-  output_config_path: ${source_data_dir}/data.aws.${download.frequency}.${download.hemisphere}.json
-  variables:
-    - zg
-    - ua
-    - va
-  levels:
-    - 2|10|50|100|250|500|700
-    - 2|10|50|100|250|500|700
-    - 2|10|50|100|250|500|700
-  date_range:
-    start: 1979-01-01
-    end: 2024-12-31
+hydra:
+  output_subdir: null
+  job:
+    name: download
+  run:
+    dir: data/logs/
+
+frequency: DAY
+output_group_by: YEAR
+hemisphere: north
+workers: 4
+delete_cache: false
+cache_only: false
+overwrite_config: true
+output:
+  config_path: ${source_data_dir}/data.aws.${frequency}.${hemisphere}.json
+
+vars:
+  - zg
+  - ua
+  - va
+  - tos
+  - tas
+  - sic
+
+levels:
+  - 2|10|50|100|250|500|700
+  - 2|10|50|100|250|500|700
+  - 2|10|50|100|250|500|700
+  - null
+  - null
+  - null
+
+dates:
+  start:
+    - 1979-01-01
+  end:
+    - 1979-01-01
+

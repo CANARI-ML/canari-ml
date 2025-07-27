@@ -5,7 +5,8 @@ defaults:
 
 model_checkpoint:
   dirpath: ${hydra:runtime.output_dir}/checkpoints
-  filename: "{epoch}"
+  # filename: "{epoch}" # Refer to pytorch lightning for this syntax
+  filename: "epoch={epoch}-${callbacks.model_checkpoint.monitor}={${callbacks.model_checkpoint.monitor}:.4f}"
   monitor: val_rmse
   mode: min
 

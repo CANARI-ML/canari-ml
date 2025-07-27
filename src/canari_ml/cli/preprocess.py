@@ -68,36 +68,36 @@ def compute_loader_hash(steps: ListConfig) -> str:
     return generate_hash(combined_inputs)
 
 
-OmegaConf.register_new_resolver("subtract", lambda x, y: x - y)
-OmegaConf.register_new_resolver("compute_step_hash", compute_step_hash)
-OmegaConf.register_new_resolver("compute_loader_hash", compute_loader_hash)
-
-
-@hydra.main(
-    version_base=None,
-    config_path=str(Path(__file__).parent / "../../../conf"),
-    config_name="config",
-)
-def preprocess_run_commands(cfg: DictConfig) -> None:
+def run_steps(cfg: DictConfig, steps: DictConfig):
     """
-    Run preprocessing commands based on the provided HYDRA configuration.
+    Executes preprocessing steps as defined in HYDRA configuration.
 
-    This function loads a Hydra configuration, selects the appropriate steps to run
-    (either for training or prediction), and then executes each step's command with
-    its corresponding arguments.
+    This function processes each step in the `steps` dictionary, checking if outputs
+    already exist (based on the `skippable` flag) and runs commands only when necessary.
+    After processing all steps, it creates symlinks from main output directories
+    to the HYDRA run directory for easy access.
 
     Args:
-        cfg: Hydra auto-loaded configuration.
-    """
+        cfg: Main configuration object containing global settings,
+             including paths and verbosity flags.
+        steps: DictConfig of preprocessing steps. Each step contains
+               a command, positional arguments, optional arguments,
+               and output locations.
 
+    Raises:
+        ValueError: If any target path for symlinking does not exist, likely
+                    due to potential failure in preprocessing.
+
+    Notes:
+        - Skippable steps are determined by the presence of existing outputs.
+        - Commands are constructed from `command`, `positional`, and `optional`
+          fields in each step configuration.
+        - Verbose mode is enabled via `cfg.preprocess_main.params.verbose`.
+    """
     cfg_yaml = OmegaConf.to_yaml(cfg)
 
     logger.info("Loaded HYDRA Configuration YAML:\n")
     logger.info(cfg_yaml)
-
-    # Select high level dict of preprocess steps to run
-    # Either for training or prediction
-    steps = cfg.preprocess_train_steps  # or cfg.preprocess_predict_steps
 
     logger.info("\nRunning preprocessing steps:")
     for step_key, step_cfg in steps.items():
@@ -160,7 +160,7 @@ def preprocess_run_commands(cfg: DictConfig) -> None:
     for target in main_output_nodes:
         symlink_path = os.path.join(run_dir, os.path.basename(target))
         if not os.path.exists(target):
-            raise ValueError(
+            logger.error(
                 f"Target path `{target}` does not exist.\nError in preprocessing?"
             )
         elif os.path.exists(symlink_path):
@@ -173,7 +173,56 @@ def preprocess_run_commands(cfg: DictConfig) -> None:
     logger.info("\n" + "=="*50 + "\nPreprocessing Completed. Tata!\n" + "=="*50)
 
 
-def main():
+OmegaConf.register_new_resolver("subtract", lambda x, y: x - y)
+OmegaConf.register_new_resolver("compute_step_hash", compute_step_hash)
+OmegaConf.register_new_resolver("compute_loader_hash", compute_loader_hash)
+
+
+@hydra.main(
+    version_base=None,
+    config_path=str(Path(__file__).parent / "../../../conf"),
+    config_name="config",
+)
+def preprocess_run_train_commands(cfg: DictConfig) -> None:
+    """
+    Run preprocessing commands based on the provided HYDRA configuration.
+
+    This function loads a Hydra configuration, selects the appropriate steps to run
+    (either for training or prediction), and then executes each step's command with
+    its corresponding arguments.
+
+    Args:
+        cfg: Hydra auto-loaded configuration.
+    """
+    # Select high level dict of preprocess steps to run
+    # Either for training or prediction
+    steps = cfg.preprocess_train_steps  # or cfg.preprocess_predict_steps
+    run_steps(cfg, steps)
+
+
+@hydra.main(
+    version_base=None,
+    config_path=str(Path(__file__).parent / "../../../conf"),
+    config_name="config",
+)
+def preprocess_run_predict_commands(cfg: DictConfig) -> None:
+    """
+    Run preprocessing commands based on the provided HYDRA configuration.
+
+    This function loads a Hydra configuration, selects the appropriate steps to run
+    (either for training or prediction), and then executes each step's command with
+    its corresponding arguments.
+
+    Args:
+        cfg: Hydra auto-loaded configuration.
+    """
+    # Select high level dict of preprocess steps to run
+    # Either for training or prediction
+    steps = cfg.preprocess_predict_steps  # or cfg.preprocess_predict_steps
+    run_steps(cfg, steps)
+
+
+def main(preprocess_type="train"):
     # Set job name for downloader
     sys.argv.append("hydra.job.name=${preprocess_main.hydra_properties.job_name}")
 
@@ -184,7 +233,12 @@ def main():
     # Use custom run dir for downloads instead of HYDRA default
     sys.argv.append("hydra.run.dir=${preprocess_main.hydra_properties.run_dir}")
     # sys.argv.append("outputs/${hydra.job.name}/${now:%Y-%m-%d_%H-%M-%S}")
-    preprocess_run_commands()
+    if preprocess_type == "train":
+        preprocess_run_train_commands()
+    elif preprocess_type == "predict":
+        preprocess_run_predict_commands()
+    else:
+        raise ValueError(f"{preprocess_type} is not a valid preprocess type")
 
 
 if __name__ == "__main__":

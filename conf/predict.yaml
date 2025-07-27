@@ -1,0 +1,22 @@
+defaults:
+  - train
+  - _self_
+
+hydra:
+  job:
+    name: predict
+  run:
+    dir: outputs/${train.run_name}/prediction/${predict.run_name}/${train.seed}
+  sweep:
+    dir: outputs/${train.run_name}/prediction/${predict.run_name}
+    subdir: ${train.seed}
+
+predict:
+  dataset: ???
+  run_name: ???
+  workers: 4
+  batch_size: 4
+  verbose: true
+  checkpoint_path: null
+  dates:
+    - 2024-12-01

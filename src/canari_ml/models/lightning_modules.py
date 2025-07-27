@@ -34,8 +34,9 @@ class BaseLightningModule(pl.LightningModule):
         learning_rate: float,
         metrics: Iterable[callable],
         enable_leadtime_metrics: bool = True,
+        **kwargs,
     ):
-        super().__init__()
+        super().__init__(**kwargs)
         # Save input parameters to __init__ (hyperparams) when checkpointing.
         # self.save_hyperparameters(ignore=["model", "criterion"])
         self.save_hyperparameters()

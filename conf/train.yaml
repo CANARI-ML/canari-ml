@@ -11,10 +11,11 @@ defaults:
 hydra:
   job:
     name: train
+  # Do not modify the output paths. They are coded when loading checkpoint for prediction.
   run:
-    dir: outputs/${train.run_name}/training/
+    dir: outputs/${train.run_name}/training/${train.seed}
   sweep:
-    dir: outputs/${train.run_name}/training_ensemble/
+    dir: outputs/${train.run_name}/training/
     subdir: ${train.seed}
 
 train:

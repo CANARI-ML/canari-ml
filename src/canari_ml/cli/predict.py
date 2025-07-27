@@ -12,9 +12,9 @@ logger = logging.getLogger(__name__)
 @hydra.main(
     version_base=None,
     config_path=str(Path(__file__).parent / "../../../conf"),
-    config_name="train",
+    config_name="predict",
 )
-def train_run(cfg: DictConfig) -> None:
+def predict_run(cfg: DictConfig) -> None:
     """
     Run training based on the provided HYDRA configuration.
 
@@ -30,11 +30,11 @@ def train_run(cfg: DictConfig) -> None:
     logger.info(f"\n{cfg_yaml}")
 
     network = HYDRAPytorchNetwork(cfg)
-    network.train()
+    network.predict()
 
 
 def main():
-    train_run() # type: ignore
+    predict_run() # type: ignore
 
 
 if __name__ == "__main__":

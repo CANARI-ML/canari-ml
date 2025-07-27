@@ -17,7 +17,7 @@ import argparse
 import sys
 import os
 
-from canari_ml.cli import download, preprocess, train
+from canari_ml.cli import download, preprocess, train, predict
 
 
 def main():
@@ -28,11 +28,16 @@ def main():
 
     # Add subcommands without help (let Hydra handle it)
     subparsers.add_parser("download", add_help=False)
-    preprocess_parser = subparsers.add_parser("preprocess", add_help=False)
-    # preprocess_subparsers = preprocess_parser.add_subparsers(dest="subcommand")
-    # preprocess_subparsers.add_parser("translate", add_help=False)
-    # preprocess_subparsers.add_parser("rotate", add_help=False)
+
+    # Pre-processing commands
+    preprocess_parser = subparsers.add_parser("preprocess", add_help=True)
+    preprocess_subparsers = preprocess_parser.add_subparsers(dest="subcommand")
+    preprocess_subparsers.add_parser("train", add_help=False)
+    preprocess_subparsers.add_parser("predict", add_help=False)
+
+    # Train/predict commands
     subparsers.add_parser("train", add_help=False)
+    subparsers.add_parser("predict", add_help=False)
 
     # Let argparse only parse known args
     args, unknown_args = parser.parse_known_args()
@@ -42,9 +47,12 @@ def main():
     if args.command == "download":
         download.main()
     elif args.command == "preprocess":
-        preprocess.main()
+            # Takes in `args.subcommand` of `train` or `predict`
+            preprocess.main(preprocess_type=args.subcommand)
     elif args.command == "train":
         train.main()
+    elif args.command == "predict":
+        predict.main()
     # elif args.command == "preprocess":
     #     if args.subcommand in ["translate", "rotate"]:
     #         getattr(preprocess, f"{args.subcommand}_main")()

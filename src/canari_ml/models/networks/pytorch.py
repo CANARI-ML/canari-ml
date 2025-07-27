@@ -1,14 +1,17 @@
 """Main module."""
 
+import datetime as dt
+import glob
 import logging
 import os
-import time
+from pathlib import Path
 
 import hydra
 import lightning.pytorch as pl
 import orjson
 import pandas as pd
 import torch
+from hydra.utils import get_class
 from icenet.model.networks.base import BaseNetwork
 from lightning.pytorch.callbacks import (
     ModelCheckpoint,
@@ -344,7 +347,7 @@ class HYDRAPytorchNetwork(BaseNetwork):
             litmodule,
             train_dataloader,
             validation_dataloader,
-            ckpt_path=None,
+            ckpt_path=None, # Outputs to default: HYDRA_OUTPUT_PATH/checkpoints/*.ckpt
         )
 
         # # Save history of metrics
@@ -358,3 +361,110 @@ class HYDRAPytorchNetwork(BaseNetwork):
             # logger.finalize(status="success")
 
         return trainer
+
+    def predict(self, test_set: bool = False):
+        # Module initialisation
+        cfg = self._cfg # HYDRA loaded configuration
+
+        dataset = CANARIMLDataSetTorch(
+            configuration_path=cfg.predict.dataset,
+            batch_size=cfg.predict.batch_size,
+            shuffling=cfg.predict.shuffling,
+            path=os.path.dirname(cfg.predict.dataset),
+        )
+        dl = dataset.get_data_loader()
+
+        dataset = self._dataset
+        lead_time = dataset.lead_time
+        input_shape = (dataset.num_channels, *dataset.shape) # channels, height, width
+
+        # Initialise neural network
+        network_partial = hydra.utils.instantiate(cfg.model.network)
+        network = network_partial(input_channels=input_shape[0], lead_time=lead_time)
+
+        # Initialise Lightning module
+        litmodule_partial = hydra.utils.instantiate(cfg.model.litmodule)
+        metric_import_paths = cfg.model.litmodule.metrics
+        metrics = [dynamic_import(path) for path in metric_import_paths]
+
+        # Assuming default model checkpoint output location
+        checkpoint_path = cfg.predict.checkpoint_path
+        train_run_name = cfg.train.run_name
+        seed = str(cfg.train.seed)
+        if not checkpoint_path:
+            ckpt_dir = Path("outputs") / train_run_name / "training" / seed / "checkpoints"
+            checkpoint_files = sorted(glob.glob(os.path.join(ckpt_dir, "*.ckpt")))
+            # Remove last.ckpt file from ckpts found (only saved for resuming training)
+            last_cpkt = "last.ckpt"
+            for i, checkpoint_file in enumerate(checkpoint_files):
+                if last_cpkt in checkpoint_file:
+                    checkpoint_files.pop(i)
+            if not checkpoint_files:
+                raise FileNotFoundError(f"No checkpoint files found in {ckpt_dir}")
+            checkpoint_path = checkpoint_files[-1]  # use last (latest) by name
+            logging.info(f"Using checkpoint: {checkpoint_path}")
+
+        # Get LightningModule class (not the instance)
+        litmodule_class = get_class(cfg.model.litmodule._target_)
+
+        litmodule = litmodule_class.load_from_checkpoint(
+            checkpoint_path,
+            model=network,
+            metrics=metrics,
+        )
+
+        litmodule.eval()
+
+        output_folder = os.path.join(".", "raw_predictions")
+
+        if not test_set:
+            logging.info("Generating forecast inputs from processed/ files")
+            predict_dates = [
+                dt.datetime.strptime(date, "%Y-%m-%d")
+                for date in cfg.predict.dates
+            ]
+            for date in predict_dates:
+                x, base_ua700, y, sample_weights = dl.generate_sample(date, prediction=True)
+
+                # input_sample shape: (1, channels, height, width)
+                input_sample = torch.tensor(x).unsqueeze(dim=0)
+                # Expand input_sample to match prediction shape's lead time dimension
+                base_ua700_expanded = torch.tensor(base_ua700.data).unsqueeze(dim=-1)
+
+                logging.info("Running prediction {}".format(date))
+                with torch.no_grad():
+                    predictions = litmodule(input_sample).unsqueeze(dim=0)
+
+                    # Add input state to predicted delta to get absolute forecast
+                    absolute_forecast = predictions + base_ua700_expanded
+
+                self.save_prediction(
+                    predictions=absolute_forecast,
+                    dates=[date],
+                    output_folder=output_folder,
+                )
+        else:
+            logging.info("Using test set from network_dataset/ files")
+            # TODO: Need to update this to handle adding `base_ua700` to predictions
+            _, _, test_dataloader = dataset.get_data_loaders(ratio=1.0)
+
+            trainer = pl.Trainer()
+            with torch.no_grad():
+                predictions = trainer.predict(litmodule, dataloaders=test_dataloader)
+
+            source_key = [k for k in dl.config["sources"].keys() if k != "meta"][0]
+
+            test_dates = [
+                dt.datetime.strptime(d, "%Y-%m-%d")
+                for d in dl.config["sources"][source_key]["splits"]["test"]
+            ]
+
+            self.save_prediction(
+                predictions=predictions,
+                dates=test_dates,
+                output_folder=output_folder,
+            )
+
+        # predictions = pl.Trainer().predict(litmodule, dataloaders=prediction_dataloader)
+
+        return

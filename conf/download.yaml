@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - paths
+  - paths: download # Defines output config path
   - override hydra/job_logging: colorlog_custom
   - override hydra/hydra_logging: colorlog
 
@@ -18,8 +18,6 @@ workers: 4
 delete_cache: false
 cache_only: false
 overwrite_config: true
-output:
-  config_path: ${source_data_dir}/data.aws.${frequency}.${hemisphere}.json
 
 vars:
   - zg

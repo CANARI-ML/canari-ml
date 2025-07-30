@@ -1,0 +1,8 @@
+# @package paths
+preprocess:
+  data_root: ${hydra:runtime.cwd}/preprocessed_data
+  preprocessed_data_dir: ${paths.preprocess.data_root}/preprocessed
+  reprojected_data_dir: ${paths.preprocess.preprocessed_data_dir}
+  normalised_data_dir: ${paths.preprocess.preprocessed_data_dir}
+  cache_dir: ${data_root}/cache # Path to store cached training data for speed
+  config_file: ${paths.preprocess.preprocessed_data_dir}/loader.${params.config_name}.json

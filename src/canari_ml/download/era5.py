@@ -53,7 +53,7 @@ def download(cfg: DictConfig):
         var_names=var_names,
         frequency=getattr(Frequency, cfg.frequency),
         output_group_by=getattr(Frequency, cfg.output_group_by),
-        config_path=cfg.output.config_path,
+        config_path=cfg.paths.download.config_file, # Output json config path to use
         overwrite=cfg.overwrite_config,
     )
 

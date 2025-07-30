@@ -12,10 +12,10 @@ import xarray as xr
 from cf_units import Unit
 from dateutil.relativedelta import relativedelta
 from download_toolbox.interface import get_dataset_config_implementation
+from importlib.metadata import version
 from preprocess_toolbox.interface import get_processor_from_source
 from preprocess_toolbox.utils import get_config
 
-from canari_ml import __version__ as canari_ml_version
 from canari_ml.data.dataloader import CANARIMLDataSetTorch
 from canari_ml.data.masks.era5 import Masks
 
@@ -212,6 +212,8 @@ def create_cf_output() -> None:
     # Metadata
     #
     if not args.plain:
+        canari_ml_version = version(canari_ml.__name__)
+
         ground_truth_ds_filename = "data.aws.day.north.json".format(
             hemi_str
         )

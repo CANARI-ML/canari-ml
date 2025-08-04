@@ -3,6 +3,7 @@ import datetime as dt
 import glob
 import logging
 import os
+from importlib.metadata import version
 from pathlib import Path
 
 import numpy as np
@@ -12,12 +13,13 @@ import xarray as xr
 from cf_units import Unit
 from dateutil.relativedelta import relativedelta
 from download_toolbox.interface import get_dataset_config_implementation
-from importlib.metadata import version
 from preprocess_toolbox.interface import get_processor_from_source
 from preprocess_toolbox.utils import get_config
 
+import canari_ml
 from canari_ml.data.dataloader import CANARIMLDataSetTorch
 from canari_ml.data.masks.era5 import Masks
+
 
 def get_prediction_data(
     root: str, name: str, date: dt, return_ensemble_data: bool = False

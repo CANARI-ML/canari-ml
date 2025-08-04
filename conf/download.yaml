@@ -1,3 +1,6 @@
+# Boiler plate - not to be modified
+# _________________________________
+
 defaults:
   - _self_
   - paths: download # Defines output config path
@@ -10,6 +13,13 @@ hydra:
     name: download
   run:
     dir: data/logs/
+  # Allow experiment file defs to work from current run path, and not Python config-path definition
+  searchpath:
+    - file://.
+
+
+# User modifiable parameters
+# __________________________
 
 frequency: DAY
 output_group_by: YEAR
@@ -40,4 +50,3 @@ dates:
     - 1979-01-01
   end:
     - 1979-01-01
-

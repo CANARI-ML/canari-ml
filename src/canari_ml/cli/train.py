@@ -29,7 +29,7 @@ def train_run(cfg: DictConfig) -> None:
     logger.info("Loaded HYDRA Configuration YAML")
     logger.info(f"\n{cfg_yaml}")
 
-    network = HYDRAPytorchNetwork(cfg)
+    network = HYDRAPytorchNetwork(cfg, run_type="train")
     network.train()
 
 

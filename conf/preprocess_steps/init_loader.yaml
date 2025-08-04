@@ -1,9 +1,0 @@
-init_loader_step:
-  name: "Initialise Loader"
-  parent: ${preprocess_main}
-  command: preprocess_loader_init
-  positional:
-    - ${preprocess_main.params.config_name}
-  optional:
-    --config-path: ${preprocess_main.output.config_file}
-  step_hash: ${preprocess_main.hash}

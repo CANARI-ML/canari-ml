@@ -94,7 +94,7 @@ class CANARIMLDataSetTorch(IceNetDataSet):
                 self.add_records(self.base_path)
         else:
             logging.warning(
-                "Running in configuration only mode, tfrecords were not generated for this dataset"
+                "Running in configuration only mode, Zarr cache files are not being generated for this dataset"
             )
 
     def get_data_loaders(self, num_workers=4, ratio=None):
@@ -135,7 +135,10 @@ class CANARIMLDataSetTorch(IceNetDataSet):
 
     def get_data_loader(self,
                         lead_time: object = None,
-                        generate_workers: object = None) -> object:
+                        generate_workers: object = None,
+                        base_path: str = os.path.join(".", "network_datasets"),
+                        dummy: bool = False,
+                        ) -> object:
         """Create an instance of the CANARIDataLoader class.
 
         Args:
@@ -163,5 +166,7 @@ class CANARIMLDataSetTorch(IceNetDataSet):
             loss_weight_days=self._config["loss_weight_days"],
             output_batch_size=self._config["output_batch_size"],
             var_lag_override=self._config["var_lag_override"],
+            base_path=base_path,
+            dummy=dummy,
         )
         return loader

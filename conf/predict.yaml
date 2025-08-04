@@ -1,22 +1,40 @@
+# Boiler plate - not to be modified unless specified
+# __________________________________________________
+
 defaults:
-  - train
   - _self_
+  - model: default # This can be changed to any of the models in conf/model
+  - override hydra/launcher: basic
+  - override hydra/job_logging: colorlog_custom
+  - override hydra/hydra_logging: colorlog
 
 hydra:
   job:
     name: predict
   run:
-    dir: outputs/${train.run_name}/prediction/${predict.run_name}/${train.seed}
+    dir: outputs/${train.run_name}/prediction/${predict.run_name}/${predict.seed}
   sweep:
     dir: outputs/${train.run_name}/prediction/${predict.run_name}
-    subdir: ${train.seed}
+    subdir: ${predict.seed}
+  # Allow experiment file defs to work from current run path, and not Python config-path definition
+  searchpath:
+    - file://.
+
+
+# User modifiable parameters
+# __________________________
+
+train:
+  run_name: ???
 
 predict:
   dataset: ???
   run_name: ???
+  seed: 42
   workers: 4
   batch_size: 4
-  verbose: true
   checkpoint_path: null
   dates:
-    - 2024-12-01
+    - 2000-2-1
+
+verbose: true

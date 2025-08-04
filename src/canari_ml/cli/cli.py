@@ -17,8 +17,9 @@ import argparse
 import sys
 import os
 
-from canari_ml.cli import preprocess, train, predict
+from canari_ml.cli import train, predict
 from canari_ml.download import era5
+from canari_ml.preprocess import preprocess
 
 
 def main():
@@ -48,8 +49,8 @@ def main():
     if args.command == "download":
         era5.download()
     elif args.command == "preprocess":
-            # Takes in `args.subcommand` of `train` or `predict`
-            preprocess.main(preprocess_type=args.subcommand)
+        # Takes in `args.subcommand` of `train` or `predict`
+        preprocess.main(preprocess_type=args.subcommand)
     elif args.command == "train":
         train.main()
     elif args.command == "predict":

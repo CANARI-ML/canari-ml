@@ -32,7 +32,7 @@ def generate_hash(inputs: list) -> str:
     return hash_value
 
 
-def compute_step_hash(nodes: ListConfig) -> str:
+def compute_step_hash(nodes: ListConfig, name: str) -> str:
     """Compute hash from multiple OmegaConf nodes.
 
     Args:
@@ -42,16 +42,19 @@ def compute_step_hash(nodes: ListConfig) -> str:
         Hash generated from the combined input data of all nodes
         converted to dicts.
     """
-    combined_inputs = []
+    if name:
+        return ""
+    else:
+        combined_inputs = []
 
-    for node in nodes:
-        if isinstance(node, str): # This element is a hash
-            combined_inputs.append(node)
-        elif isinstance(node, Container):
-            node_dict = OmegaConf.to_container(node, resolve=True)
-            combined_inputs.append(node_dict)
+        for node in nodes:
+            if isinstance(node, str): # This element is a hash
+                combined_inputs.append(node)
+            elif isinstance(node, Container):
+                node_dict = OmegaConf.to_container(node, resolve=True)
+                combined_inputs.append(node_dict)
 
-    return generate_hash(combined_inputs)
+        return generate_hash(combined_inputs)
 
 
 def compute_loader_hash(steps: ListConfig) -> str:

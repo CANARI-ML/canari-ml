@@ -11,7 +11,7 @@ defaults:
 hydra:
   output_subdir: null
   job:
-    name: ${set_preprocess_type:""}${opt_underscore:${main.name}}_${hashes.combined}
+    name: ${set_preprocess_type:""}${opt_underscore:${main.name}}${opt_underscore:${hashes.combined}}
   run:
     dir: ${paths.preprocess.data_root}/${hydra.job.name}
   # Allow experiment file defs to work from current run path, and not Python config-path definition
@@ -98,13 +98,13 @@ hemisphere: north
 params:
   # Main preprocess config output params
   config_suffix: ${frequency}.${hemisphere}
-  config_name: ${hashes.combined}.${params.config_suffix}
+  config_name: ${hydra:job.name}
 
 hashes:
-  reproject: ${compute_step_hash:[${main}, ${preprocess_type}, ${reproject}]}
-  preprocess_era5: ${compute_step_hash:[${hashes.reproject}, ${preprocess_era5}]}
-  preprocess_mask: ${compute_step_hash:[${hashes.preprocess_era5}, ${preprocess_mask}]}
-  cache: ${compute_step_hash:[${hashes.preprocess_mask}, ${preprocess_cache}]}
-  combined: ${compute_step_hash:[${hashes.preprocess_mask}]}
+  reproject: ${compute_step_hash:[${main}, ${preprocess_type}, ${reproject}], ${main.name}}
+  preprocess_era5: ${compute_step_hash:[${hashes.reproject}, ${preprocess_era5}], ${main.name}}
+  preprocess_mask: ${compute_step_hash:[${hashes.preprocess_era5}, ${preprocess_mask}], ${main.name}}
+  cache: ${compute_step_hash:[${hashes.preprocess_mask}, ${preprocess_cache}], ${main.name}}
+  combined: ${compute_step_hash:[${hashes.preprocess_mask}], ${main.name}}
 
 preprocess_type: train # Automatically handled by Python CLI subcommand

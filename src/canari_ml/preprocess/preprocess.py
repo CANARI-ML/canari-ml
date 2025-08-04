@@ -407,10 +407,9 @@ def main(preprocess_type: str = "train"):
 
     # TODO: Code smell, but, hack. Avoid modifying `sys.argv` in future if I can.
     sys.argv.append(f"++preprocess_type={preprocess_type}")
-    
+
     preprocess_run()
 
 
 if __name__ == "__main__":
     main()
-

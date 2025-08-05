@@ -1,0 +1,3 @@
+defaults:
+  - train
+  - _self_

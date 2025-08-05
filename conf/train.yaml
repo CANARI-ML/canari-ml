@@ -3,10 +3,11 @@
 
 defaults:
   - _self_
-  - model: default      # This can be changed to any of the models in conf/model/
-  - callbacks: default  # This can be changed to any of the callbacks in conf/callbacks/
-  - logger: tensorboard # This can be changed to any of the loggers in conf/logger/
-  - trainer: default    # This can be changed to any of the trainers in conf/trainer/
+  - model: default                  # This can be changed to any of the models in conf/model/
+  - callbacks: default              # This can be changed to any of the callbacks in conf/callbacks/
+  - logger: tensorboard             # This can be changed to any of the loggers in conf/logger/
+  - trainer: default                # This can be changed to any of the trainers in conf/trainer/
+  - hydra_config: default           # Used to set output path for training
   - override hydra/launcher: basic
   - override hydra/job_logging: colorlog_custom
   - override hydra/hydra_logging: colorlog
@@ -14,12 +15,6 @@ defaults:
 hydra:
   job:
     name: train
-  # Do not modify the output paths. They are coded when loading checkpoint for prediction.
-  run:
-    dir: outputs/${train.run_name}/training/${train.seed}
-  sweep:
-    dir: outputs/${train.run_name}/training/
-    subdir: ${train.seed}
   # Allow experiment file defs to work from current run path, and not Python config-path definition
   searchpath:
     - file://.

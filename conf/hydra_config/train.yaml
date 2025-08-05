@@ -1,0 +1,10 @@
+# @package _global_
+
+hydra:
+  # Do not modify the output paths. They are coded when loading checkpoint for prediction.
+  # and, used for output path for netCDF, plotting, etc.
+  run:
+    dir: outputs/${train.run_name}/training/${train.seed}
+  sweep:
+    dir: outputs/${train.run_name}/training/
+    subdir: ${train.seed}

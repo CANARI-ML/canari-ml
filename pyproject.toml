@@ -64,7 +64,7 @@ canari_ml_preprocess_add_region_weights = "canari_ml.data.masks.era5:add_region_
 canari_ml_train = "canari_ml.models.train:pytorch_main"
 canari_ml_predict = "canari_ml.models.predict:main"
 canari_ml_plot_numpy = "canari_ml.plotting.forecast:plot_numpy"
-canari_ml_output = "canari_ml.process.predict:create_cf_output"
+canari_ml_output = "canari_ml.postprocess.predict:create_cf_output"
 canari_ml_plot_ua700_error = "canari_ml.plotting.forecast:plot_ua700_error"
 
 [tool.setuptools.packages.find]

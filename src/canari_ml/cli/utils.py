@@ -2,6 +2,10 @@ import importlib
 import logging
 import subprocess
 
+from omegaconf import DictConfig, OmegaConf
+
+logger = logging.getLogger(__name__)
+
 
 def run_command(command):
     logger = logging.getLogger(__name__)
@@ -28,3 +32,10 @@ def dynamic_import(path):
     module_name, class_name = path.rsplit(".", 1)
     module = importlib.import_module(module_name)
     return getattr(module, class_name)
+
+
+def print_omega_config(cfg: DictConfig):
+    cfg_yaml = OmegaConf.to_yaml(cfg)
+
+    logger.info("Loaded HYDRA Configuration YAML")
+    logger.info(f"\n{cfg_yaml}")

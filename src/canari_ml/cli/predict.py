@@ -4,6 +4,7 @@ from pathlib import Path
 import hydra
 from omegaconf import DictConfig, OmegaConf
 
+from canari_ml.cli.utils import print_omega_config
 from canari_ml.models.networks.pytorch import HYDRAPytorchNetwork
 
 logger = logging.getLogger(__name__)
@@ -24,10 +25,7 @@ def predict_run(cfg: DictConfig) -> None:
         cfg: Hydra auto-loaded configuration.
     """
 
-    cfg_yaml = OmegaConf.to_yaml(cfg)
-
-    logger.info("Loaded HYDRA Configuration YAML")
-    logger.info(f"\n{cfg_yaml}")
+    print_omega_config(cfg)
 
     network = HYDRAPytorchNetwork(cfg, run_type="predict")
     network.predict()

@@ -28,9 +28,11 @@ from omegaconf import DictConfig
 
 from canari_ml.cli.utils import dynamic_import
 from canari_ml.data.dataloader import CANARIMLDataSetTorch
+from canari_ml.preprocess.utils import symlink
 
 from ...lightning.checkpoints import ModelCheckpointOnImprovement
 
+CACHE_SYMLINK_DIR = "cache_dir"
 
 class BaseNetwork:
     """
@@ -75,6 +77,7 @@ class BaseNetwork:
         self._dataset = dataset
         self._run_name = run_name
         self._seed = seed
+        self._output_dir: str = ""
 
         self._callbacks = (
             self.get_default_callbacks()
@@ -108,6 +111,14 @@ class BaseNetwork:
 
     def get_default_callbacks(self):
         return list()
+
+    def create_cache_symlink(self, target_path: str):
+        # Create symlink to cache dir output in train/pred output location, e.g.:
+        # outputs/{train_name}/training/42/cache_dir
+        symlink_path = os.path.join(self._output_dir, CACHE_SYMLINK_DIR)
+        symlink_dir = os.path.dirname(symlink_path)
+        relative_target = os.path.relpath(target_path, symlink_dir)
+        os.symlink(relative_target, symlink_path)
 
     def save_prediction(
         self, predictions: torch.tensor, dates: list[dt.datetime], output_folder: str
@@ -205,34 +216,35 @@ class HYDRAPytorchNetwork(BaseNetwork):
     ):
         self._cfg = cfg
         verbose=cfg.verbose
-        self._output_dir = HydraConfig.get().runtime.output_dir
-        logging.info(f"Working directory: {self._output_dir}")
 
         if run_type == "train":
-            train_cache_path = os.path.dirname(cfg.train.dataset)
-            self._train_cache_path = train_cache_path
+            cache_path = os.path.dirname(cfg.train.dataset)
+            self._train_cache_path = cache_path
             # Get directory where cached data is stored for training
             with open(cfg.train.dataset) as f:
                 dataset_json = f.read()
             parsed_json = orjson.loads(dataset_json)
             dataset_identifier = parsed_json["identifier"]
+            # Path to cached data output for training
             network_folder = os.path.join(
-                train_cache_path, dataset_identifier
+                cache_path, dataset_identifier
             )
             dataset = CANARIMLDataSetTorch(
                 configuration_path=cfg.train.dataset,
                 batch_size=cfg.train.batch_size,
                 shuffling=cfg.train.shuffling,
-                path=train_cache_path,
+                path=cache_path,
             )
             seed = cfg.train.seed
         elif run_type == "predict":
+            cache_path = os.path.dirname(cfg.predict.dataset)
+            self._predict_cache_path = cache_path
             network_folder = None
             dataset = CANARIMLDataSetTorch(
                 configuration_path=cfg.predict.dataset,
                 batch_size=cfg.predict.batch_size,
                 shuffling=False,
-                path=os.path.dirname(cfg.predict.dataset),
+                path=cache_path,
             )
             seed = cfg.predict.seed
         run_name = cfg.train.run_name
@@ -245,6 +257,9 @@ class HYDRAPytorchNetwork(BaseNetwork):
         }
 
         super().__init__(**super_kwargs)
+
+        self._output_dir = HydraConfig.get().runtime.output_dir
+        logging.info(f"Working directory: {self._output_dir}")
 
         self._verbose = verbose
 
@@ -326,6 +341,10 @@ class HYDRAPytorchNetwork(BaseNetwork):
         if isinstance(logger, WandbLogger):
             logger.experiment.finish()
             # logger.finalize(status="success")
+
+        # Create a symlink to the dataset used for this run to output dir
+        # Will make further postprocessing much easier for user
+        self.create_cache_symlink(target_path=self._train_cache_path)
 
         return trainer
 
@@ -431,5 +450,9 @@ class HYDRAPytorchNetwork(BaseNetwork):
                 dates=test_dates,
                 output_folder=output_folder,
             )
+
+        # Create a symlink to the dataset used for this run to output dir
+        # Will make further postprocessing much easier for user
+        self.create_cache_symlink(target_path=self._predict_cache_path)
 
         return

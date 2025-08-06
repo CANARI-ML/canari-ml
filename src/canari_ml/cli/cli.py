@@ -17,7 +17,7 @@ import argparse
 import sys
 import os
 
-from canari_ml.cli import train, predict
+from canari_ml.cli import train, predict, postprocess
 from canari_ml.download import era5
 from canari_ml.preprocess import preprocess
 
@@ -41,6 +41,13 @@ def main():
     subparsers.add_parser("train", add_help=False)
     subparsers.add_parser("predict", add_help=False)
 
+    # Post-processing commands
+    postprocess_parser = subparsers.add_parser("postprocess", add_help=True)
+    postprocess_subparsers = postprocess_parser.add_subparsers(dest="subcommand")
+    postprocess_subcommands = ["netcdf"]
+    for cmd in postprocess_subcommands:
+        postprocess_subparsers.add_parser(cmd, add_help=False)
+
     # Let argparse only parse known args
     args, unknown_args = parser.parse_known_args()
 
@@ -55,16 +62,9 @@ def main():
         train.main()
     elif args.command == "predict":
         predict.main()
-    # elif args.command == "preprocess":
-    #     if args.subcommand in ["translate", "rotate"]:
-    #         getattr(preprocess, f"{args.subcommand}_main")()
-    #     else:
-    #         print(f"Usage: {prog_name} preprocess {{translate,rotate}} [HYDRA_ARGS]")
-    #         sys.exit(1)
-    else:
-        commands = ",".join(list(subparsers.choices.keys()))
-        print(f"Usage: {prog_name} {{commands}} [HYDRA_ARGS]")
-        sys.exit(1)
+    elif args.command == "postprocess":
+        if args.subcommand in postprocess_subcommands:
+            getattr(postprocess, f"out_{args.subcommand}")()
 
 
 if __name__ == "__main__":

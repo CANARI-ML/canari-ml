@@ -6,6 +6,7 @@ import os
 from importlib.metadata import version
 from pathlib import Path
 
+import dask.array as da
 import numpy as np
 import orjson
 import pandas as pd
@@ -13,16 +14,19 @@ import xarray as xr
 from cf_units import Unit
 from dateutil.relativedelta import relativedelta
 from download_toolbox.interface import get_dataset_config_implementation
+from hydra.core.hydra_config import HydraConfig
+from omegaconf import DictConfig
 from preprocess_toolbox.interface import get_processor_from_source
 from preprocess_toolbox.utils import get_config
 
 import canari_ml
 from canari_ml.data.dataloader import CANARIMLDataSetTorch
 from canari_ml.data.masks.era5 import Masks
+from canari_ml.models.networks.pytorch import CACHE_SYMLINK_DIR
 
 
 def get_prediction_data(
-    root: str, name: str, date: dt, return_ensemble_data: bool = False
+    predict_dir_root: str, date: dt.date, return_ensemble_data: bool = False
 ) -> tuple:
     """
     Get prediction data from ensemble of numpy files for given date.
@@ -44,19 +48,21 @@ def get_prediction_data(
     logging.info("Post-processing {}".format(date))
 
     glob_str = os.path.join(
-        root, "results", "predict", name, "*", date.strftime("%Y_%m_%d.npy")
+        predict_dir_root, "*", "raw_predictions", date.strftime("%Y_%m_%d.npy")
     )
+
+    logging.debug(f"Glob string for prediction files:\n {glob_str}")
 
     np_files = glob.glob(glob_str)
     if not len(np_files):
         logging.warning("No files found")
         return None
 
-    data = [np.load(f) for f in np_files]
-    data = np.array(data)
+    data = [np.load(f).squeeze(0) for f in np_files]
+    data = np.asarray(data)
     ens_members = data.shape[0]
 
-    logging.debug("Data read from disk: {} from: {}".format(data.shape, np_files))
+    logging.info("Data read from disk: {} from: {}".format(data.shape, np_files))
 
     data_mean = np.stack([data.mean(axis=0), data.std(axis=0)], axis=-1).squeeze()
 
@@ -131,11 +137,17 @@ def denormalise_ua700(
     loader_config = get_config(loader_config_file)
 
     for source in loader_config["sources"]:
-        logging.debug(
+        logging.info(
             f"{source} -> {loader_config['sources'][source]['implementation']}"
         )
         processed_config_file = loader_config["filenames"][source]
         processed_config = get_config(processed_config_file)["data"]
+
+        # Point to symlinked directory for reference training dataset
+        # used to created the prediction dataset, and to use here again
+        # for denormalising the raw pytorch prediction output.
+        ref_procdir = os.path.join(processed_config["base_path"], "ref_training_dataset")
+        processed_config |= {"ref_procdir": ref_procdir}
         processed_implementation = get_processor_from_source(
             identifier=source, source_cfg=processed_config
         )
@@ -151,7 +163,7 @@ def denormalise_ua700(
     raise KeyError(f"`{var_name}` variable not found in processed files")
 
 
-def create_cf_output() -> None:
+def create_cf_output(cfg: DictConfig) -> None:
     """
     Create a CF-compliant NetCDF file from prediction outputs.
 
@@ -166,12 +178,20 @@ def create_cf_output() -> None:
         Based on `create_cf_output` class from the IceNet library.
             https://github.com/icenet-ai/icenet/blob/6caa234907904bfa76b8724d8c83cd989230494a/icenet/process/predict.py#L122
     """
-    args = get_args()
 
-    with open(args.datefile_csv, "r") as f:
-        dates = [dt.date(*[int(v) for v in s.split("-")]) for s in f.read().split()]
+    plain = cfg.nc.plain
+    dates = [dt.date(*[int(v) for v in s.split("-")]) for s in cfg.predict.dates]
 
-    dataset_config_file = os.path.join(args.root, f"dataset_config.{args.dataset}.json")
+    # Predict dir for default seed location
+    # e.g. outputs/primo/prediction/testing/42
+    predict_dir = HydraConfig.get().runtime.output_dir
+
+    # Point to symlinked cache directory - use config file to get a reference netCDF
+    # to parse metadata from
+    cache_dir = os.path.join(predict_dir, CACHE_SYMLINK_DIR)
+
+    # Get config file from cache dir
+    dataset_config_file = glob.glob(os.path.join(cache_dir, "*.json"))[0]
 
     ds = CANARIMLDataSetTorch(dataset_config_file)
     dl = ds.get_data_loader()
@@ -180,21 +200,42 @@ def create_cf_output() -> None:
     # Use reference regridded/reprojected dataset with rioxarray projection details
     ds_ref = get_ref_ds(ds)
 
-    arr, ens_members = zip(
-        *[get_prediction_data(args.root, args.prediction_name, date) for date in dates]
+    # Go to one level above to get to the root of the output directory
+    # e.g. outputs/primo/prediction/testing/
+    predict_dir_root = os.path.dirname(predict_dir)
+
+    # arr, ens_members
+    data_mean, data, ens_members = zip(
+        *[
+            get_prediction_data(
+                predict_dir_root=predict_dir_root, date=date, return_ensemble_data=True
+            )
+            for date in dates
+        ]
     )
     ens_members = list(ens_members)
-    arr = np.array(arr)
+    data = np.array(data)
+    data_mean = np.array(data_mean)
 
-    logging.info("Dataset arr shape: {}".format(arr.shape))
+    logging.info("Dataset arr shape: {}".format(data.shape))
 
     # Get ensemble mean (denormalised) and std dev
     dataset_config = get_config(dataset_config_file)
-    loader_config_file = Path(dataset_config["loader_config"]).name
-    ua700_mean = denormalise_ua700(loader_config_file, arr[..., 0], var_name="ua700")
-    ua700_stddev = arr[..., 1]
+    loader_config_file = Path(dataset_config["loader_config"])
+    ua700_mean = denormalise_ua700(
+        loader_config_file, data_mean[..., 0], var_name="ua700"
+    )
+    ua700_stddev = data_mean[..., 1]
+
+    ua700 = da.zeros_like(data)
+
+    for i, ensemble_member in enumerate(ens_members):
+        ua700[i, ...] = denormalise_ua700(
+            loader_config_file, ensemble_member, var_name="ua700"
+        )
 
     data_vars = dict(
+        ua700=(["ensemble", "time", "y", "x", "leadtime"], ua700),
         ua700_mean=(["time", "y", "x", "leadtime"], ua700_mean),
         ua700_stddev=(["time", "y", "x", "leadtime"], ua700_stddev),
         ensemble_members=(["time"], ens_members),
@@ -205,7 +246,8 @@ def create_cf_output() -> None:
 
     coords = dict(
         time=[pd.Timestamp(d) for d in dates],
-        leadtime=np.arange(1, arr.shape[3] + 1, 1),
+        leadtime=np.arange(1, data_mean.shape[3] + 1, 1),
+        # ensemble=len(ens_members),
     )
 
     extra_attrs = dict()
@@ -213,15 +255,8 @@ def create_cf_output() -> None:
     ##
     # Metadata
     #
-    if not args.plain:
+    if not plain:
         canari_ml_version = version(canari_ml.__name__)
-
-        ground_truth_ds_filename = "data.aws.day.north.json".format(
-            hemi_str
-        )
-        ground_truth_ds_config = get_dataset_config_implementation(
-            ground_truth_ds_filename
-        )
 
         lists_of_fcast_dates = [
             [
@@ -229,13 +264,13 @@ def create_cf_output() -> None:
                     date
                     + relativedelta(
                         **{
-                            f"{ground_truth_ds_config.frequency.attribute}s": int(
+                            f"{cfg.frequency.lower()}s": int(
                                 lead_idx
                             )
-                        }
+                        } # type: ignore
                     )
                 )
-                for lead_idx in np.arange(1, arr.shape[3] + 1, 1)
+                for lead_idx in np.arange(1, data_mean.shape[3] + 1, 1)
             ]
             for date in dates
         ]
@@ -246,7 +281,6 @@ def create_cf_output() -> None:
         coords["forecast_date"] = (("time", "leadtime"), lists_of_fcast_dates)
 
         extra_attrs = dict(
-            canari_ml_ground_truth_ds=ground_truth_ds_filename,
             canari_ml_mask_implementation="canari_ml.data.masks.era5:Masks",
             # spatial_resolution=ref_cube.attributes["spatial_resolution"],
             # Use ISO 8601:2004 duration format, preferably the extended format
@@ -317,7 +351,7 @@ def create_cf_output() -> None:
     ##
     # Variable attributes
     #
-    if not args.plain:
+    if not plain:
         xarr.time.attrs = dict(
             long_name="forecast initialisation time",
             standard_name="forecast_reference_time",
@@ -372,16 +406,13 @@ def create_cf_output() -> None:
             units="1",
         )
 
-        # dataset_config = get_config(dataset_config_file)
-        # loader_config_file = Path(dataset_config["loader_config"]).name
-        # xarr["ua700_mean"] = denormalise_ua700(
-        #     loader_config_file, xarr.ua700_mean, var_name="ua700"
-        # )
-
         # TODO: split into daily files
-        output_path = os.path.join(args.output_dir, f"{args.prediction_name}.nc")
-        logging.info("Saving to {}".format(output_path))
-        xarr.to_netcdf(output_path)
+        output_path = os.path.join(predict_dir_root, "ensemble", "netcdf")
+        output_file = os.path.join(output_path, f"{cfg.nc.name}.nc")
+        if not Path(output_path).exists():
+            os.makedirs(output_path, exist_ok=True)
+        logging.info("Saving to {}".format(output_file))
+        xarr.to_netcdf(output_file)
 
 
 def get_args():

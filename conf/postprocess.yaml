@@ -1,0 +1,35 @@
+# Boiler plate - not to be modified unless specified
+# __________________________________________________
+
+defaults:
+  - _self_
+  - hydra_config: predict             # Used to get path to predictions
+  - override hydra/launcher: basic
+  - override hydra/job_logging: colorlog_custom
+  - override hydra/hydra_logging: colorlog
+
+hydra:
+  job:
+    name: postprocess
+  # Allow experiment file defs to work from current run path, and not Python config-path definition
+  searchpath:
+    - file://.
+
+
+# User modifiable parameters
+# __________________________
+
+train:
+  run_name: ???
+
+predict:
+  run_name: ???
+  seed: 42 # Dummy: used for setting up prediction path (hydra_config/predict.yaml) - postprocess traverses all ensemble members
+  dates:
+    - 2000-2-1
+
+nc:
+  name: prediction_file
+  plain: false
+
+frequency: DAY

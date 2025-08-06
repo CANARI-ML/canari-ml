@@ -160,17 +160,24 @@ def preprocess_era5(cfg: DictConfig) -> None:
     additional_args = get_date_splits(cfg)
 
     if cfg.preprocess_type == "train":
+        # No `normalisation.{scale,mean}/` path needed when preprocessing for training
+        train_ref = None
+        normalisation_path = None
         more_args = {
             "processing_splits": ["train"],
-            "ref": None,
+            "ref": train_ref,
         }
     else:
         # TODO: For prediction, need to add reference file for normalisation.
+        # Reference loader to use same normalisations as the training dataset
+        # This should point to the dir that holds `normalisation.scale/`
+        # e.g.: +train_ref=preprocessed_data/preprocessed/02_normalised_small_test/era5/normalisation.scale
+        train_ref = cfg.train_ref
+        normalisation_path = Path(train_ref).parents[0]
+
         more_args = {
             "processing_splits": None,
-            # Reference loader to use same normalisations as the training dataset
-            # This should point to the dir that holds `normalisation.scale/`
-            "ref": cfg.train_ref,
+            "ref": normalisation_path,
         }
 
     # Convert to dict, and merge
@@ -207,6 +214,16 @@ def preprocess_era5(cfg: DictConfig) -> None:
     target = cfg.paths.preprocess_era5.destination_path
     run_dir = HydraConfig.get().run.dir
     symlink(target, run_dir)
+
+    if train_ref:
+        # Symlink path to normalisation scale/mean for postprocessing use
+        abs_normalisation_path = os.path.abspath(normalisation_path)
+        src = abs_normalisation_path
+        dst = os.path.join(target, "ref_training_dataset")
+        logging.info(
+            f"Creating symlink to normalisation scale/mean for postprocessing from {src} -> {dst}"
+        )
+        os.symlink(src, dst)
 
 
 def preprocess_loader_init(cfg):

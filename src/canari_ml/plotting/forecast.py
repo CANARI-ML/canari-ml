@@ -1,5 +1,7 @@
+import datetime as dt
 import logging
 import os
+from pathlib import Path
 
 import cartopy.crs as ccrs
 import imageio_ffmpeg as ffmpeg
@@ -11,16 +13,20 @@ import pandas as pd
 import pyproj
 import xarray as xr
 from download_toolbox.interface import get_dataset_config_implementation
+from hydra.core.hydra_config import HydraConfig
 from matplotlib.animation import FuncAnimation
 from matplotlib.widgets import Button, Slider
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from omegaconf import DictConfig
 
+from canari_ml.postprocess.predict import get_nc_path, get_predict_dir
 from canari_ml.preprocess.reproject import ease2_reference_grid_setup, reproject_dataset
 
 from .cli import ForecastPlotArgParser, PlottingNumpyArgParser
 from .utils import get_axes, get_forecast_obs_data
 
 cm = mpl.colormaps
+mpl.use('TkAgg')
 
 # Set Matplotlib's ffmpeg executable path to the one from imageio_ffmpeg
 ffmpeg_path = ffmpeg.get_ffmpeg_exe()
@@ -316,25 +322,31 @@ def plot_numpy():
     plot_numpy_prediction(args.numpy_file)
 
 
-def plot_ua700_error():
+def plot_ua700_error(cfg: DictConfig):
     """
     Produces plot comparing ua700 forecast and ground truth.
     """
-    ap = ForecastPlotArgParser()
-    args = ap.parse_args()
 
-    fc, obs, spatial_ref = get_forecast_obs_data(
-        args.forecast_file, args.obs_data_config, args.forecast_date
-    )
-    ds_config = get_dataset_config_implementation(args.obs_data_config)
+    predict_dir, predict_dir_root = get_predict_dir()
+    nc_path, nc_file = get_nc_path(predict_dir_root, cfg.postprocess.netcdf.name)
+    # dates = [dt.date(*[int(v) for v in s.split("-")]) for s in cfg.predict.dates]
+    out_video_path = os.path.join(predict_dir_root, "plots", f"{cfg.postprocess.plot.name}.mp4")
 
-    logging.info("Plotting ua700 error")
+    source_data_config_file = cfg.paths.download.config_file
 
-    ua700_error_plot(
-        fc_da=fc,
-        obs_da=obs,
-        obs_ds_config=ds_config,
-        output_path=args.output_path,
-        crs_wkt=spatial_ref["crs_wkt"],
-        show_plot=args.show_plot,
-    )
+    for date in cfg.predict.dates:
+        fc, obs, spatial_ref = get_forecast_obs_data(
+            Path(nc_file), source_data_config_file, date
+        )
+
+        ds_config = get_dataset_config_implementation(source_data_config_file)
+        logging.info("Plotting ua700 results")
+
+        ua700_error_plot(
+            fc_da=fc,
+            obs_da=obs,
+            obs_ds_config=ds_config,
+            output_path=Path(out_video_path),
+            crs_wkt=spatial_ref["crs_wkt"],
+            show_plot=cfg.postprocess.plot.show_plot,
+        )

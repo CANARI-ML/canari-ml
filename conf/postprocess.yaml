@@ -28,8 +28,5 @@ predict:
   dates:
     - 2000-2-1
 
-nc:
-  name: prediction_file
-  plain: false
-
 frequency: DAY
+hemisphere: north

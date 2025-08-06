@@ -25,6 +25,33 @@ from canari_ml.data.masks.era5 import Masks
 from canari_ml.models.networks.pytorch import CACHE_SYMLINK_DIR
 
 
+def get_nc_path(predict_dir_root: str, file_name: str) -> tuple[str, str]:
+    """
+    Get the path to the netCDF file for a given model ensemble.
+
+    Arguments:
+        predict_dir_root: The root directory of the prediction outputs.
+        file_name: The name of the netCDF file to retrieve.
+
+    Returns:
+        A tuple containing the output path and the output file.
+    """
+    output_path = os.path.join(predict_dir_root, "ensemble", "netcdf")
+    output_file = os.path.join(output_path, f"{file_name}.nc")
+    return output_path, output_file
+
+
+def get_predict_dir():
+    # Predict dir for default seed location
+    # e.g. outputs/primo/prediction/testing/42
+    predict_dir = HydraConfig.get().runtime.output_dir
+
+    # Go to one level above to get to the root of the output directory
+    # e.g. outputs/primo/prediction/testing/
+    predict_dir_root = os.path.dirname(predict_dir)
+    return predict_dir, predict_dir_root
+
+
 def get_prediction_data(
     predict_dir_root: str, date: dt.date, return_ensemble_data: bool = False
 ) -> tuple:
@@ -179,12 +206,10 @@ def create_cf_output(cfg: DictConfig) -> None:
             https://github.com/icenet-ai/icenet/blob/6caa234907904bfa76b8724d8c83cd989230494a/icenet/process/predict.py#L122
     """
 
-    plain = cfg.nc.plain
+    plain = cfg.postprocess.netcdf.plain
     dates = [dt.date(*[int(v) for v in s.split("-")]) for s in cfg.predict.dates]
 
-    # Predict dir for default seed location
-    # e.g. outputs/primo/prediction/testing/42
-    predict_dir = HydraConfig.get().runtime.output_dir
+    predict_dir, predict_dir_root = get_predict_dir()
 
     # Point to symlinked cache directory - use config file to get a reference netCDF
     # to parse metadata from
@@ -200,11 +225,7 @@ def create_cf_output(cfg: DictConfig) -> None:
     # Use reference regridded/reprojected dataset with rioxarray projection details
     ds_ref = get_ref_ds(ds)
 
-    # Go to one level above to get to the root of the output directory
-    # e.g. outputs/primo/prediction/testing/
-    predict_dir_root = os.path.dirname(predict_dir)
-
-    # arr, ens_members
+    # Get prediction data
     data_mean, data, ens_members = zip(
         *[
             get_prediction_data(
@@ -407,8 +428,7 @@ def create_cf_output(cfg: DictConfig) -> None:
         )
 
         # TODO: split into daily files
-        output_path = os.path.join(predict_dir_root, "ensemble", "netcdf")
-        output_file = os.path.join(output_path, f"{cfg.nc.name}.nc")
+        output_path, output_file = get_nc_path(predict_dir_root, cfg.postprocess.netcdf.name)
         if not Path(output_path).exists():
             os.makedirs(output_path, exist_ok=True)
         logging.info("Saving to {}".format(output_file))

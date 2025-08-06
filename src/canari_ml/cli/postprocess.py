@@ -2,9 +2,11 @@ import logging
 from pathlib import Path
 
 import hydra
+from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig
 
 from canari_ml.cli.utils import print_omega_config
+from canari_ml.plotting.forecast import plot_ua700_error
 from canari_ml.postprocess.predict import create_cf_output
 
 logger = logging.getLogger(__name__)
@@ -15,8 +17,13 @@ logger = logging.getLogger(__name__)
     config_path=str(Path(__file__).parent / "../../../conf"),
     config_name="postprocess",
 )
-def out_netcdf(cfg: DictConfig):
+def main(cfg: DictConfig):
     print_omega_config(cfg)
 
-    create_cf_output(cfg)
+    # Checking what override was provided by `e.g.: +postprocess=plot_ua700`
+    selected_postprocess = HydraConfig.get().runtime.choices.get("postprocess")
 
+    if selected_postprocess == "netcdf":
+        create_cf_output(cfg)
+    elif selected_postprocess == "plot_ua700":
+        plot_ua700_error(cfg)

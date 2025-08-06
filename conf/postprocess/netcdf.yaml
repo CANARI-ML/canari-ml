@@ -1,0 +1,3 @@
+netcdf:
+  name: prediction_file
+  plain: false

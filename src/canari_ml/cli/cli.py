@@ -17,7 +17,7 @@ import argparse
 import sys
 import os
 
-from canari_ml.cli import train, predict, postprocess
+from canari_ml.cli import train, predict, postprocess, plot
 from canari_ml.download import era5
 from canari_ml.preprocess import preprocess
 
@@ -42,11 +42,18 @@ def main():
     subparsers.add_parser("predict", add_help=False)
 
     # Post-processing commands
-    postprocess_parser = subparsers.add_parser("postprocess", add_help=True)
-    postprocess_subparsers = postprocess_parser.add_subparsers(dest="subcommand")
-    postprocess_subcommands = ["netcdf"]
-    for cmd in postprocess_subcommands:
-        postprocess_subparsers.add_parser(cmd, add_help=False)
+    postprocess_parser = subparsers.add_parser("postprocess", add_help=False)
+    # postprocess_subparsers = postprocess_parser.add_subparsers(dest="subcommand")
+    # postprocess_subcommands = ["netcdf"]
+    # for cmd in postprocess_subcommands:
+    #     postprocess_subparsers.add_parser(cmd, add_help=False)
+
+    # Plotting commands
+    plot_parser = subparsers.add_parser("plot", add_help=True)
+    plot_subparsers = plot_parser.add_subparsers(dest="subcommand")
+    plot_subcommands = ["ua700"]
+    for cmd in plot_subcommands:
+        plot_subparsers.add_parser(cmd, add_help=False)
 
     # Let argparse only parse known args
     args, unknown_args = parser.parse_known_args()
@@ -63,8 +70,13 @@ def main():
     elif args.command == "predict":
         predict.main()
     elif args.command == "postprocess":
-        if args.subcommand in postprocess_subcommands:
-            getattr(postprocess, f"out_{args.subcommand}")()
+        postprocess.main()
+        # if args.subcommand in postprocess_subcommands:
+        #     getattr(postprocess, f"out_{args.subcommand}")()
+    elif args.command == "plot":
+        plot.main()
+        # if args.subcommand in plot_subcommands:
+        #     getattr(plot, f"plot_{args.subcommand}")()
 
 
 if __name__ == "__main__":

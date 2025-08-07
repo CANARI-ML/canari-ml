@@ -251,7 +251,7 @@ class HYDRAPytorchNetwork(BaseNetwork):
                 path=cache_path,
             )
             seed = cfg.predict.seed
-        run_name = cfg.train.run_name
+        run_name = cfg.train.name
 
         super_kwargs = {
             "dataset": dataset,
@@ -377,7 +377,7 @@ class HYDRAPytorchNetwork(BaseNetwork):
 
         # Assuming default model checkpoint output location
         checkpoint_path = cfg.predict.checkpoint_path
-        train_run_name = cfg.train.run_name
+        train_run_name = cfg.train.name
         seed = str(cfg.predict.seed)
         if not checkpoint_path:
             ckpt_dir = Path("outputs") / train_run_name / "training" / seed / "checkpoints"

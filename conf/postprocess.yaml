@@ -26,10 +26,12 @@ postprocess:
   name: postprocess   # Used as part of path to run in (i.e., where netCDF can end up)
 
 train:
-  run_name: ???
+  name: ???
 
 predict:
-  run_name: ???
+  name: ???
+  # Unlike preceding configs, in here, seed is a list
+  # Not meant to be run with multirun, it generates ensemble mean and outputs.
   seed:
     - 42
   dates:

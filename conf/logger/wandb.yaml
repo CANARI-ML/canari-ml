@@ -2,11 +2,11 @@ _target_: lightning.pytorch.loggers.WandbLogger
 project: ${train.wandb_project}
 group: ${train.wandb_group}
 job_type: train
-name: ${train.run_name}_${train.seed}
+name: ${train.name}_${train.seed}
 save_dir: "./wandb_logs"
 log_model: true
 tags:
-  - name=${train.run_name}
+  - name=${train.name}
   - seed=seed_${train.seed}
   - model=${model.model_name}
 reinit: create_new  # Shorthand for the “reinit” setting. Determines the behavior of wandb.init() when a run is active.

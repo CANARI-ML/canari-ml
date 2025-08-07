@@ -23,11 +23,11 @@ hydra:
 # __________________________
 
 train:
-  run_name: ???
+  name: ???
 
 predict:
   dataset: ???
-  run_name: ???
+  name: ???
   seed: 42
   workers: 4
   batch_size: 4

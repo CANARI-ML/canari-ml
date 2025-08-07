@@ -27,13 +27,12 @@ postprocess:
   name: postprocess   # Used as part of netCDF path to load from
 
 train:
-  run_name: ???
+  name: ???
 
 predict:
-  run_name: ???
+  name: ???
   dates:
     - 2000-2-1
 
 frequency: DAY
 hemisphere: north
-

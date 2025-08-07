@@ -5,6 +5,7 @@ defaults:
   - _self_
   - model: default          # This can be changed to any of the models in conf/model
   - hydra_config: predict   # Used to set output path for prediction
+  - paths: predict
   - override hydra/launcher: basic
   - override hydra/job_logging: colorlog_custom
   - override hydra/hydra_logging: colorlog

@@ -49,11 +49,11 @@ def main():
     #     postprocess_subparsers.add_parser(cmd, add_help=False)
 
     # Plotting commands
-    plot_parser = subparsers.add_parser("plot", add_help=True)
-    plot_subparsers = plot_parser.add_subparsers(dest="subcommand")
-    plot_subcommands = ["ua700"]
-    for cmd in plot_subcommands:
-        plot_subparsers.add_parser(cmd, add_help=False)
+    plot_parser = subparsers.add_parser("plot", add_help=False)
+    # plot_subparsers = plot_parser.add_subparsers(dest="subcommand")
+    # plot_subcommands = ["ua700"]
+    # for cmd in plot_subcommands:
+    #     plot_subparsers.add_parser(cmd, add_help=False)
 
     # Let argparse only parse known args
     args, unknown_args = parser.parse_known_args()

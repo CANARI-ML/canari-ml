@@ -3,6 +3,8 @@
 
 defaults:
   - _self_
+  - postprocess: netcdf               # Used to get path to netCDF
+  - paths/download                    # Used to get path to source downloaded data config file
   - paths/postprocess                 # Used to get path to output postprocessed data to & pred output
   - override hydra/launcher: basic
   - override hydra/job_logging: colorlog_custom
@@ -10,10 +12,9 @@ defaults:
 
 hydra:
   job:
-    name: postprocess
-  # Do not modify the output paths. They are used for output path for netCDF, plotting, etc.
+    name: plot
   run:
-    dir: ${paths.postprocess.destination_path}
+    dir: ${paths.postprocess.destination_path}/plots
   # Allow experiment file defs to work from current run path, and not Python config-path definition
   searchpath:
     - file://.
@@ -23,18 +24,16 @@ hydra:
 # __________________________
 
 postprocess:
-  name: postprocess   # Used as part of path to run in (i.e., where netCDF can end up)
+  name: postprocess   # Used as part of netCDF path to load from
 
 train:
   run_name: ???
 
 predict:
   run_name: ???
-  seed:
-    - 42
   dates:
     - 2000-2-1
 
-
 frequency: DAY
 hemisphere: north
+

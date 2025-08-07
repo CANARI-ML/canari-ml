@@ -114,11 +114,15 @@ class BaseNetwork:
 
     def create_cache_symlink(self, target_path: str):
         # Create symlink to cache dir output in train/pred output location, e.g.:
-        # outputs/{train_name}/training/42/cache_dir
-        symlink_path = os.path.join(self._output_dir, CACHE_SYMLINK_DIR)
-        symlink_dir = os.path.dirname(symlink_path)
-        relative_target = os.path.relpath(target_path, symlink_dir)
-        os.symlink(relative_target, symlink_path)
+        # self._output_dir = outputs/{train_name}/training/42/cache_dir
+        # symlink_path = outputs/{train_name}/training/cache_dir
+        symlink_path = os.path.join(
+            os.path.dirname(self._output_dir), CACHE_SYMLINK_DIR
+        )
+        if os.path.realpath(target_path) != os.path.realpath(symlink_path):
+            symlink_dir = os.path.dirname(symlink_path)
+            relative_target = os.path.relpath(target_path, symlink_dir)
+            os.symlink(relative_target, symlink_path)
 
     def save_prediction(
         self, predictions: torch.tensor, dates: list[dt.datetime], output_folder: str
@@ -301,7 +305,7 @@ class HYDRAPytorchNetwork(BaseNetwork):
         wandb_run_id = None
         if isinstance(logger, WandbLogger) and logger.experiment is not None:
             wandb_run_id = logger.experiment.id
-            print("W&B Run:", logger.experiment.name)
+            logging.info(f"W&B Run: {logger.experiment.name}")
 
         # Trainer set-up
         trainer_kwargs = {

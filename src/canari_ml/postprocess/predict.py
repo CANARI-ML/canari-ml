@@ -1,6 +1,7 @@
 import argparse
 import datetime as dt
 import glob
+import itertools
 import logging
 import os
 from importlib.metadata import version
@@ -25,35 +26,8 @@ from canari_ml.data.masks.era5 import Masks
 from canari_ml.models.networks.pytorch import CACHE_SYMLINK_DIR
 
 
-def get_nc_path(predict_dir_root: str, file_name: str) -> tuple[str, str]:
-    """
-    Get the path to the netCDF file for a given model ensemble.
-
-    Arguments:
-        predict_dir_root: The root directory of the prediction outputs.
-        file_name: The name of the netCDF file to retrieve.
-
-    Returns:
-        A tuple containing the output path and the output file.
-    """
-    output_path = os.path.join(predict_dir_root, "ensemble", "netcdf")
-    output_file = os.path.join(output_path, f"{file_name}.nc")
-    return output_path, output_file
-
-
-def get_predict_dir():
-    # Predict dir for default seed location
-    # e.g. outputs/primo/prediction/testing/42
-    predict_dir = HydraConfig.get().runtime.output_dir
-
-    # Go to one level above to get to the root of the output directory
-    # e.g. outputs/primo/prediction/testing/
-    predict_dir_root = os.path.dirname(predict_dir)
-    return predict_dir, predict_dir_root
-
-
 def get_prediction_data(
-    predict_dir_root: str, date: dt.date, return_ensemble_data: bool = False
+    predict_dir_root: str, seeds: list[int], date: dt.date, return_ensemble_data: bool = False
 ) -> tuple:
     """
     Get prediction data from ensemble of numpy files for given date.
@@ -74,29 +48,39 @@ def get_prediction_data(
     """
     logging.info("Post-processing {}".format(date))
 
-    glob_str = os.path.join(
-        predict_dir_root, "*", "raw_predictions", date.strftime("%Y_%m_%d.npy")
-    )
+    np_files = []
+    for seed in seeds:
+        glob_str = os.path.join(
+            predict_dir_root, str(seed), "raw_predictions", date.strftime("%Y_%m_%d.npy")
+        )
+        logging.info(f"Globbing prediction files for seed: {seed}")
 
-    logging.debug(f"Glob string for prediction files:\n {glob_str}")
+        logging.debug(f"Glob string for prediction files:\n {glob_str}")
 
-    np_files = glob.glob(glob_str)
+        np_files.append(glob.glob(glob_str))
+
+    np_files = list(itertools.chain(*np_files))
     if not len(np_files):
         logging.warning("No files found")
         return None
 
-    data = [np.load(f).squeeze(0) for f in np_files]
-    data = np.asarray(data)
+    # n_channels is the number of prediction variables by the model
+    # (ensemble, n_channels, xc, yc, leadtime)
+    data = [np.load(f) for f in np_files]
+    # Since only predicting one variable, squeeze n_channels dimension out
+    data = np.asarray(data).squeeze(1)
     ens_members = data.shape[0]
 
     logging.info("Data read from disk: {} from: {}".format(data.shape, np_files))
 
-    data_mean = np.stack([data.mean(axis=0), data.std(axis=0)], axis=-1).squeeze()
+    # mean:    (yc, xc, leadtime)
+    # std_dev: (yc, xc, leadtime)
+    data_mean, data_std = data.mean(axis=0), data.std(axis=0)
 
     if return_ensemble_data:
-        return data_mean, data, ens_members
+        return data_mean, data_std, data, ens_members
     else:
-        return data_mean, ens_members
+        return data_mean, data_std, ens_members
 
 
 def get_ref_ds(dataset) -> xr.Dataset:
@@ -207,17 +191,24 @@ def create_cf_output(cfg: DictConfig) -> None:
     """
 
     plain = cfg.postprocess.netcdf.plain
+    seeds = cfg.predict.seed
+
+    # Make seeds into a list of seed values
+    if isinstance(seeds, int):
+        seeds = [seeds]
+
     dates = [dt.date(*[int(v) for v in s.split("-")]) for s in cfg.predict.dates]
 
-    predict_dir, predict_dir_root = get_predict_dir()
+    predict_dir_root = cfg.paths.predict
 
     # Point to symlinked cache directory - use config file to get a reference netCDF
     # to parse metadata from
-    cache_dir = os.path.join(predict_dir, CACHE_SYMLINK_DIR)
+    cache_dir = os.path.join(predict_dir_root, CACHE_SYMLINK_DIR)
 
     # Get config file from cache dir
     dataset_config_file = glob.glob(os.path.join(cache_dir, "*.json"))[0]
 
+    # TODO: This creates empty "./network_datasets" directory.
     ds = CANARIMLDataSetTorch(dataset_config_file)
     dl = ds.get_data_loader()
     hemi_str = "north" if dl.north else "south"
@@ -226,17 +217,21 @@ def create_cf_output(cfg: DictConfig) -> None:
     ds_ref = get_ref_ds(ds)
 
     # Get prediction data
-    data_mean, data, ens_members = zip(
+    data_mean, data_std, data, ens_members = zip(
         *[
             get_prediction_data(
-                predict_dir_root=predict_dir_root, date=date, return_ensemble_data=True
+                predict_dir_root=predict_dir_root, seeds=seeds, date=date, return_ensemble_data=True
             )
             for date in dates
         ]
     )
-    ens_members = list(ens_members)
+
+    # (time, ensemble, xc, yc, leadtime)
     data = np.array(data)
+
+    # (time, xc, yc, leadtime)
     data_mean = np.array(data_mean)
+    data_std = np.array(data_std)
 
     logging.info("Dataset arr shape: {}".format(data.shape))
 
@@ -244,22 +239,22 @@ def create_cf_output(cfg: DictConfig) -> None:
     dataset_config = get_config(dataset_config_file)
     loader_config_file = Path(dataset_config["loader_config"])
     ua700_mean = denormalise_ua700(
-        loader_config_file, data_mean[..., 0], var_name="ua700"
+        loader_config_file, data_mean, var_name="ua700"
     )
-    ua700_stddev = data_mean[..., 1]
+    ua700_stddev = data_mean
 
     ua700 = da.zeros_like(data)
 
-    for i, ensemble_member in enumerate(ens_members):
-        ua700[i, ...] = denormalise_ua700(
-            loader_config_file, ensemble_member, var_name="ua700"
+    for i, ensemble_member in enumerate(seeds):
+        ua700[:, i, ...] = denormalise_ua700(
+            loader_config_file, ua700[:, i, ...], var_name="ua700"
         )
 
     data_vars = dict(
-        ua700=(["ensemble", "time", "y", "x", "leadtime"], ua700),
+        ua700=(["time", "ensemble", "y", "x", "leadtime"], ua700),
         ua700_mean=(["time", "y", "x", "leadtime"], ua700_mean),
         ua700_stddev=(["time", "y", "x", "leadtime"], ua700_stddev),
-        ensemble_members=(["time"], ens_members),
+        ensemble_members=(["ensemble"], seeds),
     )
 
     if hasattr(ds_ref, "spatial_ref"):
@@ -268,7 +263,7 @@ def create_cf_output(cfg: DictConfig) -> None:
     coords = dict(
         time=[pd.Timestamp(d) for d in dates],
         leadtime=np.arange(1, data_mean.shape[3] + 1, 1),
-        # ensemble=len(ens_members),
+        ensemble=np.arange(len(seeds)),
     )
 
     extra_attrs = dict()
@@ -422,17 +417,18 @@ def create_cf_output(cfg: DictConfig) -> None:
         )
 
         xarr.ensemble_members.attrs = dict(
-            long_name="number of ensemble members used to create this prediction",
+            long_name="seeds for ensemble members used to create this output",
             short_name="ensemble_members",
             units="1",
         )
 
         # TODO: split into daily files
-        output_path, output_file = get_nc_path(predict_dir_root, cfg.postprocess.netcdf.name)
-        if not Path(output_path).exists():
-            os.makedirs(output_path, exist_ok=True)
-        logging.info("Saving to {}".format(output_file))
-        xarr.to_netcdf(output_file)
+        nc_path = cfg.paths.postprocess.netcdf_path
+        nc_file = os.path.join(nc_path, cfg.postprocess.netcdf.name)
+        if not Path(nc_path).exists():
+            os.makedirs(nc_path, exist_ok=True)
+        logging.info("Saving to {}".format(nc_file))
+        xarr.to_netcdf(nc_file)
 
 
 def get_args():

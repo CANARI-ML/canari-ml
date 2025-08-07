@@ -19,7 +19,6 @@ from matplotlib.widgets import Button, Slider
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from omegaconf import DictConfig
 
-from canari_ml.postprocess.predict import get_nc_path, get_predict_dir
 from canari_ml.preprocess.reproject import ease2_reference_grid_setup, reproject_dataset
 
 from .cli import ForecastPlotArgParser, PlottingNumpyArgParser
@@ -297,7 +296,7 @@ def ua700_error_plot(
     else:
         anim = FuncAnimation(fig, update, frames=len(fc_da.time), interval=500)
 
-        output_path = os.path.join("plots", "ua700_error.mp4") \
+        output_path = os.path.join("plots", "ua700_comparison.mp4") \
             if not output_path else output_path
         logging.info(f"Saving to {output_path}")
 
@@ -327,10 +326,11 @@ def plot_ua700_error(cfg: DictConfig):
     Produces plot comparing ua700 forecast and ground truth.
     """
 
-    predict_dir, predict_dir_root = get_predict_dir()
-    nc_path, nc_file = get_nc_path(predict_dir_root, cfg.postprocess.netcdf.name)
+    run_dir = HydraConfig.get().runtime.output_dir
+    nc_path = cfg.paths.postprocess.netcdf_path
+    nc_file = os.path.join(nc_path, cfg.postprocess.netcdf.name)
     # dates = [dt.date(*[int(v) for v in s.split("-")]) for s in cfg.predict.dates]
-    out_video_path = os.path.join(predict_dir_root, "plots", f"{cfg.postprocess.plot.name}.mp4")
+    out_video_path = os.path.join(run_dir, f"{cfg.plot.name}")
 
     source_data_config_file = cfg.paths.download.config_file
 
@@ -342,11 +342,12 @@ def plot_ua700_error(cfg: DictConfig):
         ds_config = get_dataset_config_implementation(source_data_config_file)
         logging.info("Plotting ua700 results")
 
+        out_video_file = os.path.join(out_video_path, f"{date}.mp4")
         ua700_error_plot(
             fc_da=fc,
             obs_da=obs,
             obs_ds_config=ds_config,
-            output_path=Path(out_video_path),
+            output_path=Path(out_video_file),
             crs_wkt=spatial_ref["crs_wkt"],
-            show_plot=cfg.postprocess.plot.show_plot,
+            show_plot=cfg.plot.show,
         )

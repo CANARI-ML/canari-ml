@@ -1,0 +1,9 @@
+# @package paths
+
+defaults:
+  - predict                     # Used to get path to prediction output root dir
+
+postprocess:
+  destination_path: ${paths.predict}/results/${postprocess.name}
+  netcdf_path: ${paths.postprocess.destination_path}/netcdf
+

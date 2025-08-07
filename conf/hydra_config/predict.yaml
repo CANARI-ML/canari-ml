@@ -3,7 +3,7 @@
 hydra:
   # Do not modify the output paths. They are used for output path for netCDF, plotting, etc.
   run:
-    dir: outputs/${train.run_name}/prediction/${predict.run_name}/${predict.seed}
+    dir: ${paths.predict}/${predict.seed}
   sweep:
-    dir: outputs/${train.run_name}/prediction/${predict.run_name}
+    dir: ${paths.predict}
     subdir: ${predict.seed}

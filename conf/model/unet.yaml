@@ -1,3 +1,5 @@
+model_name: unet  # Used for wandb tagging
+
 network:
   _target_: canari_ml.models.models.UNet
   _partial_: true

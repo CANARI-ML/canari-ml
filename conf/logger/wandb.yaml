@@ -6,7 +6,8 @@ name: ${train.run_name}_${train.seed}
 save_dir: "./wandb_logs"
 log_model: true
 tags:
-  - ${train.run_name}
-  - seed_${train.seed}
+  - name=${train.run_name}
+  - seed=seed_${train.seed}
+  - model=${model.model_name}
 reinit: create_new  # Shorthand for the “reinit” setting. Determines the behavior of wandb.init() when a run is active.
                     # Handle system stats not gathered w/ wandb if ensemble runs using multirun

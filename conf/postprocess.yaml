@@ -2,6 +2,7 @@
 # __________________________________________________
 
 defaults:
+  - predict: default
   - _self_
   - paths/postprocess                 # Used to get path to output postprocessed data to & pred output
   - override hydra/launcher: basic
@@ -28,15 +29,12 @@ postprocess:
 train:
   name: ???
 
+# Gets some from predict/default.yaml
 predict:
-  name: ???
   # Unlike preceding configs, in here, seed is a list
   # Not meant to be run with multirun, it generates ensemble mean and outputs.
   seed:
     - 42
-  dates:
-    - 2000-2-1
-
 
 frequency: DAY
 hemisphere: north

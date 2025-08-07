@@ -2,6 +2,7 @@
 # __________________________________________________
 
 defaults:
+  - predict: default
   - _self_
   - model: default          # This can be changed to any of the models in conf/model
   - hydra_config: predict   # Used to set output path for prediction
@@ -25,14 +26,12 @@ hydra:
 train:
   name: ???
 
+# Gets some from predict/default.yaml
 predict:
   dataset: ???
-  name: ???
   seed: 42
   workers: 4
   batch_size: 4
   checkpoint_path: null
-  dates:
-    - 2000-2-1
 
 verbose: true

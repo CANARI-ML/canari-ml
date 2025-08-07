@@ -2,6 +2,7 @@
 # __________________________________________________
 
 defaults:
+  - predict: default
   - _self_
   - postprocess: netcdf               # Used to get path to netCDF
   - paths/download                    # Used to get path to source downloaded data config file
@@ -28,11 +29,6 @@ postprocess:
 
 train:
   name: ???
-
-predict:
-  name: ???
-  dates:
-    - 2000-2-1
 
 frequency: DAY
 hemisphere: north

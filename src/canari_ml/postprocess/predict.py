@@ -322,7 +322,7 @@ def create_cf_output(cfg: DictConfig) -> None:
                     creator_name="Bryn Noel Ubald",
                     creator_url="www.bas.ac.uk",
                     date_created=dt.datetime.now().strftime("%Y-%m-%d"),
-                    # geospatial_bounds_crs="EPSG:6931" if dl.north else "EPSG:6932",
+                    geospatial_bounds_crs="EPSG:6931" if dl.north else "EPSG:6932",
                     # geospatial_vertical_min=0.0,
                     # geospatial_vertical_max=0.0,
                     hemisphere_string=hemi_str,
@@ -405,14 +405,14 @@ def create_cf_output(cfg: DictConfig) -> None:
             standard_name="eastward_wind",
             short_name="ua700",
             ancillary_variables="ua700_stddev",
-            grid_mapping="Lambert_Azimuthal_Grid",
+            # grid_mapping="Lambert_Azimuthal_Grid",
             units=Unit("m/s").definition,
         )
 
         xarr.ua700_stddev.attrs = dict(
             long_name="total uncertainty (one standard deviation) of zonal wind at 700hPa",
             standard_name="eastward_wind standard_error",
-            grid_mapping="Lambert_Azimuthal_Grid",
+            # grid_mapping="Lambert_Azimuthal_Grid",
             units="1",
         )
 

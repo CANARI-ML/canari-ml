@@ -19,10 +19,9 @@ logger = logging.getLogger(__name__)
 def main(cfg: DictConfig):
     print_omega_config(cfg)
 
-    # Checking what override was provided by `e.g.: +postprocess=plot_ua700`
+    # Checking what override was provided by `e.g.: +plot=ua700`
     selected_postprocess = HydraConfig.get().runtime.choices.get("plot")
 
-    # Name of the option defined within a conf/postprocess/*.yaml file
+    # Name of the file selected under `conf/plot/*.yaml`, excluding `.yaml`
     if selected_postprocess == "ua700":
         plot_ua700_error(cfg)
-

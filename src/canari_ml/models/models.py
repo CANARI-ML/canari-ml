@@ -4,9 +4,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from collections.abc import Callable
-from .lightning_modules import LitUNet
-
 # Suppress the specific UserWarning from PyTorch on performance impact due
 # to padding="same"
 warnings.filterwarnings(
@@ -341,51 +338,3 @@ class UNet(nn.Module):
             # nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2),
             # nn.ReLU(inplace=True),
         )
-
-
-def unet_batchnorm(
-    input_shape: tuple[int, int, int],
-    loss: nn.Module | Callable,
-    metrics: dict[str, Callable] | Callable,
-    learning_rate: float = 1e-4,
-    filter_size: int = 3,
-    n_filters_factor: float = 1,
-    lead_time: int = 1,
-) -> LitUNet:
-    """Constructs a U-Net model wrapped in a PyTorch Lightning module.
-
-    This function creates a U-Net architecture, applies the specified loss function
-    and metrics, and returns a `LitUNet` Lightning module for training.
-
-    Args:
-        input_shape: Shape of the input tensor (channels, height, width).
-        loss: Loss function module or callable (e.g., nn.MSELoss, custom loss).
-        metrics: Metric or dictionary of metrics to use for evaluation.
-        learning_rate (optional): Learning rate for the optimizer. Defaults to 1e-4.
-        filter_size (optional): Convolution filter size. Defaults to 3.
-        n_filters_factor (optional): Scale factor for number of filters per block. Defaults to 1.
-        lead_time (optional): Number of future time steps to predict. Defaults to 1.
-
-    Returns:
-        PyTorch Lightning module that wraps the U-Net model for training.
-    """
-    model = UNet(
-        input_channels=input_shape[0],
-        filter_size=filter_size,
-        n_filters_factor=n_filters_factor,
-        lead_time=lead_time,
-    )
-
-    # criterion = L1Loss(reduction="none")
-    # criterion = MSELoss(reduction="none")
-
-    # configure PyTorch Lightning module
-    lit_module = LitUNet(
-        model=model,
-        criterion=loss,
-        learning_rate=learning_rate,
-        metrics=metrics,
-        enable_leadtime_metrics=False,
-    )
-
-    return lit_module

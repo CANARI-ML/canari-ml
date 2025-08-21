@@ -65,7 +65,9 @@ def download(cfg: DictConfig):
     if len(start_dates)!= len(end_dates):
         raise ValueError("Start and end dates must be the same length")
 
-    print(cfg.dates.start, type(cfg.dates.start))
+    logger.debug(f"Dates type: {type(cfg.dates.start)}")
+    logger.debug(f"Dates: {cfg.dates.start}")
+
     for start_date, end_date in zip(start_dates, end_dates):
         logger.info("Downloading between {} and {}".format(start_date, end_date))
         start_date = dt.strptime(start_date, "%Y-%m-%d").date()

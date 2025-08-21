@@ -14,8 +14,6 @@ import pandas as pd
 import xarray as xr
 from cf_units import Unit
 from dateutil.relativedelta import relativedelta
-from download_toolbox.interface import get_dataset_config_implementation
-from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig
 from preprocess_toolbox.interface import get_processor_from_source
 from preprocess_toolbox.utils import get_config
@@ -28,7 +26,7 @@ from canari_ml.models.networks.pytorch import CACHE_SYMLINK_DIR
 
 def get_prediction_data(
     predict_dir_root: str, seeds: list[int], date: dt.date, return_ensemble_data: bool = False
-) -> tuple:
+) -> tuple | None:
     """
     Get prediction data from ensemble of numpy files for given date.
 
@@ -83,7 +81,7 @@ def get_prediction_data(
         return data_mean, data_std, ens_members
 
 
-def get_ref_ds(dataset) -> xr.Dataset:
+def get_ref_ds(dataset) -> xr.Dataset | None:
     """
     Get a reference reprojected ERA5 dataset from the specified source files.
 
@@ -429,35 +427,3 @@ def create_cf_output(cfg: DictConfig) -> None:
             os.makedirs(nc_path, exist_ok=True)
         logging.info("Saving to {}".format(nc_file))
         xarr.to_netcdf(nc_file)
-
-
-def get_args():
-    """Get CLI arguments and parse them"""
-    ap = argparse.ArgumentParser()
-    ap.add_argument("prediction_name")
-    ap.add_argument("dataset")
-    ap.add_argument("datefile_csv")
-
-    ap.add_argument(
-        "-p",
-        "--plain",
-        default=False,
-        help="Don't try to add geospatial or complex metadata from ground truth",
-        action="store_true",
-    )
-
-    # TODO: Add option to also include ensemble member predictions in output
-    ap.add_argument(
-        "-e",
-        "--ensemble",
-        default=False,
-        help="TODO: Also include ensemble member predictions in output",
-        action="store_true",
-    )
-
-    ap.add_argument("-o", "--output-dir", default=".")
-    ap.add_argument("-r", "--root", type=str, default=".")
-
-    ap.add_argument("-v", "--verbose", action="store_true", default=False)
-
-    return ap.parse_args()

@@ -21,7 +21,6 @@ from omegaconf import DictConfig
 
 from canari_ml.preprocess.reproject import ease2_reference_grid_setup, reproject_dataset
 
-from .cli import ForecastPlotArgParser, PlottingNumpyArgParser
 from .utils import get_axes, get_forecast_obs_data
 
 cm = mpl.colormaps
@@ -313,12 +312,6 @@ def ua700_error_plot(
         anim.save(output_path, writer=writer, dpi=300)
 
         plt.close(fig)
-
-
-def plot_numpy():
-    """CLI entrypoint to plot a direct numpy prediction output"""
-    args = PlottingNumpyArgParser().parse_args()
-    plot_numpy_prediction(args.numpy_file)
 
 
 def plot_ua700_error(cfg: DictConfig):

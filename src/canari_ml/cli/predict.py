@@ -32,6 +32,7 @@ def predict_run(cfg: DictConfig) -> None:
 
 
 def main():
+    OmegaConf.register_new_resolver("set_preprocess_type", lambda x: "predict")
     predict_run() # type: ignore
 
 

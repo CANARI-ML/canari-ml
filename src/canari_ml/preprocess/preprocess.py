@@ -25,6 +25,7 @@ from canari_ml.preprocess.utils import (
     symlink,
     IterableNamespace,
 )
+from canari_ml.models.networks.pytorch import NORMALISATION_SYMLINK_DIR
 from canari_ml.data.loaders import CanariMLDataLoaderFactory
 
 logger = logging.getLogger(__name__)
@@ -93,7 +94,7 @@ def reproject(cfg: DictConfig) -> None:
     # Emulating argparse interface (only for interface with preprocess toolbox)
     main_args = IterableNamespace(
         source=cfg.paths.download.config_file,                  # Input: downloader json config
-        destination_id="era5",                                  # Input: identifier
+        destination_id=cfg.source_dataset_id,                   # Input: identifier
         split_head=cfg.input.lag_length,                        # Input: Lag
         split_tail=cfg.input.forecast_length,                   # Input: Leadtime
         workers=cfg.workers,                                    # Input: Concurrent workers
@@ -146,7 +147,7 @@ def preprocess_era5(cfg: DictConfig) -> None:
     # Emulating argparse interface (only for interface with preprocess toolbox)
     main_args = IterableNamespace(
         source=cfg.paths.reproject.config_file,                         # Input: reprojected json config
-        destination_id="era5",                                          # Input: identifier
+        destination_id=cfg.source_dataset_id,                           # Input: identifier
         split_head=cfg.input.lag_length,                                # Input: Lag
         split_tail=cfg.input.forecast_length,                           # Input: Leadtime
         workers=cfg.workers,                                            # Input: Concurrent workers
@@ -161,19 +162,30 @@ def preprocess_era5(cfg: DictConfig) -> None:
 
     if cfg.preprocess_type == "train":
         # No `normalisation.{scale,mean}/` path needed when preprocessing for training
-        train_ref = None
         normalisation_path = None
         more_args = {
             "processing_splits": ["train"],
-            "ref": train_ref,
+            "ref": normalisation_path,
         }
     else:
         # TODO: For prediction, need to add reference file for normalisation.
         # Reference loader to use same normalisations as the training dataset
-        # This should point to the dir that holds `normalisation.scale/`
-        # e.g.: +train_ref=preprocessed_data/preprocessed/02_normalised_small_test/era5/normalisation.scale
-        train_ref = cfg.train_ref
-        normalisation_path = Path(train_ref).parents[0]
+        # This should point to the dir that holds `normalisation.scale/` or `normalisation.mean/`
+        # e.g.: +train_ref=preprocessed_data/preprocessed/02_normalised_small_test/era5/
+        if getattr(cfg, "train_ref", None):
+            normalisation_path = cfg.train_ref
+        else:
+            # If using experiment config file, we should be able to ascertain where
+            # the training normalisation file is located
+            normalisation_path = (
+                Path(cfg.paths.train) / NORMALISATION_SYMLINK_DIR
+            )
+            if not normalisation_path.exists():
+                logging.error("The training normalisation path does"
+                              " not exist, have you run training?")
+                raise NotADirectoryError(normalisation_path)
+
+        logging.info(f"Training normalisation path: {normalisation_path}")
 
         more_args = {
             "processing_splits": None,
@@ -215,7 +227,7 @@ def preprocess_era5(cfg: DictConfig) -> None:
     run_dir = HydraConfig.get().run.dir
     symlink(target, run_dir)
 
-    if train_ref:
+    if normalisation_path:
         # Symlink path to normalisation scale/mean for postprocessing use
         abs_normalisation_path = os.path.abspath(normalisation_path)
         src = abs_normalisation_path

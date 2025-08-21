@@ -3,8 +3,15 @@
 
 defaults:
   - _self_
-  - paths/download
-  - paths/preprocess
+  # Add forward slash to show it should look for it in main config-path
+  # in main canari-ml codebase, not where I'm running experiments from.
+  - common: default
+  - paths: train  # Used for generating normalised predict dataset
+                  # based on training dataset normalisation
+                  # (to get location of normalised training dataset)
+  - /paths/download
+  - /paths/preprocess
+  - /preprocess/default
   - override hydra/job_logging: colorlog_custom
   - override hydra/hydra_logging: colorlog
 
@@ -17,94 +24,3 @@ hydra:
   # Allow experiment file defs to work from current run path, and not Python config-path definition
   searchpath:
     - file://.
-
-
-# User modifiable parameters
-# __________________________
-
-input:
-  name: ""
-  forecast_length: 3
-  lag_length: ${input.forecast_length}
-  vars:
-    absolute:
-      - sic
-      - tas
-      - tos
-      - ua10
-      - ua100
-      - ua2
-      - ua250
-      - ua50
-      - ua500
-      - ua700
-    anomaly:
-      - zg10
-      - zg100
-      - zg2
-      - zg250
-      - zg50
-      - zg500
-      - zg700
-  dates:
-    train:
-      start:
-        - 2000-1-5 # For multiple: `input.dates.train.start="[2000-1-5,2001-1-1]"`
-      end:
-        - 2000-1-5
-    val:
-      start:
-        - 2000-4-5
-      end:
-        - 2000-4-5
-    test:
-      start:
-        - 2000-2-1
-      end:
-        - 2000-2-1
-    predict: # Only used for prediction, above used only for training.
-      start:
-        - 2000-2-1
-      end:
-        - 2000-2-1
-
-# Pre-processing steps
-# ____________________
-reproject:
-  source_crs: EPSG:4326
-  target_crs: EPSG:6931
-  shape: 500
-
-preprocess_era5:
-  implementation: "canari_ml.data.processors.cds:ERA5PreProcessor"
-  smooth_sigma: 0.5
-
-preprocess_mask:
-  implementation: "canari_ml.data.masks.era5:Masks"
-  channel_name: hemisphere
-
-preprocess_cache:
-  implementation: "serial"
-  output_batch_size: 4
-
-workers: 16
-
-# Boiler plate - not to be modified
-# _________________________________
-
-frequency: DAY
-hemisphere: north
-
-params:
-  # Main preprocess config output params
-  config_suffix: ${frequency}.${hemisphere}
-  config_name: ${hydra:job.name}
-
-hashes:
-  reproject: ${compute_step_hash:[${input}, ${preprocess_type}, ${reproject}], ${input.name}}
-  preprocess_era5: ${compute_step_hash:[${hashes.reproject}, ${preprocess_era5}], ${input.name}}
-  preprocess_mask: ${compute_step_hash:[${hashes.preprocess_era5}, ${preprocess_mask}], ${input.name}}
-  cache: ${compute_step_hash:[${hashes.preprocess_mask}, ${preprocess_cache}], ${input.name}}
-  combined: ${compute_step_hash:[${hashes.preprocess_mask}], ${input.name}}
-
-preprocess_type: train # Automatically handled by Python CLI subcommand

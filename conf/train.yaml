@@ -3,6 +3,8 @@
 
 defaults:
   - _self_
+  - paths: train
+  - common: default
   - model: default                  # This can be changed to any of the models in conf/model/
   - callbacks: default              # This can be changed to any of the callbacks in conf/callbacks/
   - logger: tensorboard             # This can be changed to any of the loggers in conf/logger/

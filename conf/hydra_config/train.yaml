@@ -3,7 +3,7 @@
 hydra:
   # Do not modify the output paths. They are used when loading checkpoint for prediction.
   run:
-    dir: outputs/${train.name}/training/${train.seed}
+    dir: ${paths.train}/${train.seed}
   sweep:
-    dir: outputs/${train.name}/training/
+    dir: ${paths.train}
     subdir: ${train.seed}

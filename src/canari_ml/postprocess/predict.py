@@ -21,7 +21,7 @@ from preprocess_toolbox.utils import get_config
 import canari_ml
 from canari_ml.data.dataloader import CANARIMLDataSetTorch
 from canari_ml.data.masks.era5 import Masks
-from canari_ml.models.networks.pytorch import CACHE_SYMLINK_DIR
+from canari_ml.models.networks.pytorch import CACHE_SYMLINK_DIR, NORMALISATION_SYMLINK_DIR
 
 
 def get_prediction_data(
@@ -115,7 +115,7 @@ def get_ref_ds(dataset) -> xr.Dataset | None:
 
 
 def denormalise_ua700(
-    loader_config_file: str, da: xr.DataArray, var_name: str = "ua700"
+    loader_config_file: str, normalisation_path: str, da: xr.DataArray, var_name: str = "ua700"
 ):
     """
     Denormalise a specific variable in an xarray DataArray using configuration
@@ -127,6 +127,9 @@ def denormalise_ua700(
     Args:
         loader_config_file: Path to the configuration file containing
             information about sources and their implementations.
+
+        normalisation_path: Path to normalised training dataset with normalisation
+            parameters.
 
         da: The xarray DataArray containing the data to be
             denormalized.
@@ -155,8 +158,7 @@ def denormalise_ua700(
         # Point to symlinked directory for reference training dataset
         # used to created the prediction dataset, and to use here again
         # for denormalising the raw pytorch prediction output.
-        ref_procdir = os.path.join(processed_config["base_path"], "ref_training_dataset")
-        processed_config |= {"ref_procdir": ref_procdir}
+        processed_config |= {"ref_procdir": normalisation_path}
         processed_implementation = get_processor_from_source(
             identifier=source, source_cfg=processed_config
         )
@@ -198,6 +200,7 @@ def create_cf_output(cfg: DictConfig) -> None:
     dates = [dt.date(*[int(v) for v in s.split("-")]) for s in cfg.predict.dates]
 
     predict_dir_root = cfg.paths.predict
+    # print("Root:", predict_dir_root)
 
     # Point to symlinked cache directory - use config file to get a reference netCDF
     # to parse metadata from
@@ -234,10 +237,13 @@ def create_cf_output(cfg: DictConfig) -> None:
     logging.info("Dataset arr shape: {}".format(data.shape))
 
     # Get ensemble mean (denormalised) and std dev
+    normalisation_path = (
+        Path(cfg.paths.train) / NORMALISATION_SYMLINK_DIR
+    )
     dataset_config = get_config(dataset_config_file)
     loader_config_file = Path(dataset_config["loader_config"])
     ua700_mean = denormalise_ua700(
-        loader_config_file, data_mean, var_name="ua700"
+        loader_config_file, normalisation_path, data_mean, var_name="ua700"
     )
     ua700_stddev = data_mean
 
@@ -245,7 +251,7 @@ def create_cf_output(cfg: DictConfig) -> None:
 
     for i, ensemble_member in enumerate(seeds):
         ua700[:, i, ...] = denormalise_ua700(
-            loader_config_file, ua700[:, i, ...], var_name="ua700"
+            loader_config_file, normalisation_path, ua700[:, i, ...], var_name="ua700"
         )
 
     data_vars = dict(

@@ -32,6 +32,7 @@ def train_run(cfg: DictConfig) -> None:
 
 
 def main():
+    OmegaConf.register_new_resolver("set_preprocess_type", lambda x: "train")
     train_run() # type: ignore
 
 

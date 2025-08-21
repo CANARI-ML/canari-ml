@@ -33,6 +33,7 @@ from canari_ml.preprocess.utils import symlink
 from ...lightning.checkpoints import ModelCheckpointOnImprovement
 
 CACHE_SYMLINK_DIR = "cache_dir"
+NORMALISATION_SYMLINK_DIR = "normalisation_dir"
 
 class BaseNetwork:
     """
@@ -112,9 +113,21 @@ class BaseNetwork:
     def get_default_callbacks(self):
         return list()
 
+    def create_normalisation_symlink(self, target_path: str):
+        # Create symlink to normalised source data  dir output, e.g.:
+        # self._output_dir = outputs/{train_name}/training/{seed}/
+        # symlink_path = outputs/{train_name}/training/normalisation_dir
+        symlink_path = os.path.join(
+            os.path.dirname(self._output_dir), NORMALISATION_SYMLINK_DIR
+        )
+        if os.path.realpath(target_path) != os.path.realpath(symlink_path):
+            symlink_dir = os.path.dirname(symlink_path)
+            relative_target = os.path.relpath(target_path, symlink_dir)
+            os.symlink(relative_target, symlink_path)
+
     def create_cache_symlink(self, target_path: str):
         # Create symlink to cache dir output in train/pred output location, e.g.:
-        # self._output_dir = outputs/{train_name}/training/42/cache_dir
+        # self._output_dir = outputs/{train_name}/training/{seed}/
         # symlink_path = outputs/{train_name}/training/cache_dir
         symlink_path = os.path.join(
             os.path.dirname(self._output_dir), CACHE_SYMLINK_DIR
@@ -222,6 +235,10 @@ class HYDRAPytorchNetwork(BaseNetwork):
         verbose=cfg.verbose
 
         if run_type == "train":
+            # Get directory where normalised & preprocessed data used to generate
+            # cached data is stored
+            normalised_path = Path(cfg.paths.preprocess_era5.destination_path) / cfg.source_dataset_id
+            self._train_normalised_path = normalised_path
             cache_path = os.path.dirname(cfg.train.dataset)
             self._train_cache_path = cache_path
             # Get directory where cached data is stored for training
@@ -349,6 +366,11 @@ class HYDRAPytorchNetwork(BaseNetwork):
         # Create a symlink to the dataset used for this run to output dir
         # Will make further postprocessing much easier for user
         self.create_cache_symlink(target_path=self._train_cache_path)
+
+        # Create a symlink to the normalised dataset used for this run to output dir
+        # Will allow prediction dataset to use normalisation scales against the
+        # training dataset
+        self.create_normalisation_symlink(target_path=self._train_normalised_path)
 
         return trainer
 

@@ -43,21 +43,21 @@ def get_date_splits(cfg: DictConfig) -> IterableNamespace:
     """
     if cfg.preprocess_type == "train":
         split_starts_dict = {
-            "train": "|".join(cfg.main.dates.train.start),
-            "val": "|".join(cfg.main.dates.val.start),
-            "test": "|".join(cfg.main.dates.test.start),
+            "train": "|".join(cfg.input.dates.train.start),
+            "val": "|".join(cfg.input.dates.val.start),
+            "test": "|".join(cfg.input.dates.test.start),
         }
         split_ends_dict = {
-            "train": "|".join(cfg.main.dates.train.end),
-            "val": "|".join(cfg.main.dates.val.end),
-            "test": "|".join(cfg.main.dates.test.end),
+            "train": "|".join(cfg.input.dates.train.end),
+            "val": "|".join(cfg.input.dates.val.end),
+            "test": "|".join(cfg.input.dates.test.end),
         }
     elif cfg.preprocess_type == "predict":
         split_starts_dict = {
-            "predict": "|".join(cfg.main.dates.predict.start),
+            "predict": "|".join(cfg.input.dates.predict.start),
         }
         split_ends_dict = {
-            "train": "|".join(cfg.main.dates.predict.end),
+            "train": "|".join(cfg.input.dates.predict.end),
         }
     else:
         raise ValueError(f"Unrecognised `preprocess_type`: {cfg.preprocess_type}")
@@ -94,8 +94,8 @@ def reproject(cfg: DictConfig) -> None:
     main_args = IterableNamespace(
         source=cfg.paths.download.config_file,                  # Input: downloader json config
         destination_id="era5",                                  # Input: identifier
-        split_head=cfg.main.lag_length,                         # Input: Lag
-        split_tail=cfg.main.forecast_length,                    # Input: Leadtime
+        split_head=cfg.input.lag_length,                        # Input: Lag
+        split_tail=cfg.input.forecast_length,                   # Input: Leadtime
         workers=cfg.workers,                                    # Input: Concurrent workers
         destination_path=cfg.paths.reproject.destination_path,  # Output: main path
         config=cfg.paths.reproject.config_file,                 # Output: reprojection json config
@@ -140,15 +140,15 @@ def preprocess_era5(cfg: DictConfig) -> None:
         )
         return
 
-    anom_vars = OmegaConf.to_container(cfg.main.vars.anomaly) if cfg.main.vars.anomaly else None
-    abs_vars = OmegaConf.to_container(cfg.main.vars.absolute) if cfg.main.vars.absolute else None
+    anom_vars = OmegaConf.to_container(cfg.input.vars.anomaly) if cfg.input.vars.anomaly else None
+    abs_vars = OmegaConf.to_container(cfg.input.vars.absolute) if cfg.input.vars.absolute else None
 
     # Emulating argparse interface (only for interface with preprocess toolbox)
     main_args = IterableNamespace(
         source=cfg.paths.reproject.config_file,                         # Input: reprojected json config
         destination_id="era5",                                          # Input: identifier
-        split_head=cfg.main.lag_length,                                 # Input: Lag
-        split_tail=cfg.main.forecast_length,                            # Input: Leadtime
+        split_head=cfg.input.lag_length,                                # Input: Lag
+        split_tail=cfg.input.forecast_length,                           # Input: Leadtime
         workers=cfg.workers,                                            # Input: Concurrent workers
         destination_path=cfg.paths.preprocess_era5.destination_path,    # Output: main path
         config=cfg.paths.preprocess_era5.config_file,                   # Output: preprocessed json config
@@ -343,8 +343,8 @@ def preprocess_cache(cfg):
         base_path=cfg.paths.cache.destination_path,
         config_path=cfg.paths.cache.config_path,
         dry=None,
-        lag_time=cfg.main.lag_length,
-        lead_time=cfg.main.forecast_length,
+        lag_time=cfg.input.lag_length,
+        lead_time=cfg.input.forecast_length,
         output_batch_size=cfg.preprocess_cache.output_batch_size,
         pickup=None,    # Does not currently work with continuing generating
         generate_workers=cfg.workers,

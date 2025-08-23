@@ -31,8 +31,9 @@ def postprocess_main(cfg: DictConfig):
 
 
 def main():
-    # # TODO: Code smell, but, hack. Avoid modifying `sys.argv` in future if I can.
-    sys.argv.append("++preprocess_type=predict")
     OmegaConf.register_new_resolver("set_preprocess_type", lambda x: "predict")
+
+    # # TODO: Code smell, but, hack. Avoid modifying `sys.argv` in future if I can.
+    sys.argv.insert(1, "preprocess_type=predict")
 
     postprocess_main()

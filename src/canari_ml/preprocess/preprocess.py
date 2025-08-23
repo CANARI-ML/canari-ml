@@ -435,7 +435,7 @@ def main(preprocess_type: str = "train"):
     OmegaConf.register_new_resolver("set_preprocess_type", lambda x: preprocess_type)
 
     # TODO: Code smell, but, hack. Avoid modifying `sys.argv` in future if I can.
-    sys.argv.append(f"++preprocess_type={preprocess_type}")
+    sys.argv.insert(1, f"preprocess_type={preprocess_type}")
 
     preprocess_run()
 

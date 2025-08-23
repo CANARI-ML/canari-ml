@@ -18,19 +18,19 @@ input:
       - sic
       - tas
       - tos
-      - ua10
-      - ua100
       - ua2
-      - ua250
+      - ua10
       - ua50
+      - ua100
+      - ua250
       - ua500
       - ua700
     anomaly:
-      - zg10
-      - zg100
       - zg2
-      - zg250
+      - zg10
       - zg50
+      - zg100
+      - zg250
       - zg500
       - zg700
   dates:

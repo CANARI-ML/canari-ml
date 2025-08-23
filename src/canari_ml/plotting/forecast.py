@@ -24,7 +24,6 @@ from canari_ml.preprocess.reproject import ease2_reference_grid_setup, reproject
 from .utils import get_axes, get_forecast_obs_data
 
 cm = mpl.colormaps
-mpl.use('TkAgg')
 
 # Set Matplotlib's ffmpeg executable path to the one from imageio_ffmpeg
 ffmpeg_path = ffmpeg.get_ffmpeg_exe()

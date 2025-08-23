@@ -32,6 +32,7 @@ dependencies = [
   "h5py",
   "hydra_colorlog",
   "hydra-core",
+  "hydra-submitit-launcher",
   "icenet @ git+https://github.com/icenet-ai/icenet@fe2dd76ee010ee7b8cd66e377f8cf957d2afbc4e",
   "imageio-ffmpeg",
   "lightning",

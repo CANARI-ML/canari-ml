@@ -82,7 +82,7 @@ def compute_loader_hash(steps: ListConfig) -> str:
 
 def symlink(target: str, run_dir: str) -> None:
     """
-    Symlinks a target file or directory to the specified run directory.
+    Symlinks a target file or directory to the specified run directory as relative.
 
     Args:
         target: The path of the file or directory to be symlinked.
@@ -97,7 +97,9 @@ def symlink(target: str, run_dir: str) -> None:
         logger.warning(f"Symlink already exists: `{symlink_path}`, skipping.")
     else:
         logger.info(f"Symlinking:\n\t`{target}` -> `{symlink_path}`")
-        os.symlink(target, symlink_path)
+        # Compute relative path from symlink location to target
+        relative_target = os.path.relpath(target, start=run_dir)
+        os.symlink(relative_target, symlink_path)
 
 
 def parse_shape(value: str) -> tuple[int, int]:

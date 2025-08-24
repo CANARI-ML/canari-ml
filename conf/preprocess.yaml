@@ -24,8 +24,8 @@ hydra:
   # Didn't end up doing this, but, define full path in subdir for multiruns instead of dir due to:
   # https://github.com/facebookresearch/hydra/issues/1786#issuecomment-1017005470
   sweep:
-    dir: ${paths.preprocess.data_root}/${hydra.job.name}
-    subdir: .
+    dir: ${paths.preprocess.data_root}
+    subdir: ${hydra.job.name}
 
   # Allow experiment file defs to work from current run path, and not Python config-path definition
   searchpath:

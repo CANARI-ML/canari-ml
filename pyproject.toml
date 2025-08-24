@@ -78,10 +78,13 @@ readme = { file = ["README.md"] }
 [tool.pytest.ini_options]
 addopts = "-ra"
 testpaths = [
-    "tests"
+  "tests"
 ]
 pythonpath = [
   "."
+]
+markers = [
+  "unet: Test the UNet model architecture",
 ]
 
 [[tool.pydoc-markdown.loaders]]

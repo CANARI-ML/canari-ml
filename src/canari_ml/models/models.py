@@ -136,6 +136,7 @@ class UNet(nn.Module):
         self.n_filters_factor = n_filters_factor
         self.lead_time = lead_time
         self.n_output_classes = n_output_classes
+        self.dropout_probability = dropout_probability
 
         start_out_channels = 64
         reduced_channels = int(start_out_channels * n_filters_factor)
@@ -145,7 +146,7 @@ class UNet(nn.Module):
             start_out_channels * 2**pow: reduced_channels * 2**pow for pow in range(4)
         }
 
-        self.cached_padding: tuple[int, int, int, int] | None = None  # Add this line
+        self.cached_padding: tuple[int, int, int, int] | None = None
 
         self.dropout = nn.Dropout2d(dropout_probability)
 

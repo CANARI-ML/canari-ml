@@ -17,6 +17,18 @@ logger = logging.getLogger(__name__)
     config_name="plot",
 )
 def main(cfg: DictConfig):
+    """
+    Main function for plotting ERA5 forecast data.
+
+    This function serves as the entry point for generating plots based on
+    hydra configuration. It dynamically selects which plotting function to
+    execute based on runtime choices specified in the Hydra configuration.
+
+    Args:
+        cfg: Hydra configuration parameters containing all necessary
+            settings for plotting. This includes paths, plot type selection,
+            and any additional parameters required for specific plots.
+    """
     print_omega_config(cfg)
 
     # Dynamically selecting postprocessing override as provided by `e.g.: +plot=ua700`

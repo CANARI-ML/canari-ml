@@ -17,9 +17,10 @@ logger = logging.getLogger(__name__)
 )
 def predict_run(cfg: DictConfig) -> None:
     """
-    Run training based on the provided HYDRA configuration.
+    Run prediction based on the provided HYDRA configuration.
 
-    This function loads a Hydra configuration, and trains the model.
+    This function loads a Hydra configuration, and generates
+    predictions from a trained model.
 
     Args:
         cfg: Hydra auto-loaded configuration.

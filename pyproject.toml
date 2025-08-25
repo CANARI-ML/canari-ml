@@ -85,6 +85,7 @@ pythonpath = [
 ]
 markers = [
   "unet: Test the UNet model architecture",
+  "metrics: Test custom metrics",
 ]
 
 [[tool.pydoc-markdown.loaders]]

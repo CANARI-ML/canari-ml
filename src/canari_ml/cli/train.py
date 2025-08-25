@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 @hydra.main(
     version_base=None,
-    config_path=str(Path(__file__).parent / "../../../conf"),
+    config_path=str(Path(__file__).parent / "../conf"),
     config_name="train",
 )
 def train_run(cfg: DictConfig) -> None:

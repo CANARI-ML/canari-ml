@@ -64,6 +64,10 @@ canari_ml = "canari_ml.cli.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+# Ensure hydra config files also installed
+[tool.setuptools.package-data]
+canari_ml = ["conf/**/*"]
+
 [tool.setuptools_scm]
 version_scheme = "guess-next-dev"
 local_scheme = "node-and-date"

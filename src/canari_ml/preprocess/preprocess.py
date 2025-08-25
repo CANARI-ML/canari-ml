@@ -385,7 +385,7 @@ OmegaConf.register_new_resolver("compute_loader_hash", compute_loader_hash)
 
 @hydra.main(
     version_base=None,
-    config_path=str(Path(__file__).parent / "../../../conf"),
+    config_path=str(Path(__file__).parent / "../conf"),
     config_name="preprocess",
 )
 def preprocess_run(cfg: DictConfig) -> None:

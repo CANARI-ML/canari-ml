@@ -2,7 +2,7 @@ import pytest
 
 import torch
 
-from canari_ml.models.models import UNet
+from canari_ml.models.models import UNet, get_padding, apply_padding, undo_padding
 
 
 @pytest.fixture
@@ -88,3 +88,90 @@ def test_unet_forward_pass(unet, input_dims, expected_dims):
 
     # Expected output tensor of shape
     assert y_hat.shape == expected_dims, f"Expected {y_hat.shape} to be {expected_dims}"
+
+
+@pytest.mark.unet
+@pytest.mark.parametrize(
+    "input_dims, expected_padding",
+    [
+        # Input shape: (batch_size, channels, height, width)
+        ((2, 3, 500, 500), (6, 6, 6, 6)),  # 500x500 needs padding
+        ((2, 3, 720, 720), (0, 0, 0, 0)),  # 720x720 doesn't need padding
+    ],
+)
+def test_get_padding(input_dims, expected_padding):
+    x = torch.randn(input_dims)
+    padding = get_padding(x, stride=16)
+
+    assert padding == expected_padding, "Expected {padding} to be {expected_padding}"
+
+    # Check padding is a 4 length tuple
+    assert isinstance(padding, tuple) and len(padding) == 4, (
+        f"Expected padding as tuple of length 4, got {padding}"
+    )
+
+    # Padding must not be negative
+    assert all(p >= 0 for p in padding), "Padding values should be non-negative"
+
+
+@pytest.mark.unet
+@pytest.mark.parametrize(
+    "input_dims, padding, expected_padded_dims",
+    [
+        # Input shape: (batch_size, channels, height, width)
+        ((2, 3, 500, 500), (6, 6, 6, 6), (2, 3, 512, 512)),  # 500x500 needs padding
+        (
+            (2, 3, 720, 720),
+            (0, 0, 0, 0),
+            (2, 3, 720, 720),
+        ),  # 720x720 doesn't need padding
+    ],
+)
+def test_apply_padding(input_dims, padding, expected_padded_dims):
+    x = torch.randn(input_dims)
+    padded_x = apply_padding(x, padding)
+
+    # One way of checking if the padding has been applied correctly
+    height, width = input_dims[2:]
+    padded_height = height + padding[2] + padding[3]
+    padded_width = width + padding[0] + padding[1]
+
+    # Ensure padding has been applied (programmatically)
+    assert padded_x.shape[2] == padded_height, (
+        f"Expected padded height {padded_height} {padded_x.shape[2]}"
+    )
+    assert padded_x.shape[3] == padded_width, (
+        f"Expected padded width {padded_width}, got {padded_x.shape[3]}"
+    )
+
+    # Checking the same in another way
+    assert padded_x.shape == expected_padded_dims, (
+        f"Expected padded dims of {padded_x.shape} to be {expected_padded_dims}"
+    )
+
+
+@pytest.mark.unet
+@pytest.mark.parametrize(
+    "input_dims_with_padding, padding, expected_dims",
+    [
+        # Input shape: (batch_size, channels, height, width)
+        (
+            (2, 3, 500 + 6 + 6, 500 + 6 + 6),
+            (6, 6, 6, 6),  # 500x500 needs padding
+            (2, 3, 500, 500),
+        ),
+        (
+            (2, 3, 720 + 0 + 0, 720 + 0 + 0),
+            (0, 0, 0, 0),  # 720x720 doesn't need padding
+            (2, 3, 720, 720),
+        ),
+    ],
+)
+def test_undo_padding(input_dims_with_padding, padding, expected_dims):
+    x = torch.randn(input_dims_with_padding)
+    cropped_x = undo_padding(x, padding)
+
+    # Ensure padding has been removed
+    assert cropped_x.shape == expected_dims, (
+        f"Expected unpadded dims of {cropped_x.shape} to be {expected_dims}"
+    )

@@ -16,7 +16,14 @@ logger = logging.getLogger(__name__)
     config_name="download",
 )
 def download(cfg: DictConfig):
+    """Download ERA5 reanalysis data using AWS downloader in `download-toolbox`.
 
+    Processes configuration settings, sets up the download parameters
+    and downloads daily ERA5 data from AWS mirror.
+
+    Args:
+        cfg: Hydra configuration parameters.
+    """
     cfg_yaml = OmegaConf.to_yaml(cfg)
 
     logger.info("Loaded HYDRA Configuration YAML")

@@ -26,13 +26,15 @@ Canari-ML offers several key features:
 To begin using Canari-ML:
 
 1. **Installation**:
-``` bash
+
+``` console
 pip install git+https://github.com/CANARI-ML/canari-ml@main
 ```
 
 2. **Usage**:
 Run the following command to see available entry points:
-``` bash
+
+``` console
 canari_ml --help
 ```
 

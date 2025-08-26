@@ -1,7 +1,7 @@
-site_name: canari-ml docs
+site_name: CANARI-ML
 theme:
   name: material
-  highlightjs: true
+  highlightjs: false
   color_mode: dark
   palette:
     # Palette toggle for dark mode
@@ -11,18 +11,45 @@ theme:
         icon: material/brightness-4
         name: Switch to light mode
     # Palette toggle for light mode
-    - scheme: default
+    - scheme: darkly
       primary: cyan
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
+  font:
+    text: Roboto
+    code: Red Hat Mono
+  logo: assets/images/canari-hero-image.png
+  favicon: assets/images/canari-hero-image.png
   features:
     - content.code.copy
     - search.highlight
     - search.share
+    - navigation.instant
+    - navigation.instant.prefetch # Will start to fetch a page once the user hovers over a link
+    - navigation.tracking
+    # - navigation.expand
+    - navigation.path
+    - toc.follow
+    - toc.integrate
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - navigation.footer
 
+# copyright: MIT License; 2025 British Antarctic Survey
+copyright: <a href="https://github.com/CANARI-ML/canari-ml/blob/main/LICENSE">MIT License</a> | 2025 | British Antarctic Survey
 extra:
   generator: false
+  social:
+    - icon: fontawesome/solid/globe
+      link: https://www.bas.ac.uk/project/canari/
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/bryn-noel-ubald/
+    - icon: simple/github
+      link: https://github.com/canari-ml/canari-ml/
+    - icon: fontawesome/brands/bluesky
+      link: https://bsky.app/profile/brynnoelubald.bsky.social
 
 plugins:
   - search:
@@ -51,6 +78,7 @@ plugins:
   - literate-nav:
       nav_file: SUMMARY.md
   - section-index
+  - privacy
 
 markdown_extensions:
   - admonition
@@ -69,5 +97,12 @@ markdown_extensions:
 
 nav:
   - Introduction: index.md
-  - Usage: usage.md
+  - Installation: installation.md
+  - Usage:
+    - Download: download.md
+    - Generate dataset: preprocess.md
+    - Train: train.md
+    - Predict: predict.md
+    - Postprocess: postprocess.md
+    - Plot: plot.md
   - Code Reference: reference/

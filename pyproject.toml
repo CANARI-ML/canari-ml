@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "canari_ml"
 dynamic = ["version", "readme"]
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.13"
 description = "Library for North-Atlantic jet stream forecasting"
 license = { file = "LICENSE" }
 authors = [{ name = "Bryn Noel Ubald" }]
@@ -21,7 +21,6 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
   "cartopy",

@@ -53,8 +53,24 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["coverage", "pre-commit", "ruff", "tox", "pytest", "build", "torch-tb-profiler", "commitizen"]
-docs = ["mkdocs", "mkdocstrings[python]", "mkdocs-material", "mkdocs-gen-files", "mkdocs-literate-nav", "mkdocs-section-index"]
+dev = [
+  "coverage",
+  "pre-commit",
+  "ruff",
+  "tox",
+  "pytest",
+  "build",
+  "torch-tb-profiler",
+  "commitizen",
+]
+docs = [
+  "mkdocs",
+  "mkdocstrings[python]",
+  "mkdocs-material",
+  "mkdocs-gen-files",
+  "mkdocs-literate-nav",
+  "mkdocs-section-index",
+]
 
 [project.scripts]
 canari_ml = "canari_ml.hydra.cli:main"
@@ -81,12 +97,8 @@ readme = { file = ["README.md"] }
 
 [tool.pytest.ini_options]
 addopts = "-ra"
-testpaths = [
-  "tests"
-]
-pythonpath = [
-  "."
-]
+testpaths = ["tests"]
+pythonpath = ["."]
 markers = [
   "unet: Test the UNet model architecture",
   "metrics: Test custom metrics",
@@ -117,4 +129,4 @@ name = "cz_conventional_commits"
 version_scheme = "pep440"
 version = "0.0.1a1"
 update_changelog_on_bump = true
-major_version_zero = true # Using this for initial dev before hitting v1.0.0
+major_version_zero = true        # Using this for initial dev before hitting v1.0.0

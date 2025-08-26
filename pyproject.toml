@@ -57,7 +57,7 @@ dev = ["coverage", "pre-commit", "ruff", "tox", "pytest", "build", "torch-tb-pro
 docs = ["mkdocs", "mkdocstrings[python]", "mkdocs-material", "mkdocs-gen-files", "mkdocs-literate-nav", "mkdocs-section-index"]
 
 [project.scripts]
-canari_ml = "canari_ml.cli.cli:main"
+canari_ml = "canari_ml.hydra.cli:main"
 # canari_ml_preprocess_add_region_weights = "canari_ml.data.masks.era5:add_region_weights"
 # canari_ml_plot_numpy = "canari_ml.plotting.forecast:plot_numpy"
 

@@ -10,12 +10,12 @@ The main command for downloading data is `canari_ml download`. To find the defau
 canari_ml download --help
 ```
 
-## General Settings
+## General config options
 
 | Name                | Type      | Default Value | Description                                                              |
 |---------------------|-----------|---------------|--------------------------------------------------------------------------|
 | frequency           | str       | `DAY`         | The temporal resolution of the data to download.                         |
-| output_group_by     | str       | `YEAR`        | How output files are grouped (e.g., by year or month).                   |
+| output_group_by     | str       | `YEAR`        | How output files are grouped (e.g., by `YEAR` or `MONTH`).               |
 | hemisphere          | str       | `north`       | Which hemisphere to download data for (`north` or `south`).              |
 | workers             | int       | 4             | Number of parallel workers for downloading.                              |
 | delete_cache        | bool      | false         | Whether to delete cached files after processing.                         |
@@ -26,14 +26,14 @@ canari_ml download --help
 
 Variables available for download:
 
-| Name  | Description                     | CMIP6 variable name | ECMWF ID | ECMWF Short Name | Comments |
-|-------|---------------------------------|---------------------|----------|------------------|----------|
-| zg    | Geopotential height             | zg                  | 129      | z                | This downloads geopotential (z), which is converted during the dataset preprocess step to geopotential height (zg) |
-| ua    | Zonal wind component            | ua                  | 131      | u                |          |
-| va    | Meridional wind component       | va                  | 132      | v                |          |
-| tos   | Sea Surface Temperature         | tos                 | 34       | sstk             |          |
-| tas   | Near-surface air temperature    | tas                 | 167      | 2t               |          |
-| sic   | Sea ice concentration           | sic                 | 262001   | ci               |          |
+| CMIP6 variable name | Description                     | ECMWF ID | ECMWF Short Name | Dataset               | Comments                                                                  |
+|---------------------|---------------------------------|----------|------------------|-----------------------|---------------------------------------------------------------------------|
+| zg                  | Geopotential height             | 129      | z                | pressure-level        | This downloads geopotential (z), which is converted during the dataset preprocess step to geopotential height (zg) |
+| ua                  | Zonal wind component            | 131      | u                | pressure-level        | Eastward component of the wind                                            |
+| va                  | Meridional wind component       | 132      | v                | pressure-level        | Horizontal speed of air moving towards the north                          |
+| tos                 | Sea Surface Temperature         | 34       | sstk             | surface-level         | Temperature of sea water near the surface                                 |
+| tas                 | Near-surface air temperature    | 167      | 2t               | surface-level         | Temperature of air at 2m above the surface of land, sea or in-land waters |
+| sic                 | Sea ice concentration           | 262001   | ci               | surface-level         | fraction of a grid box which is covered by sea ice                        |
 
 ## Levels
 
@@ -49,8 +49,8 @@ Date range configuration:
 
 | Name      | Type      | Default Value           | Description                           |
 |-----------|-----------|-------------------------|---------------------------------------|
-| start     | str       | `'1979-01-01'`          | Start date of data download.          |
-| end       | str       | `'2024-12-31'`          | End date of data download.            |
+| start     | str       | `1979-01-01`            | Start date of data download.          |
+| end       | str       | `2024-12-31`            | End date of data download.            |
 
 This configuration structure allows you to customize your data downloading and processing workflow. Use these tables as a reference when setting up your `config.yml` file.
 
@@ -111,6 +111,8 @@ dates:
   start: 1980-01-01
   end: 1990-12-31
 ```
+
+The surface-level variables do not have a level associated with them, so they are set to `null`. Check [Variables](#variables) section on whether a variable is surface-level or has multiple pressure-levels.
 
 ### Run with Custom Config
 

@@ -4,7 +4,7 @@ from pathlib import Path
 import hydra
 from omegaconf import DictConfig, OmegaConf
 
-from canari_ml.cli.utils import print_omega_config
+from canari_ml.hydra.utils import print_omega_config
 from canari_ml.models.networks.pytorch import HYDRAPytorchNetwork
 
 logger = logging.getLogger(__name__)

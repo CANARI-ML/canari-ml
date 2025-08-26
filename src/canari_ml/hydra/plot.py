@@ -5,7 +5,7 @@ import hydra
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig
 
-from canari_ml.cli.utils import print_omega_config
+from canari_ml.hydra.utils import print_omega_config
 from canari_ml.plotting.forecast import plot_ua700_error
 
 logger = logging.getLogger(__name__)

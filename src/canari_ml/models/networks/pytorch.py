@@ -26,7 +26,7 @@ from lightning.pytorch.loggers import CSVLogger, TensorBoardLogger, WandbLogger
 from lightning.pytorch.profilers import PyTorchProfiler
 from omegaconf import DictConfig
 
-from canari_ml.cli.utils import dynamic_import
+from canari_ml.hydra.utils import dynamic_import
 from canari_ml.data.dataloader import CANARIMLDataSetTorch
 from canari_ml.preprocess.utils import symlink
 

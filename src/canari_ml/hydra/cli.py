@@ -17,9 +17,8 @@ import argparse
 import sys
 import os
 
-from canari_ml.cli import train, predict, postprocess, plot
+from canari_ml.hydra import preprocess, train, predict, postprocess, plot
 from canari_ml.download import era5
-from canari_ml.preprocess import preprocess
 
 
 def main():

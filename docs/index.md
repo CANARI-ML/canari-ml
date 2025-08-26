@@ -1,7 +1,12 @@
 # Canari-ML: North-Atlantic zonal wind forecasting codebase
 
-> [!WARNING]
-> This is a highly experimental codebase with constant changes with every development release, and is not ready for production use.
+<figure markdown="span">
+  ![CANARI Image](assets/images/canari-hero-image.png){ width="300" }
+  <figcaption>CANARI-ML</figcaption>
+</figure>
+
+???+ warning
+    This is a highly experimental codebase with constant changes with every development release, and is not ready for production use.
 
 Welcome to the documentation for Canari-ML, a machine learning library built with PyTorch Lightning for wind forecasting (zonal wind at 700hPa) across the North Atlantic.
 

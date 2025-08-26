@@ -76,8 +76,8 @@ local_scheme = "node-and-date"
 readme = { file = ["README.md"] }
 
 [project.urls]
-"Source" = "https://github.com/antarctica/canari-ml"
-"Issue tracker" = "https://github.com/antarctica/canari-ml/issues"
+"Source" = "https://github.com/CANARI-ML/canari-ml"
+"Issue tracker" = "https://github.com/CANARI-ML/canari-ml/issues"
 
 [tool.pytest.ini_options]
 addopts = "-ra"

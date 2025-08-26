@@ -44,9 +44,9 @@ To get started with using `canari-ml`, you will need to have Python set-up on yo
 
 ### Install latest default branch directly using pip
 
-    ``` console
-    pip install git+https://github.com/CANARI-ML/canari-ml@main
-    ```
+``` console
+pip install git+https://github.com/CANARI-ML/canari-ml@main
+```
 
 ### (Optional) Create local clone for development
 

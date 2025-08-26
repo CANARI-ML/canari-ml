@@ -29,7 +29,7 @@ It is designed to be used in conjunction with the [environmental-forecasting](ht
 `canari-ml` can be installed from the source as it is not on PyPI yet:
 
 ```bash
-pip install git+https://github.com/antarctica/canari-ml@main
+pip install git+https://github.com/CANARI-ML/canari-ml@main
 ```
 
 ## Usage
@@ -42,7 +42,7 @@ TODO
 
 ## License
 
-CANARI-ML is licensed under the MIT license. See [LICENSE](https://github.com/antarctica/canari-ml/blob/main/LICENSE) for more information.
+CANARI-ML is licensed under the MIT license. See [LICENSE](https://github.com/CANARI-ML/canari-ml/blob/main/LICENSE) for more information.
 
 ## Contributing
 
@@ -50,7 +50,7 @@ Contributions are welcome!
 
 Please follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) standard for commit messages. Any that do not follow this standard will not be merged into the main branch and may be rejected.
 
-Please see [CONTRIBUTING](https://github.com/antarctica/canari-ml/blob/main/CONTRIBUTING.md) for more information on how to contribute.
+Please see [CONTRIBUTING](https://github.com/CANARI-ML/canari-ml/blob/main/CONTRIBUTING.md) for more information on how to contribute.
 
 CANARI-ML is a work in progress and will be updated as development progresses.
 

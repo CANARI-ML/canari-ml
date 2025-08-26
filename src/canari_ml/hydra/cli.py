@@ -17,8 +17,7 @@ import argparse
 import sys
 import os
 
-from canari_ml.hydra import preprocess, train, predict, postprocess, plot
-from canari_ml.download import era5
+from canari_ml.hydra import download, preprocess, train, predict, postprocess, plot
 
 
 def main():
@@ -60,7 +59,7 @@ def main():
     # Reconstruct `sys.argv` for Hydra (removing the command/subcommand parts)
     sys.argv = [prog_name] + unknown_args
     if args.command == "download":
-        era5.download()
+        download.main()
     elif args.command == "preprocess":
         # Takes in `args.subcommand` of `train` or `predict`
         preprocess.main(preprocess_type=args.subcommand)

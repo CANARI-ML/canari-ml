@@ -1,52 +1,52 @@
 import logging
 from datetime import datetime as dt
-from pathlib import Path
 
-import hydra
 from download_toolbox.data.aws import AWSDatasetConfig, AWSDownloader
 from download_toolbox.location import Location
 from download_toolbox.time import Frequency
-from omegaconf import DictConfig, OmegaConf
 
 logger = logging.getLogger(__name__)
 
-@hydra.main(
-    version_base=None,
-    config_path=str(Path(__file__).parent / "../conf"),
-    config_name="download",
-)
-def download(cfg: DictConfig):
-    """Download ERA5 reanalysis data using AWS downloader in `download-toolbox`.
 
-    Processes configuration settings, sets up the download parameters
-    and downloads daily ERA5 data from AWS mirror.
+def download_daily(
+    var_names: list[str],
+    var_levels: list[int],
+    start_dates: list[str] | str,
+    end_dates: list[str] | str,
+    hemisphere: str,
+    frequency: str,
+    output_group_by: str,
+    config_path: str,
+    overwrite: bool,
+    delete_cache: bool,
+    cache_only: bool,
+    compress: int = 0,
+    workers: int = 1,
+) -> None:
+    """Download ERA5 daily reanalysis dataset from AWS S3 using download-toolbox.
+
+    Processes configuration settings and downloads daily ERA5
+    data for the specified variables, pressure levels, and date range.
 
     Args:
-        cfg: Hydra configuration parameters.
+        var_names: List of ERA5 variables to download
+        var_levels: Corresponding list of pressure levels for the
+            variables
+        start_dates: Start dates in "YYYY-MM-DD" format
+        end_dates: End dates in "YYYY-MM-DD" format, matching length
+            with start_dates
+        hemisphere: Either "north" or "south"
+        frequency: Temporal resolution of data (e.g., "daily")
+        output_group_by: Grouping frequency for output files
+        config_path: Path to save configuration file
+        overwrite: Whether to overwrite existing files
+        delete_cache: Delete temporary cache files after download
+        cache_only: Only use cached files, no download
+        compress (optional): Compression level (0-9)
+            Defaults to 0.
+        workers (optional): Number of download workers.
+            Defaults to 1.
     """
-    cfg_yaml = OmegaConf.to_yaml(cfg)
-
-    logger.info("Loaded HYDRA Configuration YAML")
-    logger.info(f"\n{cfg_yaml}")
-
-    logger.info("AWS Data Downloading")
-
-    vars = [cfg.vars] if isinstance(cfg.vars, str) else cfg.vars
-    levels = [cfg.levels] if isinstance(cfg.levels, int) else cfg.levels
-
-
-    var_names = []
-    var_levels = []
-    for var_name, var_level in zip(vars, levels):
-        var_names.append(var_name)
-        if not var_level:
-            var_levels.append(None)
-        elif isinstance(var_level, int):
-            var_levels.append([var_level])
-        else:
-            var_levels.append([int(level) for level in var_level.split("|")])
-
-    hemisphere = cfg.hemisphere
 
     location = Location(
         name=hemisphere,
@@ -58,22 +58,22 @@ def download(cfg: DictConfig):
         levels=var_levels,
         location=location,
         var_names=var_names,
-        frequency=getattr(Frequency, cfg.frequency),
-        output_group_by=getattr(Frequency, cfg.output_group_by),
-        config_path=cfg.paths.download.config_file, # Output json config path to use
-        overwrite=cfg.overwrite_config,
+        frequency=getattr(Frequency, frequency),
+        output_group_by=getattr(Frequency, output_group_by),
+        config_path=config_path,  # Output json config path to use
+        overwrite=overwrite,
     )
 
     # If given just a single date, convert to list
-    start_dates = [cfg.dates.start] if isinstance(cfg.dates.start, str) else cfg.dates.start
-    end_dates = [cfg.dates.end] if isinstance(cfg.dates.end, str) else cfg.dates.end
-    
+    start_dates = [start_dates] if isinstance(start_dates, str) else start_dates
+    end_dates = [end_dates] if isinstance(end_dates, str) else end_dates
+
     # Make sure the length of the start and end dates are the same
-    if len(start_dates)!= len(end_dates):
+    if len(start_dates) != len(end_dates):
         raise ValueError("Start and end dates must be the same length")
 
-    logger.debug(f"Dates type: {type(cfg.dates.start)}")
-    logger.debug(f"Dates: {cfg.dates.start}")
+    logger.debug(f"Dates type: {type(start_dates)}")
+    logger.debug(f"Dates: {start_dates}")
 
     for start_date, end_date in zip(start_dates, end_dates):
         logger.info("Downloading between {} and {}".format(start_date, end_date))
@@ -83,11 +83,11 @@ def download(cfg: DictConfig):
             dataset,
             start_date=start_date,
             end_date=end_date,
-            delete_cache=cfg.delete_cache,
-            cache_only=cfg.cache_only,
-            compress=None,
-            max_threads=cfg.workers,
-            request_frequency=getattr(Frequency, cfg.output_group_by),
+            delete_cache=delete_cache,
+            cache_only=cache_only,
+            compress=compress,
+            max_threads=workers,
+            request_frequency=getattr(Frequency, output_group_by),
         )
         aws.download()
 
@@ -95,7 +95,3 @@ def download(cfg: DictConfig):
             source_files=aws.files_downloaded,
             var_filter_list=["lambert_azimuthal_equal_area"],
         )
-
-
-if __name__ == "__main__":
-    download()

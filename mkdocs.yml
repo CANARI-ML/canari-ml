@@ -21,6 +21,8 @@ theme:
     code: Red Hat Mono
   logo: assets/images/canari-hero-image.png
   favicon: assets/images/canari-hero-image.png
+  icon:
+    annotation: material/arrow-right-circle-outline
   features:
     - content.code.copy
     - search.highlight
@@ -36,6 +38,7 @@ theme:
     - search.suggest
     - search.highlight
     - navigation.footer
+    - content.code.annotate
 
 # copyright: MIT License; 2025 British Antarctic Survey
 copyright: <a href="https://github.com/CANARI-ML/canari-ml/blob/main/LICENSE">MIT License</a> | 2025 | British Antarctic Survey

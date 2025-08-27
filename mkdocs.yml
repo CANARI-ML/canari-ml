@@ -59,6 +59,7 @@ plugins:
         python:
           paths: [src]
           options:
+            docstring_style: google
             show_if_no_docstring: true
             show_inheritance_diagram: true    # Show inheritance diagram for classes
             show_signature: true  # Show function signatures (args, return type)
@@ -79,6 +80,7 @@ plugins:
       nav_file: SUMMARY.md
   - section-index
   - privacy
+  - autorefs
 
 markdown_extensions:
   - admonition
@@ -95,6 +97,9 @@ markdown_extensions:
   - pymdownx.snippets
   - pymdownx.tabbed:
       alternate_style: true
+  # https://squidfunk.github.io/mkdocs-material/setup/extensions/python-markdown/?h=permalink#table-of-contents
+  - toc:
+      permalink: true
 
 nav:
   - Introduction: index.md

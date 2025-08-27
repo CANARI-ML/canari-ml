@@ -26,14 +26,18 @@ canari_ml download --help
 
 Variables available for download:
 
-| CMIP6 variable name | Description                     | ECMWF ID | ECMWF Short Name | Dataset               | Comments                                                                  |
-|---------------------|---------------------------------|----------|------------------|-----------------------|---------------------------------------------------------------------------|
-| zg                  | Geopotential height             | 129      | z                | pressure-level        | This downloads geopotential (z), which is converted during the dataset preprocess step to geopotential height (zg) |
-| ua                  | Zonal wind component            | 131      | u                | pressure-level        | Eastward component of the wind                                            |
-| va                  | Meridional wind component       | 132      | v                | pressure-level        | Horizontal speed of air moving towards the north                          |
-| tos                 | Sea Surface Temperature         | 34       | sstk             | surface-level         | Temperature of sea water near the surface                                 |
-| tas                 | Near-surface air temperature    | 167      | 2t               | surface-level         | Temperature of air at 2m above the surface of land, sea or in-land waters |
-| sic                 | Sea ice concentration           | 262001   | ci               | surface-level         | fraction of a grid box which is covered by sea ice                        |
+| CMIP6 variable name | Description                     | ECMWF ID | ECMWF Short Name | Dataset               | Comments                                                                      |
+|---------------------|---------------------------------|----------|------------------|-----------------------|-------------------------------------------------------------------------------|
+| ta                  | Air temperature                 | 130      | t                | pressure-level        | Temperature in the atmosphere (K)                                             |
+| ua                  | Zonal wind component            | 131      | u                | pressure-level        | Eastward component of the wind (m/s)                                          |
+| va                  | Meridional wind component       | 132      | v                | pressure-level        | Horizontal speed of air moving towards the north (m/s)                        |
+| zg                  | Geopotential height             | 129      | z                | pressure-level        | This downloads geopotential {z}, which is converted during the dataset preprocess step to geopotential height {zg} |
+| hus                 | Specific humidity               | 133      | q                | pressure-level        | Mass of water vapour per kilogram of moist air (kg kg-1)                      |
+| ps                  | Surface pressure                | 134      | sp               | surface-level         | Pressure (force per unit area) of the atmosphere on the surface of land, sea and in-land water (Pa) |
+| psl                 | Sea level pressure              | 151      | msl              | surface-level         | Pressure (force per unit area) of the atmosphere adjusted to the height of mean sea level (Pa) |
+| sic                 | Sea ice concentration           | 262001   | ci               | surface-level         | Fraction of a grid box which is covered by sea ice (1)                        |
+| tas                 | Near-surface air temperature    | 167      | 2t               | surface-level         | Temperature of air at 2m above the surface of land, sea or in-land waters (K) |
+| tos                 | Sea Surface Temperature         | 34       | sstk             | surface-level         | Temperature of sea water near the surface (K)                                 |
 
 ## Levels
 

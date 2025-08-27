@@ -53,14 +53,14 @@ pip install git+https://github.com/CANARI-ML/canari-ml@main
 1. **Clone the repository**:
 
     ``` console
-    git clone https://github.com/CANARI-ML/canari-ml.git
+    git clone git@github.com:CANARI-ML/canari-ml.git
     cd canari-ml
     ```
 
     To specify the branch to clone:
 
     ``` console
-    git clone -b <branch_name> https://github.com/CANARI-ML/canari-ml.git
+    git clone -b <branch_name> git@github.com:CANARI-ML/canari-ml.git
     cd canari-ml
     ```
 

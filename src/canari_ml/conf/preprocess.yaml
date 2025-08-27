@@ -5,13 +5,13 @@ defaults:
   - _self_
   # Add forward slash to show it should look for it in main config-path
   # in main canari-ml codebase, not where I'm running experiments from.
+  - /preprocess/default
   - common: default
   - paths: train  # Used for generating normalised predict dataset
                   # based on training dataset normalisation
                   # (to get location of normalised training dataset)
   - /paths/download
   - /paths/preprocess
-  - /preprocess/default
   - override hydra/job_logging: colorlog_custom
   - override hydra/hydra_logging: colorlog
 

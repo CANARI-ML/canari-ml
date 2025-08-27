@@ -27,17 +27,19 @@ To get started with using `canari-ml`, you will need to have Python set-up on yo
     ``` console
     python -m venv venv
     ```
+    This requires Python to already be installed on your system. You could use the Python installed by the OS, by MiniForge, or any other approach.
 
 2. **Activate the virtual environment**:
 
-    - On Windows:
-        ``` console
-        .\venv\Scripts\activate.bat
-        ```
-
-    - On macOS/Linux:
+    === "macOS/Linux"
         ``` console
         source venv/bin/activate
+        ```
+
+    === "Windows"
+
+        ``` console
+        .\venv\Scripts\activate.bat
         ```
 
 ## Installing Canari-ML from Git

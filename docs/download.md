@@ -119,7 +119,7 @@ defaults:     # (1)!
 
 vars:
   - ua
-  - va
+  - zg
   - tos
   - tos
   - sic

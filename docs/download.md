@@ -195,7 +195,11 @@ canari_ml download -cd configs/download/ -cn small_download vars="[ua]" levels="
 The `canari_ml download` command offers extensive flexibility through Hydra's configuration system. You can:
 
 1. Override defaults directly via CLI arguments.
-2. Create custom JSON config files for complex settings.
+2. Use custom YAML config files to define complex overrides of the default behaviour.
 3. Combine CLI and config file overrides, with CLI taking precedence.
 
 This allows you to tailor the download process for the variables you want to train with.
+
+## Next Steps
+
+After downloading the necessary data, you can proceed with [preprocessing this data to get it ready for training](preprocess.md).

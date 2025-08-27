@@ -119,4 +119,6 @@ nav:
     - Predict: predict.md
     - Postprocess: postprocess.md
     - Plot: plot.md
+  - Scripted Usage:
+    - Experiments: running_experiments.md
   - Code Reference: reference/

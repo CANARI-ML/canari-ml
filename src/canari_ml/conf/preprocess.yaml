@@ -27,6 +27,6 @@ hydra:
     dir: ${paths.preprocess.data_root}
     subdir: ${hydra.job.name}
 
-  # Allow experiment file defs to work from current run path, and not Python config-path definition
-  searchpath:
-    - file://.
+  # # Allow experiment file defs to work from current run path, and not Python config-path definition
+  # searchpath:
+  #   - file://.

@@ -82,6 +82,9 @@ plugins:
   - privacy
   - autorefs
 
+extra_css:
+  - css/github-permalink-style.css
+
 markdown_extensions:
   - admonition
   - pymdownx.details

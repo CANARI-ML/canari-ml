@@ -110,10 +110,11 @@ markdown_extensions:
 
 nav:
   - Introduction: index.md
-  - Installation: installation.md
+  - Getting started:
+    - Installation: installation.md
   - Usage:
-    - Download: download.md
-    - Generate dataset: preprocess.md
+    - Download data: download.md
+    - Preprocess data: preprocess.md
     - Train: train.md
     - Predict: predict.md
     - Postprocess: postprocess.md

@@ -24,6 +24,7 @@ theme:
   icon:
     annotation: material/arrow-right-circle-outline
   features:
+    - optimize
     - content.code.copy
     - search.highlight
     - search.share

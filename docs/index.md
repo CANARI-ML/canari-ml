@@ -38,7 +38,10 @@ Run the following command to see available entry points:
 canari_ml --help
 ```
 
-This codebase uses [Hydra](https://hydra.cc/docs/intro/) for configuring different options, and following the quick-start guide will be helpful. It enables the user to change default options for download/preprocess/train/predict/postprocess/plot via either command line overrides, or via yaml config files (in a highly configurable and reproducibile manner).
+
+This documentation provides a foundation for configuring and running the training process. For more details on specific configuration options, refer to the [Hydra documentation](https://hydra.cc/docs/).
+
+This codebase uses [Hydra](https://hydra.cc/docs/intro/) for configuring different options. For more details on specific configuration options. It enables the user to change default options for download/preprocess/train/predict/postprocess/plot via either command line overrides, or via yaml config files (in a highly configurable and reproducibile manner), or even both.
 
 This documentation will provide detailed guides on configuring models, preprocessing data, postprocessing and visualising the prediction results.
 

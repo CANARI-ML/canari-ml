@@ -225,6 +225,9 @@ To generate the prediction dataset, run:
 canari_ml preprocess predict -cd configs/preprocess/ -cn predict_trial_dataset
 ```
 
+???+ todo
+    Define output structure
+
 ---
 
 ## Next Steps

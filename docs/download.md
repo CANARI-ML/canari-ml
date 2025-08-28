@@ -200,6 +200,10 @@ The `canari_ml download` command offers extensive flexibility through Hydra's co
 
 This allows you to tailor the download process for the variables you want to train with.
 
+
+???+ todo
+    Define output structure
+
 ## Next Steps
 
 After downloading the necessary data, you can proceed with [preprocessing this data to get it ready for training](preprocess.md).

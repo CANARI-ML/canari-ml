@@ -122,7 +122,9 @@ nav:
   - Main Usage:
     - Download data: user-guide/download/usage.md
     - Preprocess data: user-guide/preprocess/usage.md
-    - Train: user-guide/train/usage.md
+    - Train:
+      - Usage: user-guide/train/usage.md
+      - Help: user-guide/train/help.md
     - Predict: user-guide/predict/usage.md
     - Postprocess: user-guide/postprocess/usage.md
     - Plot: user-guide/plot/usage.md

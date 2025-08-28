@@ -1,4 +1,7 @@
 site_name: CANARI-ML
+repo_url: https://github.com/canari-ml/canari-ml/
+repo_name: canari-ml
+site_author: Bryn Noel Ubald
 theme:
   name: material
   highlightjs: false

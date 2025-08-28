@@ -12,14 +12,14 @@ This section guides you through the use of the preprocessing command the generat
 
 For a training dataset:
 
-- Follow all previous steps to [download](download.md) source data for all required variables, ready for preprocessing.
+- Follow all previous steps to [download](../download/usage.md) source data for all required variables, ready for preprocessing.
 - This should include data for time before and after the dates being used for training/prediction because the model utilises historical data (defined by `lag_length`) to predict future steps.
 
 For a prediction dataset:
 
 - Ensure a training dataset has already been generated.
   - The normalisation parameters from this training dataset is used to normalise the prediction dataset against.
-- A [trained](train.md) model that you want to generate predictions against.
+- A [trained](../train/usage.md) model that you want to generate predictions against.
   - The trained model symlinks to the location of the training dataset used to create the trained model which the code uses to figure out what the normalisation parameters were.
 
 ---
@@ -87,7 +87,7 @@ canari_ml preprocess predict
 
 ## Override Defaults via Command-Line
 
-Akin to the [download](download.md) approach, you can override the default behaviours using either command line overrides or a YAML configuration file, or even both.
+Akin to the [download](../download/usage.md) approach, you can override the default behaviours using either command line overrides or a YAML configuration file, or even both.
 
 If you are a fan of command line options, you will balk at the idea of using config files, and instead will like having an eternal list of options to override specific parameters like the following examples.
 
@@ -115,7 +115,7 @@ To set the variables, dates and more options you want to use for training:
 canari_ml preprocess train input.name=primo input.forecast_length=3 input.lag_length=2 input.vars.absolute="[ua500, ua700, va700]" input.vars.anomaly="[zg500,zg700]" input.dates.train.start="[1979-01-05, 1979-01-20]" input.dates.train.end="[1979-01-15, 1979-01-25]" preprocess_cache.output_batch_size=4 workers=2
 ```
 
-- The variable names are a combination of [variables](download.md#variables) and [pressure-levels](download.md#pressure-levels) (if not a surface variable).
+- The variable names are a combination of [variables](../download/usage.md#variables) and [pressure-levels](../download/usage.md#pressure-levels) (if not a surface variable).
 - `preprocess_cache.output_batch_size` defines the batch size for the dataset, this should ideally match the batch size used to run the training on your system.
 - `workers` defines the number of concurrent threads/processes to use for the preprocessing steps. If running against a large number of variables and dates and running into `out of memory` or `segfault` errors, try reducing this number.
 
@@ -173,7 +173,7 @@ workers: 2
 3. Override the above defaults with values from this file. (The order matters, `_self_` should be defined last to override previous configs in this list).
 4. If you do not want anomaly variables, you can set `anomaly: null`.
 
-You can now run the preprocess command and point to this custom config file (just like in the [download](download.md#example-override-config-file) section).
+You can now run the preprocess command and point to this custom config file (just like in the [download](../download/usage.md#example-override-config-file) section).
 
 ``` console
 canari_ml preprocess train -cd configs/preprocess/ -cn train_demo_dataset
@@ -232,4 +232,4 @@ canari_ml preprocess predict -cd configs/preprocess/ -cn predict_trial_dataset
 
 ## Next Steps
 
-After generating the necessary dataset cache, you can proceed with [creating a trained model](train.md).
+After generating the necessary dataset cache, you can proceed with [creating a trained model](../train/usage.md).

@@ -115,14 +115,14 @@ markdown_extensions:
 nav:
   - Introduction: index.md
   - Getting started:
-    - Installation: installation.md
-  - Usage:
-    - Download data: download.md
-    - Preprocess data: preprocess.md
-    - Train: train.md
-    - Predict: predict.md
-    - Postprocess: postprocess.md
-    - Plot: plot.md
-  - Scripted Usage:
-    - Experiments: running_experiments.md
+    - Installation: user-guide/getting-started/installation.md
+  - Main Usage:
+    - Download data: user-guide/download/usage.md
+    - Preprocess data: user-guide/preprocess/usage.md
+    - Train: user-guide/train/usage.md
+    - Predict: user-guide/predict/usage.md
+    - Postprocess: user-guide/postprocess/usage.md
+    - Plot: user-guide/plot/usage.md
+  - Examples:
+    - Experiments: user-guide/experiments/usage.md
   - Code Reference: reference/

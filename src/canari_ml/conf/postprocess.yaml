@@ -1,0 +1,40 @@
+# Boiler plate - not to be modified unless specified
+# __________________________________________________
+
+defaults:
+  - predict: default
+  - _self_
+  - paths/postprocess                 # Used to get path to output postprocessed data to & pred output
+  - override hydra/launcher: basic
+  - override hydra/job_logging: colorlog_custom
+  - override hydra/hydra_logging: colorlog
+
+hydra:
+  job:
+    name: postprocess
+  # Do not modify the output paths. They are used for output path for netCDF, plotting, etc.
+  run:
+    dir: ${paths.postprocess.destination_path}
+  # Allow experiment file defs to work from current run path, and not Python config-path definition
+  searchpath:
+    - file://.
+
+
+# User modifiable parameters
+# __________________________
+
+postprocess:
+  name: postprocess   # Used as part of path to run in (i.e., where netCDF can end up)
+
+train:
+  name: ???
+
+# Gets some from predict/default.yaml
+predict:
+  # Unlike preceding configs, in here, seed is a list
+  # Not meant to be run with multirun, it generates ensemble mean and outputs.
+  seed:
+    - 42
+
+frequency: DAY
+hemisphere: north

@@ -1,0 +1,6 @@
+defaults:
+  - _self_
+
+netcdf:
+  name: prediction_file.nc
+  plain: false

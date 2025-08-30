@@ -1,0 +1,8 @@
+# @package _global_
+
+defaults:
+  - _self_
+
+plot:
+  name: ua700_comparison
+  show: false

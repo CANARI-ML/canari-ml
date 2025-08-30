@@ -1,0 +1,9 @@
+# @package _global_
+
+hydra:
+  # Do not modify the output paths. They are used when loading checkpoint for prediction.
+  run:
+    dir: ${paths.train}/${train.seed}
+  sweep:
+    dir: ${paths.train}
+    subdir: ${train.seed}

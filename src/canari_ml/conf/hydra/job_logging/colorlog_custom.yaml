@@ -1,0 +1,24 @@
+version: 1
+formatters:
+  colorlog:
+    format: '%(log_color)s[%(asctime)s][%(name)s][%(filename)s:%(lineno)d][%(levelname)s]%(reset)s - %(message)s'
+    class: colorlog.ColoredFormatter
+  simple:
+    format: '[%(asctime)s][%(name)s][%(filename)s:%(lineno)d][%(levelname)s] - %(message)s'
+  advanced:
+    format: '[%(asctime)s][%(pathname)s][%(name)s][%(levelname)s] - %(message)s'
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: colorlog
+    stream: ext://sys.stdout
+  file:
+    class: logging.FileHandler
+    formatter: simple
+    # absolute file path
+    filename: ${hydra.runtime.output_dir}/${hydra.job.name}_${now:%Y-%m-%d}_${now:%H-%M-%S}.log
+root:
+  level: INFO
+  handlers: [console, file]
+
+disable_existing_loggers: false

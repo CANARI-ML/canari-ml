@@ -237,7 +237,7 @@ class CanariMLBaseDataLoader(DataCollection):
         # As of Python 3.7 dict guarantees the order of keys based on
         # original insertion order, which is great for this method
         attr_map = dict(
-            abs="absolute_vars", anom="anomoly_vars", linear_trend="linear_trends"
+            abs="absolute_vars", anom="anomoly_vars"
         )
         lag_vars = [
             (identity, var, data_format)
@@ -256,22 +256,6 @@ class CanariMLBaseDataLoader(DataCollection):
             logging.debug(f"Lag time for variable {var_name} is {self._lag_time}:")
 
             self._channels[var_prefix] = int(var_lag)
-            self._add_channel_files(
-                var_prefix,
-                self._config["sources"][identity]["processed_files"][var_prefix],
-            )
-
-        trend_names = [
-            (identity, var, self._config["sources"][identity]["linear_trend_steps"])
-            for identity in sorted(self._config["sources"].keys())
-            for var in sorted(self._config["sources"][identity]["linear_trends"])
-        ]
-
-        for identity, var_name, trend_steps in trend_names:
-            var_prefix = "{}_linear_trend".format(var_name)
-
-            self._channels[var_prefix] = len(trend_steps)
-            self._trend_steps[var_prefix] = trend_steps
             self._add_channel_files(
                 var_prefix,
                 self._config["sources"][identity]["processed_files"][var_prefix],

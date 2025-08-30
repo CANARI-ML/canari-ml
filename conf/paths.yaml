@@ -1,7 +1,0 @@
-data_root: ${hydra:runtime.cwd}/shared_data
-# source_data_dir: ${data_root}/source # Currently not modifiable in download-toolbox
-source_data_dir: ${hydra:runtime.cwd}/data # Currently not modifiable in download-toolbox
-preprocessed_data_dir: ${data_root}/preprocessed
-reprojected_data_dir: ${preprocessed_data_dir}/reprojected
-normalised_data_dir: ${preprocessed_data_dir}/normalised
-cache_dir: ${data_root}/cache

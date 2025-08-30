@@ -1,0 +1,7 @@
+# @package paths
+
+defaults:
+  - postprocess                 # Used to get path to netcdf path
+
+plot:
+  destination_path: ${paths.predict}/results/${plot.name}

@@ -7,6 +7,11 @@ from omegaconf import DictConfig, OmegaConf
 logger = logging.getLogger(__name__)
 
 
+def get_hydra_config_root_path():
+    config_path = importlib.resources.files("canari_ml").joinpath("conf")
+    return str(config_path)
+
+
 def run_command(command: list):
     """
     Run a command and log its output.

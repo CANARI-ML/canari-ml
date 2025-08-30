@@ -322,7 +322,7 @@ def plot_ua700_error(cfg: DictConfig):
     nc_path = cfg.paths.postprocess.netcdf_path
     nc_file = os.path.join(nc_path, cfg.postprocess.netcdf.name)
     # dates = [dt.date(*[int(v) for v in s.split("-")]) for s in cfg.predict.dates]
-    out_video_path = os.path.join(run_dir, f"{cfg.plot.name}")
+    out_video_path = cfg.paths.plot.destination_path
 
     source_data_config_file = cfg.paths.download.config_file
 

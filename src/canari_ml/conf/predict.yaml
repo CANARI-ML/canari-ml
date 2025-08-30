@@ -4,34 +4,13 @@
 defaults:
   - predict: default
   - _self_
-  - model: default          # This can be changed to any of the models in conf/model
-  - hydra_config: predict   # Used to set output path for prediction
-  - paths: predict
   - override hydra/launcher: basic
   - override hydra/job_logging: colorlog_custom
   - override hydra/hydra_logging: colorlog
 
-
 hydra:
   job:
     name: predict
-  # Allow experiment file defs to work from current run path, and not Python config-path definition
-  searchpath:
-    - file://.
-
-
-# User modifiable parameters
-# __________________________
-
-train:
-  name: ???
-
-# Gets some from predict/default.yaml
-predict:
-  dataset: ???
-  seed: 42
-  workers: 4
-  batch_size: 4
-  checkpoint_path: null
-
-verbose: true
+  # # Allow experiment file defs to work from current run path, and not Python config-path definition
+  # searchpath:
+  #   - file://.

@@ -1,7 +1,10 @@
-site_name: canari-ml docs
+site_name: CANARI-ML
+repo_url: https://github.com/canari-ml/canari-ml/
+repo_name: canari-ml
+site_author: Bryn Noel Ubald
 theme:
   name: material
-  highlightjs: true
+  highlightjs: false
   color_mode: dark
   palette:
     # Palette toggle for dark mode
@@ -11,18 +14,49 @@ theme:
         icon: material/brightness-4
         name: Switch to light mode
     # Palette toggle for light mode
-    - scheme: default
+    - scheme: darkly
       primary: cyan
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
+  font:
+    text: Roboto
+    code: Red Hat Mono
+  logo: assets/images/canari-hero-image.png
+  favicon: assets/images/canari-hero-image.png
+  icon:
+    annotation: material/arrow-right-circle-outline
   features:
+    - optimize
     - content.code.copy
     - search.highlight
     - search.share
+    - navigation.instant
+    - navigation.instant.prefetch # Will start to fetch a page once the user hovers over a link
+    - navigation.tracking
+    # - navigation.expand
+    - navigation.path
+    - toc.follow
+    - toc.integrate
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - navigation.footer
+    - content.code.annotate
 
+# copyright: MIT License; 2025 British Antarctic Survey
+copyright: <a href="https://github.com/CANARI-ML/canari-ml/blob/main/LICENSE">MIT License</a> | 2025 | British Antarctic Survey
 extra:
   generator: false
+  social:
+    - icon: fontawesome/solid/globe
+      link: https://www.bas.ac.uk/project/canari/
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/bryn-noel-ubald/
+    - icon: simple/github
+      link: https://github.com/canari-ml/canari-ml/
+    - icon: fontawesome/brands/bluesky
+      link: https://bsky.app/profile/brynnoelubald.bsky.social
 
 plugins:
   - search:
@@ -32,6 +66,7 @@ plugins:
         python:
           paths: [src]
           options:
+            docstring_style: google
             show_if_no_docstring: true
             show_inheritance_diagram: true    # Show inheritance diagram for classes
             show_signature: true  # Show function signatures (args, return type)
@@ -51,13 +86,48 @@ plugins:
   - literate-nav:
       nav_file: SUMMARY.md
   - section-index
+  - privacy
+  - autorefs
+
+extra_css:
+  - css/github-permalink-style.css
+
+extra_javascript:
+  - https://unpkg.com/tablesort@5.3.0/dist/tablesort.min.js
+  - javascripts/tablesort.js
 
 markdown_extensions:
   - admonition
   - pymdownx.details
   - pymdownx.superfences
+  - attr_list
+  - md_in_html
+  - pymdownx.blocks.caption
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  # https://squidfunk.github.io/mkdocs-material/setup/extensions/python-markdown/?h=permalink#table-of-contents
+  - toc:
+      permalink: true
 
 nav:
   - Introduction: index.md
-  - Usage: usage.md
+  - Getting started:
+    - Installation: user-guide/getting-started/installation.md
+  - Main Usage:
+    - Download data: user-guide/download/usage.md
+    - Preprocess data: user-guide/preprocess/usage.md
+    - Train:
+      - Usage: user-guide/train/usage.md
+      - Help: user-guide/train/help.md
+    - Predict: user-guide/predict/usage.md
+    - Postprocess: user-guide/postprocess/usage.md
+    - Plot: user-guide/plot/usage.md
+  - Examples:
+    - Experiments: user-guide/experiments/usage.md
   - Code Reference: reference/

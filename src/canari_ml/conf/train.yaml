@@ -2,14 +2,8 @@
 # __________________________________________________
 
 defaults:
+  - train: default
   - _self_
-  - paths: train
-  - common: default
-  - model: default                  # This can be changed to any of the models in conf/model/
-  - callbacks: default              # This can be changed to any of the callbacks in conf/callbacks/
-  - logger: tensorboard             # This can be changed to any of the loggers in conf/logger/
-  - trainer: default                # This can be changed to any of the trainers in conf/trainer/
-  - hydra_config: train             # Used to set output path for training
   - override hydra/launcher: basic
   - override hydra/job_logging: colorlog_custom
   - override hydra/hydra_logging: colorlog
@@ -17,23 +11,6 @@ defaults:
 hydra:
   job:
     name: train
-  # Allow experiment file defs to work from current run path, and not Python config-path definition
-  searchpath:
-    - file://.
-
-
-# User modifiable parameters
-# __________________________
-
-train:
-  dataset: ???
-  name: ???
-  seed: 42
-  epochs: 50
-  workers: 4
-  batch_size: 4
-  shuffling: true
-  wandb_group: unet
-  wandb_project: CANARI
-
-verbose: true
+  # # Allow experiment file defs to work from current run path, and not Python config-path definition
+  # searchpath:
+  #   - file://.

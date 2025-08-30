@@ -4,9 +4,6 @@
 defaults:
   - predict: default
   - _self_
-  - postprocess: netcdf               # Used to get path to netCDF
-  - paths/download                    # Used to get path to source downloaded data config file
-  - paths/postprocess                 # Used to get path to output postprocessed data to & pred output
   - override hydra/launcher: basic
   - override hydra/job_logging: colorlog_custom
   - override hydra/hydra_logging: colorlog
@@ -16,9 +13,9 @@ hydra:
     name: plot
   run:
     dir: ${paths.postprocess.destination_path}/plots
-  # Allow experiment file defs to work from current run path, and not Python config-path definition
-  searchpath:
-    - file://.
+  # # Allow experiment file defs to work from current run path, and not Python config-path definition
+  # searchpath:
+  #   - file://.
 
 
 # User modifiable parameters

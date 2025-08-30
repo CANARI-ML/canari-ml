@@ -1,4 +1,5 @@
 defaults:
+  - default
   - _self_
 
 netcdf:

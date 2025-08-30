@@ -5,6 +5,12 @@
 
 defaults:
   - _self_
+  - /common/default
+  - /paths/download
+  - /paths/preprocess
+  - /paths/train  # Used for generating normalised predict dataset
+                  # based on training dataset normalisation
+                  # (to get location of normalised training dataset)
 
 # User modifiable parameters
 # __________________________

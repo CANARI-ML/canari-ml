@@ -18,6 +18,7 @@ from preprocess_toolbox.utils import update_config
 
 from canari_ml.data.processors.cds import ERA5PreProcessor
 from canari_ml.data.masks.era5 import Masks
+from canari_ml.hydra.utils import get_hydra_config_root_path
 from canari_ml.preprocess.reproject import reproject_datasets_from_config
 from canari_ml.preprocess.utils import (
     compute_loader_hash,
@@ -385,7 +386,7 @@ OmegaConf.register_new_resolver("compute_loader_hash", compute_loader_hash)
 
 @hydra.main(
     version_base=None,
-    config_path=str(Path(__file__).parent / "../conf"),
+    config_path=get_hydra_config_root_path(),
     config_name="preprocess",
 )
 def preprocess_run(cfg: DictConfig) -> None:
@@ -436,7 +437,7 @@ def main(preprocess_type: str = "train"):
     OmegaConf.register_new_resolver("set_preprocess_type", lambda x: preprocess_type)
 
     # TODO: Code smell, but, hack. Avoid modifying `sys.argv` in future if I can.
-    sys.argv.insert(1, f"preprocess_type={preprocess_type}")
+    sys.argv.insert(1, f"++preprocess_type={preprocess_type}")
 
     preprocess_run()
 

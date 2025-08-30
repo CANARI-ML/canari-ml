@@ -64,6 +64,7 @@ dev = [
 ]
 docs = [
   "mkdocs",
+  "mkdocs-autorefs",
   "mkdocstrings[python]",
   "mkdocs-material",
   "mkdocs-gen-files",

@@ -1,6 +1,22 @@
 # @package _global_
 
+defaults:
+  - _self_
+  # - /model/default          # This can be changed to any of the models in conf/model
+  - /hydra_config/predict   # Used to set output path for prediction
+  - /paths/predict
+
+train:
+  name: ???
+
 predict:
   name: ???
   dates:
     - 2000-2-1
+  dataset: ???
+  seed: 42
+  workers: 4
+  batch_size: 4
+  checkpoint_path: null
+
+verbose: true

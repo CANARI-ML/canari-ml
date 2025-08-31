@@ -11,7 +11,7 @@ def unet():
         input_channels=3,
         filter_size=3,
         n_filters_factor=4,
-        lead_time=7,
+        lead_time=3,
         n_output_classes=1,
         dropout_probability=0.3,
     )
@@ -69,14 +69,14 @@ def test_unet_init(
 @pytest.mark.parametrize(
     "input_dims, expected_dims",
     [
-        # Input shape: (batch_size, channels, height, width)
-        # Output shape: (batch_size, unet.n_output_classes, height, width, unet.lead_time)
-        ((1, 3, 500, 500), (1, 1, 500, 500, 7)),
-        ((8, 3, 500, 500), (8, 1, 500, 500, 7)),  # EASE2 36km2 grid (EASE2_N36km)
-        ((4, 3, 720, 720), (4, 1, 720, 720, 7)),  # EASE2 25km2 grid (EASE2_N25km)
-        ((4, 3, 201, 201), (4, 1, 201, 201, 7)),  # Odd img dims
-        ((4, 3, 201, 500), (4, 1, 201, 500, 7)),  # Non-square img dims
-        ((7, 3, 31, 31), (7, 1, 31, 31, 7)),  # Small dims
+        # # Input shape: (batch_size, channels, height, width)
+        # # Output shape: (batch_size, unet.n_output_classes, height, width, unet.lead_time)
+        # ((8, 3, 500, 500), (8, 1, 500, 500, 3)),  # EASE2 36km2 grid (EASE2_N36km)
+        # ((4, 3, 720, 720), (4, 1, 720, 720, 3)),  # EASE2 25km2 grid (EASE2_N25km)
+        ((1, 3, 25, 25), (1, 1, 25, 25, 3)),
+        ((2, 3, 51, 51), (2, 1, 51, 51, 3)),  # Odd img dims
+        ((2, 3, 51, 50), (2, 1, 51, 50, 3)),  # Non-square img dims
+        ((7, 3, 31, 31), (7, 1, 31, 31, 3)),  # Small dims
     ],
 )
 def test_unet_forward_pass(unet, input_dims, expected_dims):

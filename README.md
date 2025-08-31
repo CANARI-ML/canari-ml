@@ -1,8 +1,8 @@
 # Canari-ML
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Python Version](https://img.shields.io/badge/python-3.12%20|%203.13-blue)](https://www.python.org/)
-<!-- [![Docs](https://img.shields.io/badge/docs-canari--ml.io-blue)](https://canari-ml.readthedocs.io/) -->
+[![Python Version](https://img.shields.io/badge/python-3.11-blue)](https://www.python.org/)
+[![Docs](https://img.shields.io/badge/docs-canari--ml.io-blue)](https://canari-ml.readthedocs.io/)
 
 Canari-ML is a machine learning library based on PyTorch lightning for wind forecasting across the North Atlantic.
 
@@ -38,7 +38,7 @@ There are various command line entry points for the package which can be found u
 
 ## Documentation
 
-TODO
+The latest documentation can be found on [Read the Docs](https://canari-ml.readthedocs.io).
 
 ## License
 

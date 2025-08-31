@@ -1,0 +1,8 @@
+# @package _global_
+
+defaults:
+  - /paths/postprocess # Used to get path to output postprocessed data to & pred output
+  - _self_
+
+postprocess:
+  name: postprocess   # Used as part of path to run in (i.e., where netCDF can end up)

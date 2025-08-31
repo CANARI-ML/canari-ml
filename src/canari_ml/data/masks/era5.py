@@ -38,13 +38,13 @@ class MaskDatasetConfig(DatasetConfig):
     """
     def __init__(
         self,
-        downloaded_files: list = None,
+        downloaded_files: list | None = None,
         identifier: str = "masks",
         variable_name=None,
         reference_era5_file=None,
         base_weight=1.0,
         region_weights=None,
-        weight_smoothing_sigma=10,
+        weight_smoothing_sigma: float = 10.0,
         **kwargs,
     ):
         """Initialise the MaskDatasetConfig class.
@@ -307,6 +307,7 @@ class MaskDatasetConfig(DatasetConfig):
             )
             self._config = Configuration(
                 config_type=self.config_type,
+                config_path=self._config_path,
                 directory=self.root_path,
                 identifier=self.location.name,
             )
@@ -338,11 +339,13 @@ class Masks(Processor):
         self,
         dataset_config: DatasetConfig,
         *args,
-        absolute_vars: list = None,
-        identifier: str = None,
+        absolute_vars: list | None = None,
+        identifier: str | None = None,
         base_weight: float = 1.0,
-        region_weights: tuple | list = None,
+        region_weights: tuple | list | None = None,
         weight_smoothing_sigma: float = 10.0,
+        mask_dataset_config_path: str | None = None, # passed via `--mask-dataset-config-path `
+        mask_config_path: str | None = None, # passed via `--mask-config-path`
         **kwargs,
     ):
         """Initialise the Masks processor with configuration settings.
@@ -363,7 +366,7 @@ class Masks(Processor):
         # Use first ERA5 file available from this variable as reference file
         reference_era5_file = dataset_config.var_files.get(variable_name, None)[0]
 
-        mask_ds = MaskDatasetConfig(
+        mask_ds_kwargs: dict = dict(
             base_path=dataset_config.base_path,
             frequency=dataset_config.frequency,
             location=dataset_config.location,
@@ -373,16 +376,31 @@ class Masks(Processor):
             region_weights=region_weights,
             weight_smoothing_sigma=weight_smoothing_sigma,
         )
+
+        if mask_dataset_config_path:
+            mask_ds_kwargs |= dict(config_path=mask_dataset_config_path)
+            dir_path = os.path.dirname(mask_dataset_config_path)
+            os.makedirs(dir_path, exist_ok=True)
+
+
+        mask_ds = MaskDatasetConfig(**mask_ds_kwargs)
         mask_ds.save_data_for_config()
         self._dataset_config = mask_ds.save_config()
         self._hemi_str = "north" if dataset_config.location.north else "south"
 
-        super().__init__(
-            mask_ds,
+        processor_kwargs: dict = dict(
+            dataset_config=mask_ds,
             absolute_vars=["hemisphere", "weighted_regions"],
             # dtype=np.dtype(bool), # Removed since "weighted_regions" is a float,
                                     # dealt with in `generate_sample` func.
             identifier="masks.{}".format(self._hemi_str),
+        )
+
+        if mask_config_path:
+            processor_kwargs |= dict(config_path=mask_config_path)
+
+        super().__init__(
+            **processor_kwargs,
             **kwargs,
         )
 
@@ -592,8 +610,8 @@ class WeightsArgParser(MetaArgParser):
     and smoothing of the weights using a Gaussian kernel with a given sigma.
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def add_region_weights(self):
         self.add_argument(
@@ -639,7 +657,7 @@ def get_channel_info_from_processor(cfg_segment: str):
     Raises:
         RuntimeError: If the `--config-path` argument is provided, as it is invalid for this CLI endpoint.
     """
-    args = WeightsArgParser().add_channel().add_region_weights().parse_args()
+    args, unknown_args = WeightsArgParser(base_path="processed").add_channel().add_region_weights().parse_known_args()
 
     proc_impl = get_implementation(args.implementation)
     ds_config = get_dataset_config_implementation(args.ground_truth_dataset)
@@ -656,16 +674,25 @@ def get_channel_info_from_processor(cfg_segment: str):
     if not abs(total_weight - 1.0) < 1e-6:
         logging.error(f"Total weight must sum to 1.0, not {total_weight:.3f}")
 
-    processor = proc_impl(
+
+    impl_args = (
         ds_config,
         [
             args.channel_name,
         ],
         args.channel_name,
-        base_weight=args.base_weight,
-        region_weights=args.region_weights,
-        weight_smoothing_sigma=args.weight_smoothing_sigma,
     )
+
+    impl_kwargs = {
+        "base_path": args.destination_path,
+        "base_weight": args.base_weight,
+        "region_weights": args.region_weights,
+        "weight_smoothing_sigma": args.weight_smoothing_sigma,
+    }
+    if unknown_args:
+        impl_kwargs |= unknown_args
+
+    processor = proc_impl(*impl_args, **impl_kwargs)
     processor.process()
     update_config(
         get_config_filename(args),

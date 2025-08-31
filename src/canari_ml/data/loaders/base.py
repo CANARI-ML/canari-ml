@@ -20,7 +20,6 @@ class CanariMLBaseDataLoader(DataCollection):
             dictionary and passed as an argument to the appropriate loader class
         identifier: The identifier for the current loader
         var_lag: The number of previous months/days for which to use features
-        dataset_config_path (Path): The path to the dataset config file
         generate_workers (bool): Whether to generate workers or not. Only used if
             `loader_configuration` is set to "tf_dataset". If it is false, then this
             loader class will return a generator of `tf.Dataset`'s, one for each
@@ -29,7 +28,8 @@ class CanariMLBaseDataLoader(DataCollection):
         loss_weight_days: The number of months/days used to calculate loss weights
         n_forecast_days: Number of months/days ahead we want to predict
         output_batch_size: The batch size that is passed to the model
-        path: Path where cached Zarr files can be stored
+        base_path: Path where cached Zarr files can be stored
+        config_path: The path to the dataset config file
         var_lag_override:
 
     """
@@ -39,7 +39,6 @@ class CanariMLBaseDataLoader(DataCollection):
         loader_configuration: str,
         identifier: str,
         *args,
-        dataset_config_path: str = ".",
         dates_override: object = None,
         dry: bool = False,
         generate_workers: int = 8,
@@ -47,18 +46,19 @@ class CanariMLBaseDataLoader(DataCollection):
         lead_time: int = None,
         loss_weight_days: bool = True,
         output_batch_size: int = 32,
-        path: str = os.path.join(".", "network_datasets"),
+        base_path: str = os.path.join(".", "network_datasets"),
+        config_path: str = ".",
         pickup: bool = False,
         var_lag_override: object = None,
         **kwargs,
     ):
-        super().__init__(*args, identifier=identifier, base_path=path, **kwargs)
+        super().__init__(*args, identifier=identifier, base_path=base_path, **kwargs)
 
         self._channels = dict()
         self._channel_files = dict()
 
         self._configuration_path = loader_configuration
-        self._dataset_config_path = dataset_config_path
+        self._dataset_config_path = config_path
         self._dates_override = dates_override
         self._config = dict()
         self._dry = dry
@@ -237,7 +237,7 @@ class CanariMLBaseDataLoader(DataCollection):
         # As of Python 3.7 dict guarantees the order of keys based on
         # original insertion order, which is great for this method
         attr_map = dict(
-            abs="absolute_vars", anom="anomoly_vars", linear_trend="linear_trends"
+            abs="absolute_vars", anom="anomoly_vars"
         )
         lag_vars = [
             (identity, var, data_format)
@@ -256,22 +256,6 @@ class CanariMLBaseDataLoader(DataCollection):
             logging.debug(f"Lag time for variable {var_name} is {self._lag_time}:")
 
             self._channels[var_prefix] = int(var_lag)
-            self._add_channel_files(
-                var_prefix,
-                self._config["sources"][identity]["processed_files"][var_prefix],
-            )
-
-        trend_names = [
-            (identity, var, self._config["sources"][identity]["linear_trend_steps"])
-            for identity in sorted(self._config["sources"].keys())
-            for var in sorted(self._config["sources"][identity]["linear_trends"])
-        ]
-
-        for identity, var_name, trend_steps in trend_names:
-            var_prefix = "{}_linear_trend".format(var_name)
-
-            self._channels[var_prefix] = len(trend_steps)
-            self._trend_steps[var_prefix] = trend_steps
             self._add_channel_files(
                 var_prefix,
                 self._config["sources"][identity]["processed_files"][var_prefix],
@@ -368,9 +352,12 @@ class CanariMLBaseDataLoader(DataCollection):
             "var_lag_override": self._var_lag_override,
         }
 
-        output_path = os.path.join(
-            self._dataset_config_path, "dataset_config.{}.json".format(self.identifier)
-        )
+        if not self._dataset_config_path:
+            output_path = os.path.join(
+                self._dataset_config_path, "dataset_config.{}.json".format(self.identifier)
+            )
+        else:
+            output_path = self._dataset_config_path
 
         logging.info("Writing configuration to {}".format(output_path))
 

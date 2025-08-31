@@ -1,0 +1,3 @@
+# @package paths
+
+predict: outputs/${train.name}/prediction/${predict.name}

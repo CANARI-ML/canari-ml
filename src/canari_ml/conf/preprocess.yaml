@@ -1,0 +1,27 @@
+# Boiler plate - not to be modified
+# _________________________________
+
+defaults:
+  - _self_
+  # Add forward slash to show it should look for it in main config-path
+  # in main canari-ml codebase, not where I'm running experiments from.
+  - /preprocess/default
+  - override hydra/job_logging: colorlog_custom
+  - override hydra/hydra_logging: colorlog
+
+
+hydra:
+  output_subdir: null
+  job:
+    name: ${set_preprocess_type:""}${opt_underscore:${input.name}}${opt_underscore:${hashes.combined}}
+  run:
+    dir: ${paths.preprocess.data_root}/${hydra.job.name}
+  # Didn't end up doing this, but, define full path in subdir for multiruns instead of dir due to:
+  # https://github.com/facebookresearch/hydra/issues/1786#issuecomment-1017005470
+  sweep:
+    dir: ${paths.preprocess.data_root}
+    subdir: ${hydra.job.name}
+
+  # # Allow experiment file defs to work from current run path, and not Python config-path definition
+  # searchpath:
+  #   - file://.

@@ -3,7 +3,7 @@ import logging
 import os
 import time
 from collections.abc import Generator
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 from pprint import pformat
 
 import dask
@@ -15,13 +15,15 @@ import pandas as pd
 import xarray as xr
 from dateutil.relativedelta import relativedelta
 from icenet.data.loaders.base import DATE_FORMAT
+from tqdm import tqdm
+from zarr.convenience import consolidate_metadata
 
 from canari_ml.data.loaders.base import CanariMLBaseDataLoader
 
+logger = logging.getLogger(__name__)
+
 # Speeds up matplotlib rendering a lot!
 matplotlib.use("Agg")
-
-import multiprocessing as mp
 
 
 class SerialLoader(CanariMLBaseDataLoader):
@@ -113,7 +115,7 @@ class SerialLoader(CanariMLBaseDataLoader):
             )
 
             if dates_override:
-                logging.info(
+                logger.info(
                     "{} available {} dates".format(len(forecast_dates), dataset)
                 )
                 forecast_dates = forecast_dates.intersection(dates_override[dataset])
@@ -122,7 +124,7 @@ class SerialLoader(CanariMLBaseDataLoader):
             output_dir = self.get_data_var_folder(dataset)
             zarr_path = os.path.join(output_dir, f"{dataset}.zarr")
 
-            logging.info(
+            logger.info(
                 "{} {} dates to process, generating cache data.".format(
                     len(forecast_dates), dataset
                 )
@@ -144,7 +146,7 @@ class SerialLoader(CanariMLBaseDataLoader):
                     False,
                 ]
 
-                logging.debug(f"Forecast dates:\n{pformat(forecast_dates)}")
+                logger.debug(f"Forecast dates:\n{pformat(forecast_dates)}")
 
                 zarr_data, samples, gen_times = generate_and_write(
                     zarr_path,
@@ -157,20 +159,20 @@ class SerialLoader(CanariMLBaseDataLoader):
                     plot=self._plot,
                 )
 
-                logging.info("Finished output {}".format(zarr_data))
+                logger.info("Finished output {}".format(zarr_data))
                 counts[dataset] += samples
                 exec_times += gen_times
             else:
                 counts[dataset] += len(forecast_dates)
-                logging.warning("Skipping {} on pickup run".format(zarr_path))
+                logger.warning("Skipping {} on pickup run".format(zarr_path))
 
         if len(exec_times) > 0:
-            logging.info(
+            logger.info(
                 "Average sample generation time: {}".format(np.average(exec_times))
             )
         self._write_dataset_config(counts)
 
-    def generate_sample(self, date: object, prediction: bool = False, parallel=True) -> tuple[xr.DataArray, xr.DataArray, xr.DataArray]:
+    def generate_sample(self, date: object, prediction: bool = False, parallel=True) -> tuple[np.array, np.array, np.array]:
         """
         Generate a sample for the given date.
 
@@ -201,7 +203,7 @@ class SerialLoader(CanariMLBaseDataLoader):
             if k not in self._meta_channels and not k.endswith("linear_trend")
         ], **ds_kwargs)
 
-        logging.debug("VAR: {}".format(var_ds))
+        logger.debug("VAR: {}".format(var_ds))
         var_ds = var_ds.transpose("yc", "xc", "time")
 
         trend_files = \
@@ -211,7 +213,7 @@ class SerialLoader(CanariMLBaseDataLoader):
 
         if len(trend_files) > 0:
             trend_ds = xr.open_mfdataset(trend_files, **ds_kwargs)
-            logging.debug("TREND: {}".format(trend_ds))
+            logger.debug("TREND: {}".format(trend_ds))
             trend_ds = trend_ds.transpose("yc", "xc", "time")
 
         args = [
@@ -220,6 +222,8 @@ class SerialLoader(CanariMLBaseDataLoader):
             self.num_channels, self._shape, self._trend_steps, self._frequency_attr,
             self._masks, prediction
         ]
+
+        var_ds.close()
 
         if prediction:
             x, base_ua700, y, sw = generate_sample(date, var_ds, var_files, trend_ds, *args)
@@ -296,7 +300,7 @@ def process_date(idx: int,
                  plot: bool,
                  plot_dir: str,
                  args: tuple,
-                ) -> tuple[xr.DataArray, xr.DataArray, xr.DataArray, float]:
+                ) -> tuple[np.array, np.array, np.array, float]:
     """
     Process a single date to generate samples and write them to the Zarr store.
 
@@ -399,9 +403,11 @@ def process_date(idx: int,
                 vmax=1,
             )
 
+    x, y, sample_weights = dask.compute(x, y, sample_weights)
+
     end = time.time()
     duration = end - start
-    logging.info(f"Time taken to produce {date}: {duration:.4f} seconds")
+    logger.info(f"Time taken to produce {date}: {duration:.4f} seconds")
     return x, y, sample_weights, duration
 
 
@@ -437,7 +443,7 @@ def generate_and_write(
             dates, and a list of time taken for each date.
     """
     count = 0
-    times = []
+    times = [0.0]*len(dates)
 
     (
         channels,
@@ -464,16 +470,6 @@ def generate_and_write(
         if k not in meta_channels and not k.endswith("linear_trend"):
             print("k, v:", k, v)
 
-    var_ds = xr.open_mfdataset(
-        [
-            v
-            for k, v in var_files.items()
-            if k not in meta_channels and not k.endswith("linear_trend")
-        ],
-        **ds_kwargs,
-        engine="h5netcdf", # Found default netcdf4 engine buggy
-    )
-
     trend_files = [v for k, v in var_files.items() if k.endswith("linear_trend")]
     trend_ds = None
 
@@ -486,83 +482,97 @@ def generate_and_write(
     if plot:
         os.makedirs(plot_dir, exist_ok=True)
 
-    x_list, y_list, sw_list = [], [], []
-    if workers <= 1:
-        for idx, date in enumerate(dates):
-            x, y, sample_weights, duration = process_date(
-                                                idx,
-                                                date,
-                                                lead_time,
-                                                var_ds,
-                                                var_files,
-                                                trend_ds,
-                                                channels,
-                                                meta_channels,
-                                                trend_steps,
-                                                frequency_attr,
-                                                dry,
-                                                plot,
-                                                plot_dir,
-                                                args
-                                                )
-            x_list.append(x)
-            y_list.append(y)
-            sw_list.append(sample_weights)
-            times.append(duration)
-            count += 1
-    else:
-        with ProcessPoolExecutor(max_workers=workers, mp_context=mp.get_context("spawn")) as executor:
-            futures = {
-                executor.submit(process_date,
-                                idx,
-                                date,
-                                lead_time,
-                                var_ds,
-                                var_files,
-                                trend_ds,
-                                channels,
-                                meta_channels,
-                                trend_steps,
-                                frequency_attr,
-                                dry,
-                                plot,
-                                plot_dir,
-                                args
-                                ): (idx, date)
-                for idx, date in enumerate(dates)
-            }
+    # Only predicting ua700 in model output
+    out_channels = 1
 
-        for future in as_completed(futures):
-            x, y, sample_weights, duration = future.result()
-            x_list.append(x)
-            y_list.append(y)
-            sw_list.append(sample_weights)
-            times.append(duration)
-            count += 1
+    empty_x = da.zeros((len(dates), num_channels, *shape), dtype=dtype, chunks=(batch_size, num_channels, *shape))
+    empty_y = da.zeros((len(dates), out_channels, *shape, lead_time), dtype=dtype, chunks=(batch_size, out_channels, *shape, lead_time))
+    empty_sw = da.zeros((len(dates), out_channels, *shape, lead_time), dtype=dtype, chunks=(batch_size, out_channels, *shape, lead_time))
 
-    x_data = da.stack(x_list, axis=0)
-    y_data = da.stack(y_list, axis=0)
-    sw_data = da.stack(sw_list, axis=0)
-
+    # Pre-allocate empty Zarr dataset
+    ## Zarr does not like saving dates as is with dtype=object.
+    time_coord = np.array(dates, dtype="datetime64[ns]")
     ds = xr.Dataset(
         {
-            "x": (["time", "channels", "yc", "xc"], x_data),
-            "y": (["time", "channel", "yc", "xc", "lead_time"], y_data),
-            "sample_weights": (["time", "channel", "yc", "xc", "lead_time"], sw_data),
+            "x": (["time", "channels", "yc", "xc"], empty_x),
+            "y": (["time", "channel", "yc", "xc", "lead_time"], empty_y),
+            "sample_weights": (["time", "channel", "yc", "xc", "lead_time"], empty_sw),
         },
-        coords={"time": dates},
+        coords={"time": time_coord},
     )
 
-    chunks=(batch_size, num_channels, *shape, )
-    ds["x"] = ds["x"].chunk(chunks)
-    chunks=(batch_size, 1, *shape, lead_time)
-    ds["y"] = ds["y"].chunk(chunks)
-    ds["sample_weights"] = ds["sample_weights"].chunk(chunks)
+    # # Chunk dataset
+    # chunks=(batch_size, num_channels, *shape, )
+    # ds["x"] = ds["x"].chunk(chunks)
+    # chunks=(batch_size, out_channels, *shape, lead_time)
+    # ds["y"] = ds["y"].chunk(chunks)
+    # ds["sample_weights"] = ds["sample_weights"].chunk(chunks)
 
-    # Zarr does not like saving dates as is with dtype=object.
-    ds = ds.assign_coords(time=np.array(dates, dtype="datetime64[ns]"))
+    # Write empty Zarr ds to initialise
+    ds.to_zarr(path, mode="w", consolidated=False)
 
-    ds.to_zarr(path, mode="w", consolidated=True)
+    def worker(idx_date):
+        idx, date = idx_date
+
+        with xr.open_mfdataset(
+            [
+                v
+                for k, v in var_files.items()
+                if k not in meta_channels and not k.endswith("linear_trend")
+            ],
+            **ds_kwargs,
+            engine="h5netcdf", # Found default netcdf4 engine buggy
+        ) as var_ds:
+
+            x, y, sw, duration = process_date(
+                                            idx,
+                                            date,
+                                            lead_time,
+                                            var_ds,
+                                            var_files,
+                                            trend_ds,
+                                            channels,
+                                            meta_channels,
+                                            trend_steps,
+                                            frequency_attr,
+                                            dry,
+                                            plot,
+                                            plot_dir,
+                                            args
+                                            )
+
+        return idx, x, y, sw, duration
+
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        for result in tqdm(executor.map(worker, enumerate(dates)), total=len(dates)):
+            idx, x, y, sample_weights, duration = result
+
+            # # Write results back to Zarr in batch
+            # for idx, x, y, sample_weights, duration in results:
+            ds_region = xr.Dataset(
+                {
+                    "x": (["time", "channels", "yc", "xc"], x[np.newaxis]),
+                    "y": (["time", "channel", "yc", "xc", "lead_time"], y[np.newaxis]),
+                    "sample_weights": (["time", "channel", "yc", "xc", "lead_time"], sample_weights[np.newaxis]),
+                },
+                coords={"time": [time_coord[idx]]},
+            )
+
+            ds_region.to_zarr(path, mode="a", region={"time": slice(idx, idx+1)}, consolidated=False)
+            # ds_region.to_zarr(path, mode="a", consolidated=False)
+
+            times[idx] = duration
+            count += 1
+
+
+    # # Option provided by zarr logger:
+    # # 3. Explicitly setting consolidated=True, to raise an error in this case instead of falling back to try reading non-consolidated metadata.
+    # #   xr.open_zarr(path).to_zarr(path, mode="a", consolidated=True)
+    # xr.open_zarr(path).to_zarr(path, mode="a", consolidated=True)
+
+    # # Create final consolidated metadata using zarr instead
+    consolidate_metadata(path)
 
     return path, count, times
 
@@ -712,7 +722,7 @@ def generate_sample(
             # forecast initialisation date
             sample_output = sample_output - base_ua700_expanded
         except KeyError as sic_ex:
-            logging.exception(
+            logger.exception(
                 "Issue selecting data for non-prediction sample, "
                 "please review ua700 ground-truth: dates {}".format(forecast_idxs)
             )
@@ -732,7 +742,7 @@ def generate_sample(
             sample_weight = da.zeros(shape, dtype)
         else:
             # No masking when sample_weight = 1
-            sample_weight = np.ones(shape, dtype)
+            sample_weight = np.ones(shape, dtype=dtype)
             if "weighted_regions" in masks:
                 sample_weight = masks["weighted_regions"].data
             if "hemisphere" in masks:
@@ -770,9 +780,9 @@ def generate_sample(
                     data = da.ma.where(masks["land"], 0.0, data)
                 channel_data.append(data)
 
-                # logging.info("NANs: {} = {} in {}-{}".format(forecast_date, int(da.isnan(data).sum()), var_name, idx))
+                # logger.info("NANs: {} = {} in {}-{}".format(forecast_date, int(da.isnan(data).sum()), var_name, idx))
             except KeyError as e:
-                logging.warning(
+                logger.warning(
                     "KeyError detected on channel construction for {} - {}: {}".format(
                         var_name, idx, e
                     )
@@ -788,15 +798,14 @@ def generate_sample(
                 "{} meta variable cannot have more than one channel".format(var_name)
             )
 
-        meta_ds = xr.open_dataarray(var_files[var_name])
-
-        if var_name in ["sin", "cos"]:
-            ref_date = "2012-{}-{}".format(forecast_date.month, forecast_date.day)
-            trig_val = meta_ds.sel(time=ref_date).to_numpy()
-            x[v1, :, :] = da.broadcast_to([trig_val], shape)
-        else:
-            x[v1, :, :] = da.array(meta_ds.to_numpy())
-        v1 += channels[var_name]
+        with xr.open_dataarray(var_files[var_name]) as meta_ds:
+            if var_name in ["sin", "cos"]:
+                ref_date = "2012-{}-{}".format(forecast_date.month, forecast_date.day)
+                trig_val = meta_ds.sel(time=ref_date).to_numpy()
+                x[v1, :, :] = da.broadcast_to([trig_val], shape)
+            else:
+                x[v1, :, :] = da.array(meta_ds.to_numpy())
+            v1 += channels[var_name]
 
     # TODO: we have unwarranted nans which need fixing, probably from broken spatial infilling
     nan_mask_x, nan_mask_y, nan_mask_sw = (
@@ -805,7 +814,7 @@ def generate_sample(
         da.isnan(sample_weights),
     )
     if nan_mask_x.sum() + nan_mask_y.sum() + nan_mask_sw.sum() > 0:
-        logging.warning(
+        logger.warning(
             "NANs: {} in input, {} in output, {} in weights".format(
                 int(nan_mask_x.sum()), int(nan_mask_y.sum()), int(nan_mask_sw.sum())
             )

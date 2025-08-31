@@ -1,0 +1,31 @@
+# Boiler plate - not to be modified unless specified
+# __________________________________________________
+
+defaults:
+  - predict: default
+  - _self_
+  - override hydra/launcher: basic
+  - override hydra/job_logging: colorlog_custom
+  - override hydra/hydra_logging: colorlog
+
+hydra:
+  job:
+    name: plot
+  run:
+    dir: ${paths.postprocess.destination_path}/plots
+  # # Allow experiment file defs to work from current run path, and not Python config-path definition
+  # searchpath:
+  #   - file://.
+
+
+# User modifiable parameters
+# __________________________
+
+postprocess:
+  name: postprocess   # Used as part of netCDF path to load from
+
+train:
+  name: ???
+
+frequency: DAY
+hemisphere: north

@@ -1,0 +1,6 @@
+defaults:
+  - netcdf
+
+plot:
+  name: ua700_comparison
+  show_plot: false

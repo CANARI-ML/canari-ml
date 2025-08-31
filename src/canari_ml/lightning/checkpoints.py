@@ -7,6 +7,16 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 
 
 class ModelCheckpointOnImprovement(ModelCheckpoint):
+    """A custom ModelCheckpoint that saves only when monitored metric improves.
+
+    This checkpoint class tracks the best score of a monitored metric and
+    saves model checkpoints only when there's improvement. It evaluates
+    the metric after each training epoch and compares it to the previous
+    best score, saving the checkpoint if an improvement is detected.
+
+    Attributes:
+        best_score: The best metric value encountered so far.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.best_score = None

@@ -1,0 +1,25 @@
+# @package paths
+preprocess:
+  data_root: ${getcwd:}/preprocessed_data
+  preprocessed_data_dir: ${paths.preprocess.data_root}/preprocessed
+  reprojected_data_dir: ${paths.preprocess.preprocessed_data_dir}
+  normalised_data_dir: ${paths.preprocess.preprocessed_data_dir}
+  cache_dir: ${paths.preprocess.data_root}/cache # Path to store cached training data for speed
+  loader_file: ${paths.preprocess.preprocessed_data_dir}/loader.${params.config_name}.json
+
+reproject:
+  destination_path: ${paths.preprocess.reprojected_data_dir}/01_reproject${opt_underscore:${input.name}}${opt_underscore:${hashes.reproject}}
+  config_file: ${paths.reproject.destination_path}/reproject.${params.config_suffix}.json
+
+preprocess_era5:
+  destination_path: ${paths.preprocess.normalised_data_dir}/02_normalised${opt_underscore:${input.name}}${opt_underscore:${hashes.preprocess_era5}}
+  config_file: ${paths.preprocess_era5.destination_path}/processed_era5.${params.config_suffix}.json
+
+mask:
+  destination_path: ${paths.preprocess_era5.destination_path}/mask${opt_underscore:${input.name}}${opt_underscore:${hashes.preprocess_mask}}
+  mask_dataset_config_path: ${paths.mask.destination_path}/dataset_config.masks.${params.config_suffix}.json
+  mask_config_path: ${paths.mask.destination_path}/processed_era5.masks.${params.config_suffix}.json
+
+cache:
+  destination_path: ${paths.preprocess.cache_dir}/03_cache${opt_underscore:${input.name}}${opt_underscore:${hashes.cache}}
+  config_path: ${paths.cache.destination_path}/cached.${params.config_suffix}.json

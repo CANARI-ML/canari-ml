@@ -16,9 +16,8 @@ import xarray as xr
 from cf_units import Unit
 from download_toolbox.interface import DatasetConfig
 from ncdata.iris_xarray import cubes_from_xarray, cubes_to_xarray
-from preprocess_toolbox.dataset.cli import init_dataset
 
-from .cli import ReprojectArgParser, parse_shape
+from .utils import parse_shape
 
 # Get the logger for rasterio (or the relevant library)
 logger = logging.getLogger("rasterio")
@@ -85,7 +84,7 @@ def ease2_reference_grid_setup(
     # see: https://nsidc.org/data/user-resources/help-center/guide-ease-grids#anchor-25-km-resolution-ease-grids
     num_grid_points = shape[0]
 
-    target_crs = target_crs.split(":")[1] if target_crs else 6931
+    target_crs = target_crs.split(":")[1] if target_crs else 6931 # type: ignore
 
     # use cartopy to read the EASE grid parameters based on the EPSG code
     # for a Northern Hemisphere, Lambert Azimuthal grid (as specified at the NSIDC link above)
@@ -130,13 +129,13 @@ def ease2_reference_grid_setup(
 
     # create an empty cube representing the grid
     grid = iris.cube.Cube(
-        np.empty((y.shape[0], x.shape[0])), dim_coords_and_dims=[(y, 0), (x, 1)]
+        np.empty((y.shape[0], x.shape[0])), dim_coords_and_dims=[(y, 0), (x, 1)] # type: ignore
     )
 
     # create a binary mask on the EASE grid, with values 1 == NH, 0 == SH
-    xy = np.meshgrid(grid.coord(axis="x").points, grid.coord(axis="y").points)
+    xy = np.meshgrid(grid.coord(axis="x").points, grid.coord(axis="y").points) # type: ignore
     lonlat = ccrs.Geodetic().transform_points(
-        grid.coord_system().as_cartopy_crs(), xy[0], xy[1]
+        grid.coord_system().as_cartopy_crs(), xy[0], xy[1] # type: ignore
     )
     lon = lonlat[:, :, 0]
     lat = lonlat[:, :, 1]
@@ -150,7 +149,7 @@ def ease2_reference_grid_setup(
 
 
 def reproject_dataset(
-    input_: str | xr.Dataset | xr.DataArray,
+    input_: str | Path | xr.Dataset | xr.DataArray,
     grid: iris.cube.Cube,
     mask: iris.cube.Cube,
     target_crs: str = "EPSG:6931",
@@ -216,7 +215,7 @@ def reproject_dataset(
 
     # cube_reproject = cube.regrid(grid, iris.analysis.Nearest())
     cube_reproject = cube.regrid(
-        grid, iris.analysis.Linear(extrapolation_mode="linear")
+        grid, iris.analysis.Linear(extrapolation_mode="linear") # pyright: ignore[reportAttributeAccessIssue]
     )
 
     cube_reproject.data *= mask_data
@@ -312,31 +311,3 @@ def reproject_datasets_from_config(
             reproject_file(datafile, grid, mask, target_crs)
 
     logging.info("Reprojection completed")
-
-
-def reproject():
-    args = (
-        ReprojectArgParser()
-        .add_destination()
-        .add_splits()
-        .add_source_crs()
-        .add_target_crs()
-        .add_shape()
-        .add_coarsen()
-        .add_interpolate_nans()
-        .parse_args()
-    )
-    # Initially copy across the source data from `./data/` to the destination
-    # `./processed_data/`
-    ds, ds_config = init_dataset(args)
-    # Reproject and overwrite the copied data
-    reproject_datasets_from_config(
-        ds_config,
-        source_crs=args.source_crs,
-        target_crs=args.target_crs,
-        shape=args.shape,
-        coarsen=args.coarsen,
-        interpolate_nans=args.interpolate_nans,
-        workers=args.workers,
-    )
-    ds_config.save_config()

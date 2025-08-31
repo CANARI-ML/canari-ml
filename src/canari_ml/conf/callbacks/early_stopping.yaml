@@ -1,0 +1,14 @@
+# Comments from lightning docs:
+# https://lightning.ai/docs/pytorch/2.5.2/api/lightning.pytorch.callbacks.EarlyStopping.html#lightning.pytorch.callbacks.EarlyStopping
+early_stopping:
+  _target_: lightning.pytorch.callbacks.EarlyStopping
+  monitor: val_mse    # The value being monitored for early stopping.
+  min_delta: 0.0      # Minimum change in the monitored quantity to qualify as an improvement
+  patience: 10        # No. of validation checks w/o improvement. By default: one check happens after every training epoch.
+  mode: min           # One of 'min', 'max'. In 'min' mode, training will stop when the quantity monitored has stopped decreasing and in 'max' mode it will stop when the quantity monitored has stopped increasing.
+  strict: True        # whether to crash the training if monitor is not found in the validation metrics.
+  check_finite: True  # When set True, stops training when the monitor becomes NaN or infinite.
+  stopping_threshold: null   # Stop training immediately once the monitored quantity reaches this threshold.
+  divergence_threshold: null # Stop training as soon as the monitored quantity becomes worse than this threshold.
+  check_on_train_epoch_end: null  # Whether to run early stopping at the end of the training epoch. If this is False, then the check runs at the end of the validation.
+  log_rank_zero_only: null  # When set True, logs the status of the early stopping callback only for rank 0 process.

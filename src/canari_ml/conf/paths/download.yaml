@@ -1,0 +1,4 @@
+# @package paths
+download:
+  source_data_dir: ${hydra:runtime.cwd}/data # Currently not modifiable in download-toolbox
+  config_file: ${paths.download.source_data_dir}/data.aws.${frequency}.${hemisphere}.json

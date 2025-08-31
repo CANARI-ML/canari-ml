@@ -1,0 +1,3 @@
+# @package paths
+
+train: outputs/${train.name}/training/

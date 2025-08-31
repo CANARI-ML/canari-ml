@@ -5,33 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "canari_ml"
 dynamic = ["version", "readme"]
-requires-python = ">=3.12"
+requires-python = ">=3.11,<3.12"
 description = "Library for North-Atlantic jet stream forecasting"
 license = { file = "LICENSE" }
 authors = [{ name = "Bryn Noel Ubald" }]
 maintainers = [{ email = "bryald@bas.ac.uk" }]
-dependencies = [
-  "cartopy",
-  "cf-units",
-  "dask",
-  "distributed",
-  "download-toolbox==0.0.5",
-  "h5py",
-  "icenet @ git+https://github.com/icenet-ai/icenet@cb8a483ab5c8a6283799ec95a86d3099e4708f2e",
-  "imageio-ffmpeg",
-  "lightning",
-  "matplotlib",
-  "ncdata",
-  "pip",
-  "preprocess-toolbox==0.0.4",
-  "rioxarray",
-  "scitools-iris",
-  "seaborn",
-  "shapely",
-  "tqdm",
-  "wheel",
-  "xarray[io]>=2024.3.0",
-]
 classifiers = [
   "Development Status :: 3",
   "Environment :: Console",
@@ -41,22 +19,69 @@ classifiers = [
   "Natural Language :: English",
   "Operating System :: POSIX",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+  "cartopy",
+  "cf-units",
+  "dask",
+  "distributed",
+  "download-toolbox @ git+https://github.com/environmental-forecasting/download-toolbox@df6e5cb458280d310ea66ed2b633c941b960fffb",
+  "h5py",
+  "hydra_colorlog",
+  "hydra-core",
+  "hydra-submitit-launcher",
+  "icenet @ git+https://github.com/icenet-ai/icenet@fe2dd76ee010ee7b8cd66e377f8cf957d2afbc4e",
+  "imageio-ffmpeg",
+  "lightning",
+  "matplotlib",
+  "ncdata",
+  "numpy<2.0",
+  "pip",
+  "preprocess-toolbox @ git+https://github.com/environmental-forecasting/preprocess-toolbox@f1353886059d43746aca932f7cec04a5f78bb577",
+  "rioxarray",
+  "scitools-iris",
+  "seaborn",
+  "shapely",
+  "tqdm",
+  "wandb",
+  "wheel",
+  "xarray[io]>=2024.3.0",
+  "zarr<3",
+]
+
+[project.optional-dependencies]
+dev = [
+  "coverage",
+  "pre-commit",
+  "ruff",
+  "tox",
+  "pytest",
+  "build",
+  "torch-tb-profiler",
+  "commitizen",
+]
+docs = [
+  "mkdocs",
+  "mkdocs-autorefs",
+  "mkdocstrings[python]",
+  "mkdocs-material",
+  "mkdocs-gen-files",
+  "mkdocs-literate-nav",
+  "mkdocs-section-index",
 ]
 
 [project.scripts]
-canari_ml_dataset_create = "canari_ml.data.loader:create_network_dataset"
-canari_ml_preprocess_reproject = "canari_ml.preprocess.reproject:reproject"
-canari_ml_preprocess_add_region_weights = "canari_ml.data.masks.era5:add_region_weights"
-canari_ml_train = "canari_ml.models.train:pytorch_main"
-canari_ml_predict = "canari_ml.models.predict:main"
-canari_ml_plot_numpy = "canari_ml.plotting.forecast:plot_numpy"
-canari_ml_output = "canari_ml.process.predict:create_cf_output"
-canari_ml_plot_ua700_error = "canari_ml.plotting.forecast:plot_ua700_error"
+canari_ml = "canari_ml.hydra.cli:main"
+# canari_ml_preprocess_add_region_weights = "canari_ml.data.masks.era5:add_region_weights"
+# canari_ml_plot_numpy = "canari_ml.plotting.forecast:plot_numpy"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+# Ensure hydra config files also installed
+[tool.setuptools.package-data]
+canari_ml = ["conf/**/*"]
 
 [tool.setuptools_scm]
 version_scheme = "guess-next-dev"
@@ -65,21 +90,17 @@ local_scheme = "node-and-date"
 [tool.setuptools.dynamic]
 readme = { file = ["README.md"] }
 
-[project.optional-dependencies]
-dev = ["coverage", "pre-commit", "ruff", "tox", "pytest", "build", "torch-tb-profiler", "commitizen"]
-docs = ["mkdocs", "mkdocstrings[python]", "mkdocs-material", "mkdocs-gen-files", "mkdocs-literate-nav", "mkdocs-section-index"]
-
 [project.urls]
-"Source" = "https://github.com/antarctica/canari-ml"
-"Issue tracker" = "https://github.com/antarctica/canari-ml/issues"
+"Source" = "https://github.com/CANARI-ML/canari-ml"
+"Issue tracker" = "https://github.com/CANARI-ML/canari-ml/issues"
 
 [tool.pytest.ini_options]
 addopts = "-ra"
-testpaths = [
-    "tests"
-]
-pythonpath = [
-  "."
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+  "unet: Test the UNet model architecture",
+  "metrics: Test custom metrics",
 ]
 
 [[tool.pydoc-markdown.loaders]]
@@ -107,4 +128,4 @@ name = "cz_conventional_commits"
 version_scheme = "pep440"
 version = "0.0.1a1"
 update_changelog_on_bump = true
-major_version_zero = true # Using this for initial dev before hitting v1.0.0
+major_version_zero = true        # Using this for initial dev before hitting v1.0.0

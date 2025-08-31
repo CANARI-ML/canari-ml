@@ -1,0 +1,4 @@
+defaults:
+  - download
+  - preprocess
+  - _self_

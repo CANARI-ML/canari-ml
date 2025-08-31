@@ -1,0 +1,16 @@
+defaults:
+  - model_checkpoint
+  - early_stopping
+  - _self_
+
+model_checkpoint:
+  dirpath: ${hydra:runtime.output_dir}/checkpoints
+  # filename: "{epoch}" # Refer to pytorch lightning for this syntax
+  filename: "epoch={epoch}-${callbacks.model_checkpoint.monitor}={${callbacks.model_checkpoint.monitor}:.4f}"
+  monitor: val_rmse
+  mode: min
+
+early_stopping:
+  monitor: val_rmse
+  patience: 10 # No. of validation checks w/o improvement
+  mode: min

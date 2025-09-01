@@ -1,3 +1,9 @@
+---
+hide:
+  - navigation
+  - toc
+---
+
 # Canari-ML: North-Atlantic zonal wind forecasting codebase
 
 <figure markdown="span">

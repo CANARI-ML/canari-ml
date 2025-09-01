@@ -44,7 +44,7 @@ theme:
     # - toc.integrate
     - optimize
 
-copyright: <a href="https://github.com/CANARI-ML/canari-ml/blob/main/LICENSE">MIT License</a> | 2025 | British Antarctic Survey
+copyright: <a target="_blank" rel="noopener noreferrer" href="https://github.com/CANARI-ML/canari-ml/blob/main/LICENSE">MIT License</a> | 2025 | <a target="_blank" rel="noopener noreferrer" href="https://www.bas.ac.uk/">British Antarctic Survey</a>
 extra:
   generator: false
   social:

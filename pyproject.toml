@@ -65,10 +65,11 @@ docs = [
   "mkdocs",
   "mkdocs-autorefs",
   "mkdocstrings[python]",
-  "mkdocs-material",
   "mkdocs-gen-files",
   "mkdocs-literate-nav",
+  "mkdocs-material",
   "mkdocs-section-index",
+  "mkdocs-toggle-sidebar-plugin",
 ]
 
 [project.scripts]

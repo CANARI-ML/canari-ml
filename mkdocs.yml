@@ -85,6 +85,8 @@ plugins:
         - docs/gen_ref_pages.py
   - literate-nav:
       nav_file: SUMMARY.md
+  - toggle-sidebar:
+      toggle_button: all
   - markdown-exec
   - section-index
   - privacy

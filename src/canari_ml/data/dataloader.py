@@ -17,8 +17,10 @@ class ZarrDataset(Dataset):
         Initialise the dataset from a directory containing Zarr files.
 
         Args:
-            root_path: Path to the directory containing 'train.zarr', 'val.zarr', 'test.zarr'.
-            zarr_name: Name of the Zarr file to load (e.g., 'train.zarr', 'val.zarr', 'test.zarr').
+            root_path: Path to the directory containing 'train.zarr', 'val.zarr',
+                'test.zarr'.
+            zarr_name: Name of the Zarr file to load (e.g., 'train.zarr', 'val.zarr',
+                'test.zarr').
             train_split: Whether to load the training split
                 Defaults to True.
         """
@@ -52,7 +54,8 @@ class ZarrDataset(Dataset):
         x = self.x_array[idx]
         y = self.y_array[idx]
 
-        # Convert to PyTorch tensors if needed. Assuming numpy arrays are already correct dtype.
+        # Convert to PyTorch tensors if needed. Assuming numpy arrays are
+        # already correct dtype.
         x_tensor = torch.from_numpy(x).float()
         y_tensor = torch.from_numpy(y).float()
 
@@ -90,11 +93,13 @@ class CANARIMLDataSetTorch(IceNetDataSet):
         if self._config.get("dataset_path") and os.path.exists(
             self._config["dataset_path"]
         ):
-            if not self.train_fns or not self.val_fns or not self.test_fns:
-                self.add_records(self.base_path)
+            logging.warning(
+                "Will generate cache dataset"
+            )
         else:
             logging.warning(
-                "Running in configuration only mode, Zarr cache files are not being generated for this dataset"
+                "Running in configuration only mode, Zarr cache files are not being "
+                "generated for this dataset"
             )
 
     def get_data_loaders(self, num_workers=4, ratio=None):

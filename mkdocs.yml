@@ -66,6 +66,9 @@ plugins:
           paths: [src]
           options:
             docstring_style: google
+            docstring_options:
+              ignore_init_summary: true
+            merge_init_into_class: true
             show_if_no_docstring: true
             show_inheritance_diagram: true    # Show inheritance diagram for classes
             show_signature: true  # Show function signatures (args, return type)

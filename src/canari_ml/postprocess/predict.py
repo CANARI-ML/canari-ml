@@ -25,17 +25,21 @@ from canari_ml.models.networks.pytorch import CACHE_SYMLINK_DIR, NORMALISATION_S
 
 
 def get_prediction_data(
-    predict_dir_root: str, seeds: list[int], date: dt.date, return_ensemble_data: bool = False
+    predict_dir_root: str,
+    seeds: list[int],
+    date: dt.date,
+    return_ensemble_data: bool = False,
 ) -> tuple | None:
     """
     Get prediction data from ensemble of numpy files for given date.
 
     Args:
-        root: Root directory path to pipeline results.
-        name: Name of the prediction.
+        predict_dir_root: Root directory path to pipeline results.
+        seeds: List of random seeds used for different ensemble members.
         date: Forecast date to get prediction data for.
-        return_ensemble_data (optional): Whether to also return full ensemble data
-            array, or just the mean. Defaults to False.
+        return_ensemble_data (optional): Whether to also return the full
+            ensemble data array along with mean and standard deviation.
+            Defaults to False.
 
     Returns:
         tuple:
@@ -43,6 +47,14 @@ def get_prediction_data(
               Returns (data_mean, full_data_ensemble, number_of_ensemble_members)
             - If `return_ensemble_data` is False:
               Returns (data_mean, number_of_ensemble_members)
+
+            data_mean: Mean prediction across all ensemble members.
+                    Shape is (yc, xc, leadtime).
+            data_std: Standard deviation of predictions across ensemble members.
+                    Shape is (yc, xc, leadtime).
+            full_data_ensemble: Full ensemble prediction data if `return_ensemble_data`
+                                is True. Shape is (ens_members, yc, xc, leadtime).
+            ens_members: Number of ensemble members.
     """
     logging.info("Post-processing {}".format(date))
 
@@ -81,7 +93,7 @@ def get_prediction_data(
         return data_mean, data_std, ens_members
 
 
-def get_ref_ds(dataset) -> xr.Dataset | None:
+def get_ref_ds(dataset: CANARIMLDataSetTorch) -> xr.Dataset | None:
     """
     Get a reference reprojected ERA5 dataset from the specified source files.
 
@@ -115,8 +127,11 @@ def get_ref_ds(dataset) -> xr.Dataset | None:
 
 
 def denormalise_ua700(
-    loader_config_file: str, normalisation_path: str, da: xr.DataArray, var_name: str = "ua700"
-):
+    loader_config_file: str,
+    normalisation_path: str,
+    da: xr.DataArray,
+    var_name: str = "ua700",
+) -> xr.DataArray:
     """
     Denormalise a specific variable in an xarray DataArray using configuration
     from processed data files.
@@ -132,7 +147,7 @@ def denormalise_ua700(
             parameters.
 
         da: The xarray DataArray containing the data to be
-            denormalized.
+            denormalised.
 
         var_name (optional): Name of the variable to denormalise.
             Defaults to "ua700".

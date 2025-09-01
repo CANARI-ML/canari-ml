@@ -16,6 +16,9 @@ import xarray as xr
 from dateutil.relativedelta import relativedelta
 from icenet.data.loaders.base import DATE_FORMAT
 from tqdm import tqdm
+
+# from typing import Unpack # Switch to this when I set min ver to 3.12
+from typing_extensions import Unpack  # < Python 3.12
 from zarr.convenience import consolidate_metadata
 
 from canari_ml.data.loaders.base import CanariMLBaseDataLoader
@@ -45,7 +48,7 @@ class SerialLoader(CanariMLBaseDataLoader):
         _masks (dict[str, xr.DataArray]): Dictionary of masks for each variable, loaded from configuration.
         _plot (bool): Flag indicating whether to produce plots during data generation.
     """
-    def __init__(self, *args, plot=False, **kwargs) -> None:
+    def __init__(self, *args: Unpack, plot: bool = False, **kwargs: Unpack) -> None:
         super().__init__(*args, **kwargs)
         self._plot = plot
 
@@ -65,7 +68,7 @@ class SerialLoader(CanariMLBaseDataLoader):
         dates_override: dict | None = None,
         pickup: bool = False,
         client: object | None = None,
-    ):
+    ) -> None:
         """
         Generate data for multiple datasets sequentially.
 
@@ -234,7 +237,13 @@ class SerialLoader(CanariMLBaseDataLoader):
 
 
 def plot_samples_grid(
-    data_array, title_prefix, fname, titles=None, vmin=0, vmax=1, cmap="RdBu_r"
+    data_array: xr.DataArray,
+    title_prefix: str,
+    fname: str,
+    titles: None | list[str] = None,
+    vmin: float = 0,
+    vmax: float = 1,
+    cmap: str = "RdBu_r",
 ):
     """
     Plot samples in a grid.
@@ -244,6 +253,10 @@ def plot_samples_grid(
         title_prefix: Prefix for figure title
         fname: Output file path (.jpg)
         titles (optional): List of strings to title each subplot
+        vmin (optional): Minimum value for colourbar.
+            Defaults to 0.
+        vmax (optional): Maximum value for colourbar.
+            Defaults to 1.
         cmap (optional): Matplotlib colormap
     """
     n_slices = data_array.shape[-1]
@@ -313,9 +326,6 @@ def process_date(idx: int,
         idx: Index of the current date.
         date: Date to generate samples for.
         n_forecast_steps: Number of `days/months/...` to forecast for.
-        x_store: Zarr store array for input data.
-        y_store: Zarr store array for output data.
-        sw_store: Zarr store array for sample weights.
         var_ds: Dataset containing variable data.
         var_files: Dictionary of variable files with their corresponding paths.
         trend_ds: Dataset containing linear trend data (if any).
@@ -662,6 +672,9 @@ def generate_sample(
     frequency_attr: str,
     masks: object,
     prediction: bool = False,
+) -> (
+    tuple[xr.DataArray, xr.DataArray, xr.DataArray]
+    | tuple[xr.DataArray, xr.DataArray, xr.DataArray, xr.DataArray]
 ):
     """
     Generate a sample for train/val/prediction.

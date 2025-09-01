@@ -1,7 +1,12 @@
 import inspect
 
 from icenet.data.loaders.base import IceNetBaseDataLoader
+
+# from typing import Unpack # Switch to this when I set min ver to 3.12
+from typing_extensions import Unpack  # < Python 3.12
+
 from canari_ml.data.loaders.serial import SerialLoader
+
 
 class CanariMLDataLoaderFactory:
     """A factory class for managing a map of loader names and their corresponding 
@@ -52,7 +57,7 @@ class CanariMLDataLoaderFactory:
                 "Cannot add {} as already in loader map".format(loader_name)
             )
 
-    def create_data_loader(self, loader_name, *args, **kwargs) -> object:
+    def create_data_loader(self, loader_name: str, *args: Unpack, **kwargs: Unpack) -> object:
         """Creates an instance of a loader based on specified name from the
            `_loader_map` dict attribute.
 

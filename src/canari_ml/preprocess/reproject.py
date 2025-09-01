@@ -16,6 +16,7 @@ import xarray as xr
 from cf_units import Unit
 from download_toolbox.interface import DatasetConfig
 from ncdata.iris_xarray import cubes_from_xarray, cubes_to_xarray
+from typing_extensions import Unpack
 
 from .utils import parse_shape
 
@@ -153,7 +154,7 @@ def reproject_dataset(
     grid: iris.cube.Cube,
     mask: iris.cube.Cube,
     target_crs: str = "EPSG:6931",
-):
+) -> xr.Dataset:
     """
     Reprojects a source dataset from `EPSG:4326` (lat/lon) to a target CRS using Iris.
 
@@ -271,7 +272,7 @@ def reproject_file(
 
 
 def reproject_datasets_from_config(
-    process_config: DatasetConfig, workers: int = 1, **kwargs
+    process_config: DatasetConfig, workers: int = 1, **kwargs: Unpack
 ) -> None:
     """
     Reprojects multiple datasets from input config file.

@@ -7,12 +7,12 @@ from omegaconf import DictConfig, OmegaConf
 logger = logging.getLogger(__name__)
 
 
-def get_hydra_config_root_path():
+def get_hydra_config_root_path() -> str:
     config_path = importlib.resources.files("canari_ml").joinpath("conf")
     return str(config_path)
 
 
-def run_command(command: list):
+def run_command(command: list) -> None:
     """
     Run a command and log its output.
 
@@ -39,7 +39,7 @@ def run_command(command: list):
         raise RuntimeError("Command failed with exit code %d" % process.returncode)
 
 
-def dynamic_import(path: str):
+def dynamic_import(path: str) -> None:
     """
     Dynamically import a class or function from a module.
 
@@ -59,7 +59,7 @@ def dynamic_import(path: str):
     return getattr(module, class_name)
 
 
-def print_omega_config(cfg: DictConfig):
+def print_omega_config(cfg: DictConfig) -> None:
     """Print a HYDRA configuration as YAML.
 
     This function converts the given OmegaConf DictionaryConfig to

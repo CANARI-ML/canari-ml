@@ -135,7 +135,7 @@ def parse_shape(value: str) -> tuple[int, int]:
     return tuple(values)
 
 
-def parse_crs(crs_string: str):
+def parse_crs(crs_string: str) -> ccrs.CRS:
     """Parse a string representing a Cartopy CRS expression into a CRS object.
 
     Args:

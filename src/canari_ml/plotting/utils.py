@@ -171,16 +171,24 @@ def high_res_rectangle(
     Create a high-resolution lat/lon "rectangle" by subdividing the corners into
     smaller segments.
 
+    Creates a smooth polygon boundary around a rectangular region defined by
+    longitude and latitude limits. It subdivides each edge into smaller
+    segments for higher resolution, projects the coordinates using specified CRS,
+    and returns the boundary as an matplotlib Path object for plotting.
+    The result can be used for creating custom gridlines or region boundaries in
+    cartographic visualisations.
+
     Args:
-        lon_min, lon_max: Longitude bounds
-        lat_min, lat_max: Latitude bounds
-        num_points: Number of points to interpolate along each side of the rectangle
         lon_min: The minimum longitude (left edge).
         lon_max: The maximum longitude (right edge).
         lat_min: The minimum latitude (bottom edge).
         lat_max: The maximum latitude (top edge).
-        num_points (optional): Number of points to interpolate along each side of the rectangle.
-            Defaults to 100.
+        target_crs (optional): Target coordinate reference system for projection.
+            Defaults to None.
+        num_points (optional): Number of points to interpolate along each side of
+            the rectangle. Defaults to 100.
+        source_crs (ccrs.CRS, optional): Source coordinate reference system for input
+            data. Defaults to ccrs.PlateCarree().
     Returns:
         A high-resolution projected lat/lon bounded Path for matplotlib custom boundary.
     """

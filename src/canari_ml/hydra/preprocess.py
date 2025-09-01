@@ -239,7 +239,7 @@ def preprocess_era5(cfg: DictConfig) -> None:
         os.symlink(src, dst)
 
 
-def preprocess_loader_init(cfg):
+def preprocess_loader_init(cfg: DictConfig):
     """
     Initialise the data loader configuration file.
 
@@ -271,7 +271,7 @@ def preprocess_loader_init(cfg):
         raise FileExistsError
 
 
-def preprocess_loader_add_era5(cfg):
+def preprocess_loader_add_era5(cfg: DictConfig):
     """
     Add ERA5 data to the preprocessor configuration.
 
@@ -304,7 +304,7 @@ def preprocess_loader_add_era5(cfg):
     update_config(loader_file, "sources", cfgs)
 
 
-def preprocess_loader_add_mask(cfg):
+def preprocess_loader_add_mask(cfg: DictConfig):
     """
     Add mask data to the preprocessor configuration.
 
@@ -339,7 +339,7 @@ def preprocess_loader_add_mask(cfg):
                   {channel_name: processor.get_config()})
 
 
-def preprocess_cache(cfg):
+def preprocess_cache(cfg: DictConfig):
     """
     Generate ML dataset cache & config (if train) or just config file (if predict).
 

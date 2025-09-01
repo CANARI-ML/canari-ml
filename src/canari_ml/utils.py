@@ -51,7 +51,7 @@ def region_arg(argument: str) -> tuple[int, int, int, int]:
     Parse a string argument as a region, expecting four integers separated by commas.
 
     Args:
-        argument The string argument containing the region's coordinates.
+        argument: The string argument containing the region's coordinates.
 
     Returns:
         Tuple containing the x1, y1, x2, and y2 coordinates of the region.

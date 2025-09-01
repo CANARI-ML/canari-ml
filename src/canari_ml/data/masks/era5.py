@@ -19,6 +19,7 @@ from preprocess_toolbox.loader.cli import MetaArgParser
 from preprocess_toolbox.processor import Processor
 from preprocess_toolbox.utils import get_config_filename, update_config
 from scipy.ndimage import gaussian_filter
+from typing_extensions import Unpack
 
 
 class MaskDatasetConfig(DatasetConfig):
@@ -40,12 +41,12 @@ class MaskDatasetConfig(DatasetConfig):
         self,
         downloaded_files: list | None = None,
         identifier: str = "masks",
-        variable_name=None,
-        reference_era5_file=None,
-        base_weight=1.0,
-        region_weights=None,
+        variable_name: None | str = None,
+        reference_era5_file: None | str = None,
+        base_weight: float = 1.0,
+        region_weights: tuple | list | None = None,
         weight_smoothing_sigma: float = 10.0,
-        **kwargs,
+        **kwargs: Unpack,
     ):
         """Initialise the MaskDatasetConfig class.
 
@@ -244,7 +245,7 @@ class MaskDatasetConfig(DatasetConfig):
         source_files: list = None,
         time_dim_values: list = None,
         var_filter_list: list = None,
-        **kwargs,
+        **kwargs: Unpack,
     ) -> None:
         """Save data for the current configuration.
 
@@ -338,7 +339,7 @@ class Masks(Processor):
     def __init__(
         self,
         dataset_config: DatasetConfig,
-        *args,
+        *args: Unpack,
         absolute_vars: list | None = None,
         identifier: str | None = None,
         base_weight: float = 1.0,
@@ -346,7 +347,7 @@ class Masks(Processor):
         weight_smoothing_sigma: float = 10.0,
         mask_dataset_config_path: str | None = None, # passed via `--mask-dataset-config-path `
         mask_config_path: str | None = None, # passed via `--mask-config-path`
-        **kwargs,
+        **kwargs: Unpack,
     ):
         """Initialise the Masks processor with configuration settings.
 
@@ -356,6 +357,14 @@ class Masks(Processor):
             absolute_vars (optional): Variables treated as absolute.
                 Defaults to None.
             identifier (optional): Identifier for processing.
+                Defaults to None.
+            base_weight (optional): Base weight for regions.
+                Defaults to 1.0.
+            region_weights (optional): Weights for different regions.
+                Defaults to None.
+            weight_smoothing_sigma (optional): Sigma value for smoothing weights.
+                Defaults to 10.0.
+            mask_dataset_config_path (optional): Path for dataset config file.
                 Defaults to None.
             **kwargs: Additional keyword arguments passed to super class.
         """
@@ -466,7 +475,7 @@ class Masks(Processor):
 
         self.save_config()
 
-    def hemisphere(self, *args, **kwargs) -> xr.DataArray:
+    def hemisphere(self, *args: Unpack, **kwargs: Unpack) -> xr.DataArray:
         """Return the hemisphere mask as an xr.DataArray.
 
         Args:
@@ -479,7 +488,7 @@ class Masks(Processor):
         da = xr.open_dataarray(self.hemisphere_filename)
         return da.data[self._region]
 
-    def weighted_regions(self, *args, **kwargs) -> xr.DataArray:
+    def weighted_regions(self, *args: Unpack, **kwargs: Unpack) -> xr.DataArray:
         """Return the weighted regions as an xr.DataArray.
 
         Args:
@@ -610,7 +619,7 @@ class WeightsArgParser(MetaArgParser):
     and smoothing of the weights using a Gaussian kernel with a given sigma.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Unpack, **kwargs: Unpack):
         super().__init__(*args, **kwargs)
 
     def add_region_weights(self):

@@ -37,7 +37,7 @@ The `canari_ml preprocess` command preprocesses the ERA5 data running the follow
 
 To see the subcommands available, run:
 
-``` console exec="on" source="tabbed-left" result="ansi"
+``` console exec="on" source="tabbed-left" result="ansi" tabs="Command|Output"
 $ canari_ml preprocess --help
 ```
 
@@ -48,7 +48,7 @@ The `train` subcommand applies the [preprocessing steps](#usage), then processes
 #### Basic Usage
 
 
-``` console exec="on" source="tabbed-left" result="ansi"
+``` console exec="on" source="tabbed-left" result="ansi" tabs="Command|Output"
 $ canari_ml preprocess train --help
 ```
 
@@ -70,7 +70,7 @@ The `predict` subcommand applies the [preprocessing steps](#usage), then just ou
 
 #### Basic Usage
 
-``` console exec="on" source="tabbed-left" result="ansi"
+``` console exec="on" source="tabbed-left" result="ansi" tabs="Command|Output"
 $ canari_ml preprocess predict --help
 ```
 

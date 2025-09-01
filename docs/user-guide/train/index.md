@@ -29,7 +29,7 @@ The `canari_ml train` command is used to train models using preprocessed ERA5 da
 
 To see all available configuration options, run:
 
-``` console exec="on" source="tabbed-left" result="ansi"
+``` console exec="on" source="tabbed-left" result="ansi" tabs="Command|Output"
 $ canari_ml train --help
 ```
 

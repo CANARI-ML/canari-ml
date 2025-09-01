@@ -206,4 +206,4 @@ This allows you to tailor the download process for the variables you want to tra
 
 ## Next Steps
 
-After downloading the necessary data, you can proceed with [preprocessing this data to get it ready for training](../preprocess/usage.md).
+After downloading the necessary data, you can proceed with [preprocessing this data to get it ready for training](../preprocess/index.md).

@@ -51,4 +51,4 @@ This codebase uses [Hydra](https://hydra.cc/docs/intro/) for configuring differe
 
 This documentation will provide detailed guides on configuring models, preprocessing data, postprocessing and visualising the prediction results.
 
-We hope you find Canari-ML useful! Let's get started with the [installation guide](installation.md).
+We hope you find Canari-ML useful! Let's get started with the [installation guide](user-guide/getting-started/installation.md).

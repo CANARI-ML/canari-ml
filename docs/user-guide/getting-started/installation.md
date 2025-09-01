@@ -88,4 +88,4 @@ pip install git+https://github.com/CANARI-ML/canari-ml@main
 
 ## Next Steps
 
-After setting up your environment, you can proceed with [downloading source ERA5 data](download.md).
+After setting up your environment, you can proceed with [downloading source ERA5 data](../download/index.md).

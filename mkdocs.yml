@@ -81,6 +81,7 @@ plugins:
             show_bases: true     # Show base classes in the documentation
   - gen-files:
       scripts:
+        - docs/gen_help.py
         - docs/gen_ref_pages.py
   - literate-nav:
       nav_file: SUMMARY.md
@@ -119,15 +120,27 @@ nav:
   - Getting started:
     - Installation: user-guide/getting-started/installation.md
     - Hydra usage: user-guide/getting-started/hydra.md
+    - CLI help: help/general.md
   - Main Usage:
-    - Download data: user-guide/download/usage.md
-    - Preprocess data: user-guide/preprocess/usage.md
+    - Download data:
+      - user-guide/download/index.md
+      - CLI help: help/download.md
+    - Preprocess data:
+      - user-guide/preprocess/index.md
+      - CLI help: help/preprocess.md
     - Train:
-      - Usage: user-guide/train/usage.md
+      - user-guide/train/index.md
       - Help: user-guide/train/help.md
-    - Predict: user-guide/predict/usage.md
-    - Postprocess: user-guide/postprocess/usage.md
-    - Plot: user-guide/plot/usage.md
+      - CLI help: help/train.md
+    - Predict:
+      - user-guide/predict/index.md
+      - CLI help: help/predict.md
+    - Postprocess:
+      - user-guide/postprocess/index.md
+      - CLI help: help/postprocess.md
+    - Plot:
+      - user-guide/plot/index.md
+      - CLI help: help/plot.md
   - Examples:
-    - Experiments: user-guide/experiments/usage.md
+    - Experiments: user-guide/experiments/index.md
   - Code Reference: reference/

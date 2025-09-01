@@ -108,3 +108,10 @@ Examples:
 v1.2.4-alpha.3 → v1.2.5-alpha.0
 
 For full documentation on its usage, please peruse the [Commitizen docs](https://commitizen-tools.github.io/commitizen/commands/bump/).
+
+
+## Contributors
+
+<a href="https://github.com/canari-ml/canari-ml/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=canari-ml/canari-ml" />
+</a>

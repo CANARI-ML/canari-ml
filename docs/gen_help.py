@@ -40,6 +40,8 @@ def run_command(command):
         logger.info(f"Error running command '{command}': {e}")
         return ""
 
+logger.debug(f"Current working dir: {os.getcwd()}")
+logger.debug(f"Script dir path: {os.path.dirname(os.path.realpath(__file__))}")
 
 # Generate markdown for each command's --help output
 for command, filename in commands:

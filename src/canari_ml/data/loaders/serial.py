@@ -14,7 +14,6 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from dateutil.relativedelta import relativedelta
-from icenet.data.loaders.base import DATE_FORMAT
 from tqdm import tqdm
 
 # from typing import Unpack # Switch to this when I set min ver to 3.12
@@ -27,6 +26,8 @@ logger = logging.getLogger(__name__)
 
 # Speeds up matplotlib rendering a lot!
 matplotlib.use("Agg")
+
+DATE_FORMAT = "%Y-%m-%d"
 
 
 class SerialLoader(CanariMLBaseDataLoader):

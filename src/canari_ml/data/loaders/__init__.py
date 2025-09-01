@@ -1,6 +1,6 @@
 import inspect
 
-from icenet.data.loaders.base import IceNetBaseDataLoader
+from canari_ml.data.loaders.base import CanariMLBaseDataLoader
 
 # from typing import Unpack # Switch to this when I set min ver to 3.12
 from typing_extensions import Unpack  # < Python 3.12
@@ -41,14 +41,14 @@ class CanariMLDataLoaderFactory:
 
         Raises:
             RuntimeError: If the loader name already exists or if the implementation
-                class is not a descendant of IceNetBaseDataLoader.
+                class is not a descendant of CanariMLBaseDataLoader.
         """
         if loader_name not in self._loader_map:
-            if IceNetBaseDataLoader in inspect.getmro(loader_impl):
+            if CanariMLBaseDataLoader in inspect.getmro(loader_impl):
                 self._loader_map[loader_name] = loader_impl
             else:
                 raise RuntimeError(
-                    "{} is not descended from IceNetBaseDataLoader".format(
+                    "{} is not descended from CanariMLBaseDataLoader".format(
                         loader_impl.__name__
                     )
                 )

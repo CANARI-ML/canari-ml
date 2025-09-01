@@ -9,13 +9,107 @@ import pandas as pd
 import pyproj
 import xarray as xr
 from dateutil.relativedelta import relativedelta
-from download_toolbox.dataset import DatasetConfig
 from download_toolbox.interface import Frequency, get_dataset_config_implementation
-from icenet.plotting.utils import broadcast_forecast
 from download_toolbox.utils import get_implementation
 from shapely.geometry import Polygon
 from shapely.geometry.polygon import orient
 from shapely.ops import transform
+
+
+def broadcast_forecast(start_date: pd.Timestamp,
+                       end_date: pd.Timestamp,
+                       datafiles: list | None = None,
+                       dataset: xr.Dataset | None = None,
+                       target: os.PathLike | str | None = None,
+                       frequency: Frequency = Frequency.DAY) -> xr.Dataset:
+    """
+    Broadcasts forecast data across a specified time range.
+
+    Args:
+        start_date: Start date for the forecast period
+        end_date: End date for the forecast period
+        datafiles: List of input data files
+        dataset: Input xarray Dataset
+        target: Output file path to save results
+        frequency (optional): Forecast frequency (e.g., daily, monthly)
+
+    Returns:
+        Broadcasted forecast dataset
+
+    Examples:
+        ``` python
+        # Example usage:
+        start = pd.Timestamp('2023-01-01')
+        end = pd.Timestamp('2023-01-07')
+        datafiles = ['input.nc']
+
+        result = broadcast_forecast(start, end, datafiles=datafiles, frequency=Frequency.DAY)
+        ```
+
+    Notes:
+        Based on IceNet implementation:
+        https://github.com/icenet-ai/icenet/blob/a7554a617c1eff1eceefa4a0f0a5782c5a0a34ea/icenet/plotting/utils.py
+    """
+
+    if not ((datafiles is None) ^ (dataset is None)):
+        raise RuntimeError("Only one of datafiles and dataset can be set")
+
+    if datafiles:
+        logging.info("Using {} to generate forecast through {} to {}".format(
+            ", ".join(datafiles), start_date, end_date))
+        dataset = xr.open_mfdataset(datafiles, engine="netcdf4")
+
+    dates = pd.date_range(start_date, end_date, freq=frequency.freq)
+    i = 0
+
+    logging.debug("Dataset summary: \n{}".format(dataset))
+
+    if len(dataset.time.values) > 1:
+        while dataset.time.values[i + 1] < dates[0]:
+            i += 1
+
+    logging.info("Starting index will be {} for {} - {}".format(i, dates[0], dates[-1]))
+    dt_arr = []
+
+    for d in dates:
+        logging.debug("Looking for date {}".format(d))
+        arr = None
+
+        while arr is None:
+            if d >= dataset.time.values[i]:
+                delta_attribute = "{}s".format(frequency.attribute)
+                delta_lead = relativedelta(pd.to_datetime(d), pd.to_datetime(dataset.time.values[i]))
+                # TODO: d_lead used to use as is, but forecasts start at leadtime 1, so genuine fix
+                #  or red herring? Validate with daily forecasts as well: we introduced +1
+                d_lead = getattr(delta_lead, delta_attribute) + 1
+
+                if i + 1 < len(dataset.time.values):
+                    if pd.to_datetime(dataset.time.values[i]) + relativedelta(**{delta_attribute: d_lead}) >= \
+                       pd.to_datetime(dataset.time.values[i + 1]) + relativedelta(**{delta_attribute: 1}):
+                        i += 1
+                        continue
+
+                logging.debug("Selecting date {} and lead {}".format(
+                    pd.to_datetime(dataset.time.values[i]).strftime("%D"),
+                    d_lead))
+
+                arr = dataset.sel(time=dataset.time.values[i],
+                                  leadtime=d_lead).\
+                    copy().\
+                    drop("time").\
+                    assign_coords(dict(time=d)).\
+                    drop("leadtime")
+            else:
+                i += 1
+
+        dt_arr.append(arr)
+
+    target_ds = xr.concat(dt_arr, dim="time")
+
+    if target:
+        logging.info("Saving dataset to {}".format(target))
+        target_ds.to_netcdf(target)
+    return target_ds
 
 
 def get_forecast_data(
@@ -48,7 +142,10 @@ def get_forecast_data(
 
 
 def filter_ds_by_obs(
-    ds: object, obs_da: object, forecast_date: str, frequency: Frequency = Frequency.DAY
+    ds: xr.Dataset,
+    obs_da: xr.DataArray,
+    forecast_date: str,
+    frequency: Frequency = Frequency.DAY,
 ) -> xr.Dataset:
     """
     Filter a dataset based on observational data for a specific forecast date.

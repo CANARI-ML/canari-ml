@@ -1,8 +1,26 @@
-# Canari-ML
+<p align="center">
+  <img src="docs/assets/images/canari-hero-image.png" alt="Canari-ML Image" width="250" height="212">
+</p>
 
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Python Version](https://img.shields.io/badge/python-3.11-blue)](https://www.python.org/)
-[![Docs](https://img.shields.io/badge/docs-canari--ml.io-blue)](https://canari-ml.readthedocs.io/)
+<h1 align="center">Canari-ML</h1>
+
+<p align="center">
+  <a href="https://github.com/canari-ml/canari-ml/actions/workflows/test.yaml?query=branch%3Amain">
+    <img src="https://github.com/canari-ml/canari-ml/actions/workflows/test.yaml/badge.svg?branch=main" alt="Testing">
+  </a>
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
+  </a>
+  <a href="https://canari-ml.readthedocs.io/">
+    <img src="https://img.shields.io/badge/docs-canari--ml.io-green" alt="Docs">
+  </a>
+  <a href="https://github.com/astral-sh/ruff">
+    <img src="https://img.shields.io/badge/code%20style-ruff-000000.svg" alt="Formatted with ruff">
+  </a>
+  <a href="https://www.python.org/">
+    <img src="https://img.shields.io/badge/python-3.11-blue" alt="Python Version">
+  </a>
+</p>
 
 Canari-ML is a machine learning library based on PyTorch lightning for wind forecasting across the North Atlantic.
 

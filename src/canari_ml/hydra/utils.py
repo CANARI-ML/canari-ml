@@ -2,6 +2,7 @@ import importlib
 import logging
 import subprocess
 
+import yaml
 from omegaconf import DictConfig, OmegaConf
 
 logger = logging.getLogger(__name__)
@@ -59,7 +60,12 @@ def dynamic_import(path: str) -> None:
     return getattr(module, class_name)
 
 
-def print_omega_config(cfg: DictConfig) -> None:
+class IndentDumper(yaml.Dumper):
+    def increase_indent(self, flow=False, indentless=False):
+        return super(IndentDumper, self).increase_indent(flow, False)
+
+
+def print_omega_config(cfg: DictConfig, resolve: bool = False) -> None:
     """Print a HYDRA configuration as YAML.
 
     This function converts the given OmegaConf DictionaryConfig to
@@ -68,7 +74,9 @@ def print_omega_config(cfg: DictConfig) -> None:
     Args:
         cfg: The Hydra configuration to print.
     """
-    cfg_yaml = OmegaConf.to_yaml(cfg)
+    # cfg_yaml = OmegaConf.to_yaml(cfg)
+    cfg_dict = OmegaConf.to_container(cfg, resolve=True, enum_to_str=True)
+    cfg_yaml = yaml.dump(cfg_dict, Dumper=IndentDumper)
 
     logger.info("Loaded HYDRA Configuration YAML")
     logger.info(f"\n{cfg_yaml}")

@@ -118,6 +118,7 @@ nav:
   - Introduction: index.md
   - Getting started:
     - Installation: user-guide/getting-started/installation.md
+    - Hydra usage: user-guide/getting-started/hydra.md
   - Main Usage:
     - Download data: user-guide/download/usage.md
     - Preprocess data: user-guide/preprocess/usage.md

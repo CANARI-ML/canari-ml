@@ -2,7 +2,15 @@ import logging
 import os
 import subprocess
 
+# logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(levelname)s\t-  %(message)s')
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 
 # Main options
 main_command = "canari_ml"
@@ -35,7 +43,7 @@ def run_command(command):
 
 # Generate markdown for each command's --help output
 for command, filename in commands:
-    logger.info(f"Generating documentation for: {command}")
+    logger.info(f"Generating documentation for: `{command}`")
     help_output = run_command(f"{command} --help")
     if help_output:
         with open(os.path.join(output_dir, filename), "w") as f:

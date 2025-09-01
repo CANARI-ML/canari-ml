@@ -3,31 +3,24 @@ import os
 import sys
 from pathlib import Path
 
-import hydra
 import orjson
 from download_toolbox.cli import csv_of_date_args
 from download_toolbox.interface import (
     get_dataset_config_implementation,
     get_implementation,
 )
-from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, OmegaConf
-from preprocess_toolbox.cli import process_split_args
-from preprocess_toolbox.dataset.cli import init_dataset
 from preprocess_toolbox.utils import update_config
 
-from canari_ml.data.processors.cds import ERA5PreProcessor
-from canari_ml.data.masks.era5 import Masks
+import hydra
 from canari_ml.hydra.utils import get_hydra_config_root_path
-from canari_ml.preprocess.reproject import reproject_datasets_from_config
 from canari_ml.preprocess.utils import (
+    IterableNamespace,
     compute_loader_hash,
     compute_step_hash,
     symlink,
-    IterableNamespace,
 )
-from canari_ml.models.networks.pytorch import NORMALISATION_SYMLINK_DIR
-from canari_ml.data.loaders import CanariMLDataLoaderFactory
+from hydra.core.hydra_config import HydraConfig
 
 logger = logging.getLogger(__name__)
 
@@ -108,9 +101,12 @@ def reproject(cfg: DictConfig) -> None:
     # Convert to dict, and merge
     args = IterableNamespace(**vars(main_args), **vars(additional_args))
 
+    from preprocess_toolbox.dataset.cli import init_dataset
     # Initially copy across the source data from `./data/` to the destination
     # `./processed_data/`
     ds, ds_config = init_dataset(args)
+
+    from canari_ml.preprocess.reproject import reproject_datasets_from_config
     # Reproject and overwrite the copied data
     reproject_datasets_from_config(
         ds_config,
@@ -176,6 +172,7 @@ def preprocess_era5(cfg: DictConfig) -> None:
         if getattr(cfg, "train_ref", None):
             normalisation_path = cfg.train_ref
         else:
+            from canari_ml.models.networks.pytorch import NORMALISATION_SYMLINK_DIR
             # If using experiment config file, we should be able to ascertain where
             # the training normalisation file is located
             normalisation_path = (
@@ -196,11 +193,13 @@ def preprocess_era5(cfg: DictConfig) -> None:
     # Convert to dict, and merge
     args = IterableNamespace(**vars(main_args), **vars(additional_args), **more_args)
 
+    from preprocess_toolbox.cli import process_split_args
     ds_config = get_dataset_config_implementation(args.source)
     splits = process_split_args(args, frequency=ds_config.frequency)
 
     implementation = cfg.preprocess_era5.implementation
 
+    from canari_ml.data.processors.cds import ERA5PreProcessor
     implementation = (
         get_implementation(implementation) if implementation else ERA5PreProcessor
     )
@@ -315,6 +314,7 @@ def preprocess_loader_add_mask(cfg: DictConfig):
     implementation = cfg.preprocess_mask.implementation
     ground_truth_dataset = cfg.paths.reproject.config_file
 
+    from canari_ml.data.masks.era5 import Masks
     proc_impl = get_implementation(implementation) if implementation else Masks
     ds_config = get_dataset_config_implementation(ground_truth_dataset)
 
@@ -349,6 +349,7 @@ def preprocess_cache(cfg: DictConfig):
 
     loader_file = cfg.paths.preprocess.loader_file
 
+    from canari_ml.data.loaders import CanariMLDataLoaderFactory
     dl = CanariMLDataLoaderFactory().create_data_loader(
         cfg.preprocess_cache.implementation,
         loader_file,
@@ -398,10 +399,8 @@ def preprocess_run(cfg: DictConfig) -> None:
     Args:
         cfg: Hydra auto-loaded configuration.
     """
-    cfg_yaml = OmegaConf.to_yaml(cfg)
-
-    logger.info("Loaded HYDRA Configuration YAML")
-    logger.info(f"\n{cfg_yaml}")
+    from canari_ml.hydra.utils import print_omega_config
+    print_omega_config(cfg)
 
     preprocess_type = cfg.preprocess_type
     logger.info(f"preprocess_type: {preprocess_type}")

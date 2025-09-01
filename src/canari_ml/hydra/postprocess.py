@@ -1,13 +1,11 @@
-import sys
 import logging
+import sys
 from pathlib import Path
+
+from omegaconf import DictConfig, OmegaConf
 
 import hydra
 from hydra.core.hydra_config import HydraConfig
-from omegaconf import DictConfig, OmegaConf
-
-from canari_ml.hydra.utils import print_omega_config
-from canari_ml.postprocess.predict import create_cf_output
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +26,8 @@ def postprocess_main(cfg: DictConfig):
     Args:
         cfg: Hydra configuration parameters for postprocessing.
     """
+    from canari_ml.hydra.utils import print_omega_config
+    from canari_ml.postprocess.predict import create_cf_output
     print_omega_config(cfg)
 
     # Dynamically selecting postprocessing override as provided by `e.g.: +postprocess=netcdf`

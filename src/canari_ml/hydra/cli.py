@@ -12,13 +12,11 @@
 # if __name__ == "__main__":
 #     app()
 
-
 import argparse
 import sys
 import os
 
-from canari_ml.hydra import download, preprocess, train, predict, postprocess, plot
-
+# from canari_ml.hydra import download, preprocess, train, predict, postprocess, plot
 
 def main():
     prog_name = os.path.basename(sys.argv[0])
@@ -59,19 +57,25 @@ def main():
     # Reconstruct `sys.argv` for Hydra (removing the command/subcommand parts)
     sys.argv = [prog_name] + unknown_args
     if args.command == "download":
+        from canari_ml.hydra import download
         download.main()
     elif args.command == "preprocess":
+        from canari_ml.hydra import preprocess
         # Takes in `args.subcommand` of `train` or `predict`
         preprocess.main(preprocess_type=args.subcommand)
     elif args.command == "train":
+        from canari_ml.hydra import train
         train.main()
     elif args.command == "predict":
+        from canari_ml.hydra import predict
         predict.main()
     elif args.command == "postprocess":
+        from canari_ml.hydra import postprocess
         postprocess.main()
         # if args.subcommand in postprocess_subcommands:
         #     getattr(postprocess, f"out_{args.subcommand}")()
     elif args.command == "plot":
+        from canari_ml.hydra import plot
         plot.main()
         # if args.subcommand in plot_subcommands:
         #     getattr(plot, f"plot_{args.subcommand}")()

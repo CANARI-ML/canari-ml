@@ -4,9 +4,6 @@ from pathlib import Path
 import hydra
 from omegaconf import DictConfig, OmegaConf
 
-from canari_ml.hydra.utils import print_omega_config
-from canari_ml.models.networks.pytorch import HYDRAPytorchNetwork
-
 logger = logging.getLogger(__name__)
 
 
@@ -24,9 +21,10 @@ def train_run(cfg: DictConfig) -> None:
     Args:
         cfg: Hydra auto-loaded configuration.
     """
-
+    from canari_ml.hydra.utils import print_omega_config
     print_omega_config(cfg)
 
+    from canari_ml.models.networks.pytorch import HYDRAPytorchNetwork
     network = HYDRAPytorchNetwork(cfg, run_type="train")
     network.train()
 

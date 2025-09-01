@@ -23,10 +23,8 @@ def main(cfg: DictConfig) -> None:
     Args:
         cfg: Hydra configuration parameters.
     """
-    cfg_yaml = OmegaConf.to_yaml(cfg)
-
-    logger.info("Loaded HYDRA Configuration YAML")
-    logger.info(f"\n{cfg_yaml}")
+    from canari_ml.hydra.utils import print_omega_config
+    print_omega_config(cfg)
 
     logger.info("AWS Data Downloading")
 

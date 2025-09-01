@@ -1,12 +1,10 @@
 import logging
 from pathlib import Path
 
-import hydra
-from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig
 
-from canari_ml.hydra.utils import print_omega_config
-from canari_ml.plotting.forecast import plot_ua700_error
+import hydra
+from hydra.core.hydra_config import HydraConfig
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +27,8 @@ def main(cfg: DictConfig):
             settings for plotting. This includes paths, plot type selection,
             and any additional parameters required for specific plots.
     """
+    from canari_ml.hydra.utils import print_omega_config
+    from canari_ml.plotting.forecast import plot_ua700_error
     print_omega_config(cfg)
 
     # Dynamically selecting postprocessing override as provided by `e.g.: +plot=ua700`

@@ -41,7 +41,7 @@ theme:
     - search.share
     - search.suggest
     - toc.follow
-    - toc.integrate
+    # - toc.integrate
     - optimize
 
 copyright: <a href="https://github.com/CANARI-ML/canari-ml/blob/main/LICENSE">MIT License</a> | 2025 | British Antarctic Survey

@@ -3,7 +3,7 @@ import os
 
 import torch
 import zarr
-from icenet.data.network_dataset import IceNetDataSet
+from canari_ml.data.network_dataset import IceNetDataSet
 from torch.utils.data import DataLoader, Dataset
 
 from canari_ml.data.loaders import CanariMLDataLoaderFactory

@@ -27,34 +27,33 @@ theme:
   icon:
     annotation: material/arrow-right-circle-outline
   features:
-    - optimize
+    - content.code.annotate
     - content.code.copy
+    # - navigation.expand
+    - navigation.footer
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
     - search.highlight
     - search.share
-    - navigation.instant
-    - navigation.instant.prefetch # Will start to fetch a page once the user hovers over a link
-    - navigation.tracking
-    # - navigation.expand
-    - navigation.path
+    - search.suggest
     - toc.follow
     - toc.integrate
-    - navigation.top
-    - search.suggest
-    - search.highlight
-    - navigation.footer
-    - content.code.annotate
+    - optimize
 
-# copyright: MIT License; 2025 British Antarctic Survey
 copyright: <a href="https://github.com/CANARI-ML/canari-ml/blob/main/LICENSE">MIT License</a> | 2025 | British Antarctic Survey
 extra:
   generator: false
   social:
     - icon: fontawesome/solid/globe
       link: https://www.bas.ac.uk/project/canari/
-    - icon: fontawesome/brands/linkedin
-      link: https://www.linkedin.com/in/bryn-noel-ubald/
     - icon: simple/github
       link: https://github.com/canari-ml/canari-ml/
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/bryn-noel-ubald/
     - icon: fontawesome/brands/bluesky
       link: https://bsky.app/profile/brynnoelubald.bsky.social
 

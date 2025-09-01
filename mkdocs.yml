@@ -81,10 +81,11 @@ plugins:
             show_bases: true     # Show base classes in the documentation
   - gen-files:
       scripts:
-        - docs/gen_help.py
+        # - docs/gen_help.py
         - docs/gen_ref_pages.py
   - literate-nav:
       nav_file: SUMMARY.md
+  - markdown-exec
   - section-index
   - privacy
   - autorefs

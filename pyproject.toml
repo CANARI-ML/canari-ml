@@ -63,6 +63,7 @@ dev = [
   "commitizen",
 ]
 docs = [
+  "markdown-exec[ansi]",
   "mkdocs",
   "mkdocs-autorefs",
   "mkdocstrings[python]",

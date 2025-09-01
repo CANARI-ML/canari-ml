@@ -21,12 +21,12 @@ output_dir = "help/"
 # Help commands to capture
 commands = [
     (f"{main_command}", "general.md"),
-    # (f"{main_command} download", "download.md"),
-    # (f"{main_command} preprocess train", "preprocess.md"),
-    # (f"{main_command} train", "train.md"),
-    # (f"{main_command} predict", "predict.md"),
-    # (f"{main_command} postprocess", "postprocess.md"),
-    # (f"{main_command} plot", "plot.md"),
+    (f"{main_command} download", "download.md"),
+    (f"{main_command} preprocess train", "preprocess.md"),
+    (f"{main_command} train", "train.md"),
+    (f"{main_command} predict", "predict.md"),
+    (f"{main_command} postprocess", "postprocess.md"),
+    (f"{main_command} plot", "plot.md"),
 ]
 
 

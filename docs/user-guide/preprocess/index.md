@@ -37,8 +37,8 @@ The `canari_ml preprocess` command preprocesses the ERA5 data running the follow
 
 To see the subcommands available, run:
 
-``` console
-canari_ml preprocess --help
+``` console exec="on" source="tabbed-left" result="ansi"
+$ canari_ml preprocess --help
 ```
 
 ### Training Subcommand
@@ -47,8 +47,9 @@ The `train` subcommand applies the [preprocessing steps](#usage), then processes
 
 #### Basic Usage
 
-``` console
-canari_ml preprocess train --help
+
+``` console exec="on" source="tabbed-left" result="ansi"
+$ canari_ml preprocess train --help
 ```
 
 This displays the help menu with all available default configuration options. And, will inform you of what options are available to override.
@@ -69,8 +70,8 @@ The `predict` subcommand applies the [preprocessing steps](#usage), then just ou
 
 #### Basic Usage
 
-``` console
-canari_ml preprocess predict --help
+``` console exec="on" source="tabbed-left" result="ansi"
+$ canari_ml preprocess predict --help
 ```
 
 This displays the help menu for the prediction command.
@@ -80,7 +81,7 @@ This displays the help menu for the prediction command.
 To execute the prediction preprocessing using the defaults:
 
 ``` console
-canari_ml preprocess predict
+$ canari_ml preprocess predict
 ```
 
 ---
@@ -98,13 +99,13 @@ If you are a fan of command line options, you will balk at the idea of using con
 To change the dataset name, and forecast length to 5 days:
 
 ``` console
-canari_ml preprocess train input.name=primo input.forecast_length=5
+$ canari_ml preprocess train input.name=primo input.forecast_length=5
 ```
 
 By default, the number of historical days used to generate the dataset will match the forecast length, to adjust it to a specific number of days, you can override the `lag_length` parameter:
 
 ``` console
-canari_ml preprocess train input.name=primo input.forecast_length=3 input.lag_length=3
+$ canari_ml preprocess train input.name=primo input.forecast_length=3 input.lag_length=3
 ```
 
 #### Override More Options
@@ -112,7 +113,7 @@ canari_ml preprocess train input.name=primo input.forecast_length=3 input.lag_le
 To set the variables, dates and more options you want to use for training:
 
 ``` console
-canari_ml preprocess train input.name=primo input.forecast_length=3 input.lag_length=2 input.vars.absolute="[ua500, ua700, va700]" input.vars.anomaly="[zg500,zg700]" input.dates.train.start="[1979-01-05, 1979-01-20]" input.dates.train.end="[1979-01-15, 1979-01-25]" preprocess_cache.output_batch_size=4 workers=2
+$ canari_ml preprocess train input.name=primo input.forecast_length=3 input.lag_length=2 input.vars.absolute="[ua500, ua700, va700]" input.vars.anomaly="[zg500,zg700]" input.dates.train.start="[1979-01-05, 1979-01-20]" input.dates.train.end="[1979-01-15, 1979-01-25]" preprocess_cache.output_batch_size=4 workers=2
 ```
 
 - The variable names are a combination of [variables](../download/index.md#variables) and [pressure-levels](../download/index.md#pressure-levels) (if not a surface variable).
@@ -176,7 +177,7 @@ workers: 2
 You can now run the preprocess command and point to this custom config file (just like in the [download](../download/index.md#example-override-config-file) section).
 
 ``` console
-canari_ml preprocess train -cd configs/preprocess/ -cn train_demo_dataset
+$ canari_ml preprocess train -cd configs/preprocess/ -cn train_demo_dataset
 ```
 
 ---
@@ -222,7 +223,7 @@ workers: 2
 To generate the prediction dataset, run:
 
 ``` console
-canari_ml preprocess predict -cd configs/preprocess/ -cn predict_trial_dataset
+$ canari_ml preprocess predict -cd configs/preprocess/ -cn predict_trial_dataset
 ```
 
 ???+ todo

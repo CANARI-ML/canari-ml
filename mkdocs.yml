@@ -88,6 +88,7 @@ plugins:
   - toggle-sidebar:
       toggle_button: all
   - markdown-exec
+  - git-revision-date-localized
   - section-index
   - privacy
   - autorefs

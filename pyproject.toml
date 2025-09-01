@@ -66,6 +66,7 @@ docs = [
   "mkdocs-autorefs",
   "mkdocstrings[python]",
   "mkdocs-gen-files",
+  "mkdocs-git-revision-date-localized-plugin",
   "mkdocs-literate-nav",
   "mkdocs-material",
   "mkdocs-section-index",

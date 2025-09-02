@@ -75,7 +75,7 @@ def print_omega_config(cfg: DictConfig, resolve: bool = False) -> None:
         cfg: The Hydra configuration to print.
     """
     # cfg_yaml = OmegaConf.to_yaml(cfg)
-    cfg_dict = OmegaConf.to_container(cfg, resolve=True, enum_to_str=True)
+    cfg_dict = OmegaConf.to_container(cfg, resolve=resolve, enum_to_str=True)
     cfg_yaml = yaml.dump(cfg_dict, Dumper=IndentDumper)
 
     logger.info("Loaded HYDRA Configuration YAML")

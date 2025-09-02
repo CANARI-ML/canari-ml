@@ -131,9 +131,15 @@ nav:
   - Main Usage:
     - Download data:
       - user-guide/download/index.md
+      - CLI usage: user-guide/download/cli_usage.md
+      - Config file usage: user-guide/download/config_file_usage.md
+      - Output structure: user-guide/download/output_structure.md
       - CLI help: help/download.md
     - Preprocess data:
       - user-guide/preprocess/index.md
+      - CLI usage: user-guide/preprocess/cli_usage.md
+      - Config file usage: user-guide/preprocess/config_file_usage.md
+      - Output structure: user-guide/preprocess/output_structure.md
       - CLI help: help/preprocess.md
     - Train:
       - user-guide/train/index.md

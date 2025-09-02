@@ -70,126 +70,6 @@ Configuring date ranges to download:
 This configuration structure allows you to customise your data downloading and processing workflow. Use these tables as a reference when setting up your `config.yml` file.
 
 
-## Override Defaults via CLI
-
-You can follow the [hydra documentation](https://hydra.cc/docs/advanced/override_grammar/basic/) to override any configuration option directly from the command line using the format `key=value`.
-
-Due to the scope of this project, I would recommend not changing the following variables:
-
-- `frequency`
-- `output_group_by`
-- `hemisphere`
-
-### Examples
-
-???+ warning
-    Be wary that the default options mean that you will be downloading all data from 1979 to 2024, which can take a while!
-    And, any of example commands might take a while to run, if only testing, I would recommend setting the date ranges to no more than a few days, and limit the number of variables & levels to download.
-
-#### Select Specific Variables and Levels
-
-``` console
-canari_ml download vars="[ua, va]" levels="[700, 700]"
-```
-
-#### Custom Date Range
-
-``` console
-canari_ml download dates.start="1980-01-01" dates.end="1990-12-31"
-```
-
-#### Common Override Options
-
-``` console
-canari_ml download vars="[ua]" levels="[700]" dates.start="[1979-01-01]" dates.end="[1979-01-02]" delete_cache=true
-```
-
-## Override Defaults via Config File
-
-For more complex customisations, you may prefer using a YAML config file with the non-defaults you want to set. This can be set up in many different ways following Hydra's approach, however, I will provide an example layout below.
-
-I will store the custom config within a `configs/download` directory.
-
-### Example Override Config File
-
-``` yaml title="configs/download/small_download.yaml" linenums="1"
-defaults:     # (1)!
-  - /download # (2)!
-  - _self_    # (3)!
-
-vars:
-  - ua
-  - zg
-  - tos
-  - tos
-  - sic
-
-levels:
-  - 250|500|700 # (4)!
-  - 500|700
-  - null        # (5)!
-  - null
-  - null
-
-dates:
-  start: 1980-01-01
-  end: 1990-12-31
-```
-
-1. Always define defaults in the header of your custom config file.
-2. Uses the default download config within the canari-ml codebase as base config.
-3. Override the above defaults with values from this file. (The order matters, `_self_` should be defined last to override previous configs in this list).
-4. Download multiple pressure levels, separated by the `|` operator.
-5. Surface-level variables do not have a pressure-level associated with them, so they are set to `null`. Check [Variables](#variables) section on whether a variable is surface-level or has multiple pressure-levels, in which case, you should specify the pressure levels you want to download.
-
-???+ note
-    The AWS ERA5 mirror stores all 36 pressure levels in a single netCDF file (Initial version of this downloader extracted just the necessary variables from the S3 bucket using boto and xarray, but, this was slower than downloading the entire file on BAS HPC, so, code now downloads the entire file, then extracts the required pressure levels).
-
-    If you want to download multiple pressure levels, it is recommended to set to download all of them in one go since it will download the entire 36 pressure level file no matter how many pressure levels you specify, so, this mean not having to redownload the entire file further down the line.
-
-You can now run the download command and point to this config file.
-
-``` console
-canari_ml download --config-dir configs/download/ --config-name small_download
-```
-
-or, for brevity, you can use the short options:
-
-``` console
-canari_ml download -cd configs/download/ -cn small_download
-```
-
-You can confirm the default options have been overridden by adding the `--help` flag:
-
-``` console
-canari_ml download -cd configs/download/ -cn small_download --help
-```
-
-where the following hydra options are,
-
-* `--config-dir` or `-cd`: The directory where your custom config file is located
-* `--config-name` or `-cn`: The name of your custom config file, either with or without the `.yaml` extension
-
-The default location that Hydra looks for config files is set to where the default config files are installed using pip, or where your cloned repo is.
-
-## Combine CLI and Config File Overrides
-
-You can override settings in the config file while providing additional CLI arguments. CLI overrides take precedence over the config file.
-
-### Example Command
-
-``` console
-canari_ml download -cd configs/download/ -cn small_download vars="[ua]" levels="[700]" dates.start="1985-01-01"
-```
-
-This would override the definition in the custom config file and only download `ua` at `700hPa`, with dates between `1985-01-01` to `1990-12-31`.
-
-And, once again, you can verify the default options have been overridden by adding the `--help` flag:
-
-``` console
-canari_ml download -cd configs/download/ -cn small_download vars="[ua]" levels="[700]" dates.start="1985-01-01" --help
-```
-
 ## Summary
 
 The `canari_ml download` command offers extensive flexibility through Hydra's configuration system. You can:
@@ -199,10 +79,6 @@ The `canari_ml download` command offers extensive flexibility through Hydra's co
 3. Combine CLI and config file overrides, with CLI taking precedence.
 
 This allows you to tailor the download process for the variables you want to train with.
-
-
-???+ todo
-    Define output structure
 
 ## Next Steps
 

@@ -106,7 +106,11 @@ extra_javascript:
 markdown_extensions:
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:mermaid2.fence_mermaid_custom
   - attr_list
   - md_in_html
   - pymdownx.blocks.caption

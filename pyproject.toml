@@ -34,6 +34,7 @@ dependencies = [
   "imageio-ffmpeg",
   "lightning",
   "matplotlib",
+  "mkdocs-mermaid2-plugin",
   "ncdata",
   "pip",
   "preprocess-toolbox @ git+https://github.com/environmental-forecasting/preprocess-toolbox@f1353886059d43746aca932f7cec04a5f78bb577",

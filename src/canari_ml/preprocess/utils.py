@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import cartopy.crs as ccrs
 import orjson
+import xarray as xr
 from omegaconf import Container, ListConfig, OmegaConf
 
 logger = logging.getLogger(__name__)
@@ -194,7 +195,41 @@ def parse_crs(crs_string: str) -> ccrs.CRS:
 
     return crs
 
+
+def get_nc_encoding(
+    data: xr.Dataset | xr.DataArray,
+    chunksizes: tuple | None = None,
+    comp: dict | None = None,
+):
+    # import hdf5plugin
+    # comp = dict(hdf5plugin.LZ4())
+    # comp = dict(hdf5plugin.Zstd(clevel=22))
+    # comp = dict(zlib=False)
+    if not comp:
+        comp = dict(zlib=True, complevel=5, shuffle=True)
+    time_chunk_size = 1
+
+    # Wrap DataArray in Dataset to generalise next step
+    if isinstance(data, xr.DataArray):
+        data = data.to_dataset(name=data.name)
+
+    encoding = {}
+    for var_name, var in data.data_vars.items():
+        if "time" in var.dims:
+            if not chunksizes:
+                chunksizes = tuple(
+                    time_chunk_size if dim == "time" else var.sizes[dim]
+                    for dim in var.dims
+                )
+            encoding[var_name] = dict(chunksizes=chunksizes) | comp
+
+    return encoding
+
+
 def preprocess_register_resolvers():
+    """
+    Register custom OmegaCon resolvers for preprocessing config files.
+    """
     OmegaConf.register_new_resolver("getcwd", lambda: os.getcwd())
     OmegaConf.register_new_resolver("opt_underscore", lambda x: f"_{x}" if x else "")
     OmegaConf.register_new_resolver("compute_step_hash", compute_step_hash)

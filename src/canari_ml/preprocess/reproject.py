@@ -18,7 +18,7 @@ from download_toolbox.interface import DatasetConfig
 from ncdata.iris_xarray import cubes_from_xarray, cubes_to_xarray
 from typing_extensions import Unpack
 
-from .utils import parse_shape
+from .utils import parse_shape, get_nc_encoding
 
 # Get the logger for rasterio (or the relevant library)
 logger = logging.getLogger("rasterio")
@@ -261,7 +261,10 @@ def reproject_file(
         ds_reprojected = reproject_dataset(reproject_datafile, grid, mask, target_crs)
 
         logging.debug(f"Saving reprojected data to {datafile}... ")
-        ds_reprojected.to_netcdf(datafile)
+
+        encoding = get_nc_encoding(ds_reprojected)
+
+        ds_reprojected.to_netcdf(datafile, engine="h5netcdf", encoding=encoding)
     except Exception as e:
         print(f"Error reprojecting {datafile}: {e}")
         raise

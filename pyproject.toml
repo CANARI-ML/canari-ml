@@ -37,7 +37,7 @@ dependencies = [
   "mkdocs-mermaid2-plugin",
   "ncdata",
   "pip",
-  "preprocess-toolbox @ git+https://github.com/environmental-forecasting/preprocess-toolbox@f1353886059d43746aca932f7cec04a5f78bb577",
+  "preprocess-toolbox @ git+https://github.com/environmental-forecasting/preprocess-toolbox@0213b1cbb13035f78e29703d866ba8f7adfef3a2",
   "rioxarray",
   "scitools-iris",
   "seaborn",

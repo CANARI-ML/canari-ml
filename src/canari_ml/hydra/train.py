@@ -1,8 +1,10 @@
 import logging
 from pathlib import Path
 
-import hydra
 from omegaconf import DictConfig, OmegaConf
+
+import hydra
+from canari_ml.preprocess.utils import preprocess_register_resolvers
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +32,8 @@ def train_run(cfg: DictConfig) -> None:
 
 
 def main():
-    OmegaConf.register_new_resolver("set_preprocess_type", lambda x: "train")
+    OmegaConf.register_new_resolver("set_preprocess_type", lambda: "train")
+    preprocess_register_resolvers()
     train_run() # type: ignore
 
 

@@ -18,6 +18,7 @@ from canari_ml.preprocess.utils import (
     IterableNamespace,
     compute_loader_hash,
     compute_step_hash,
+    preprocess_register_resolvers,
     symlink,
 )
 from hydra.core.hydra_config import HydraConfig
@@ -379,11 +380,7 @@ def preprocess_cache(cfg: DictConfig):
     symlink(target, run_dir)
 
 
-OmegaConf.register_new_resolver("getcwd", lambda: os.getcwd())
-OmegaConf.register_new_resolver("opt_underscore", lambda x: f"_{x}" if x else "")
-OmegaConf.register_new_resolver("compute_step_hash", compute_step_hash)
-OmegaConf.register_new_resolver("compute_loader_hash", compute_loader_hash)
-
+preprocess_register_resolvers()
 
 @hydra.main(
     version_base=None,

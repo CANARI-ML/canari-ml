@@ -193,3 +193,9 @@ def parse_crs(crs_string: str) -> ccrs.CRS:
         )
 
     return crs
+
+def preprocess_register_resolvers():
+    OmegaConf.register_new_resolver("getcwd", lambda: os.getcwd())
+    OmegaConf.register_new_resolver("opt_underscore", lambda x: f"_{x}" if x else "")
+    OmegaConf.register_new_resolver("compute_step_hash", compute_step_hash)
+    OmegaConf.register_new_resolver("compute_loader_hash", compute_loader_hash)

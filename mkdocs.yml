@@ -90,6 +90,17 @@ plugins:
       nav_file: SUMMARY.md
   - toggle-sidebar:
       toggle_button: all
+  - plantuml:
+      puml_url: https://www.plantuml.com/plantuml/
+      theme:
+        light: material/indigo-light
+        dark: material/indigo-dark
+      cache:
+        backend: local
+        local:
+          path: "~/.cache/mkdocs_puml"
+      interaction:
+        enabled: true
   - markdown-exec
   - git-revision-date-localized
   - section-index
@@ -132,6 +143,7 @@ nav:
     - Installation: user-guide/getting-started/installation.md
     - Hydra usage: user-guide/getting-started/hydra.md
     - CLI help: help/general.md
+    - Software architecture: user-guide/getting-started/software_architecture.md
   - Main Usage:
     - Download data:
       - user-guide/download/index.md

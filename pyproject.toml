@@ -64,6 +64,7 @@ dev = [
 docs = [
   "markdown-exec[ansi]",
   "mkdocs",
+  "mkdocs_puml",
   "mkdocs-autorefs",
   "mkdocstrings[python]",
   "mkdocs-gen-files",

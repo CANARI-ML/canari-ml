@@ -19,7 +19,7 @@ left to right direction
 title CANARI-ML Software Architecture
 
 System_Ext(downloadAlias, "\n<$bi-cloud-arrow-down{scale=3}>\n\ndownload-toolbox", "Download data from various sources")
-System_Ext(preprocessAlias, "\n<$bi-database{scale=3}>\n\npreprocess-toolbox", "Preprocess downloaded data, ready for training")
+System_Ext(preprocessAlias, "\n<$bi-database{scale=3}>\n\npreprocess-toolbox", "Preprocess downloaded data, reproject, normalise and prepare data for modelling")
 System(canariMLAlias, "\n<$bi-lightning{scale=3}>\n\ncanari-ml", "Main ML codebase, including netCDF generation, visualisation")
 System_Ext(stacAlias, "\n<$bi-view-list{scale=3}>\n\nenvironmental-stac", "Process netCDF outputs for delivery of forecasts")
 

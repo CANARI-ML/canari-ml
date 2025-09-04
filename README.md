@@ -22,6 +22,20 @@
   </a>
 </p>
 
+<p align="center">
+  <img alt="GitHub Pull Requests Open" src="https://img.shields.io/github/issues-pr/canari-ml/canari-ml">
+  <img alt="GitHub Pull Requests Closed" src="https://img.shields.io/github/issues-pr-closed/canari-ml/canari-ml">
+  <img alt="GitHub Issues Open" src="https://img.shields.io/github/issues-raw/canari-ml/canari-ml">
+  <img alt="GitHub Issues Closed" src="https://img.shields.io/github/issues-closed/canari-ml/canari-ml">
+</p>
+
+<p align="center">
+  <img alt="Weights and Biases Logo" src="https://img.shields.io/badge/Weights_&_Biases-FFBE00?style=for-the-badge&logo=WeightsAndBiases&logoColor=white">
+  <img alt="PyTorch Logo" src="https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white">
+  <img alt="Linux Logo" src="  https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black">
+</p>
+
+
 Canari-ML is a machine learning library based on PyTorch lightning for wind forecasting across the North Atlantic.
 
 It is designed to be used in conjunction with the [environmental-forecasting](http://github.com/environmental-forecasting/) initiative which is used for data download and for majority of the pre-processing steps to prepare the source data for training and prediction.

@@ -35,118 +35,12 @@ $ canari_ml train --help
 
 This will display the default configuration and all modifiable parameters.
 
----
-
-## Configuration Options
-
-The `canari_ml train` command uses a structured configuration system, where you can override default settings using CLI arguments or YAML config files. 
-
----
-
-## Override Defaults via Command-Line
-
-You can override configuration options directly from the command line using the format `key=value`. Where the following are the keys you might potentially want to override.
-
-#### Override Train Parameters
-
-- `train.seed`: Random seed for reproducibility.
-- `train.epochs`: Number of training epochs.
-- `train.workers`: Number of CPU/GPU workers for data loading and training.
-- `train.batch_size`: Batch size for training.
-
-#### Override Model Parameters
-
-You can also override model-specific parameters:
-
-``` console
-canari_ml train model.network.filter_size=5 model.litmodule.criterion.learning_rate=0.001
-```
-
-- `model.network.filter_size`: Filter size in the UNet architecture.
-- `model.litmodule.criterion.learning_rate`: Learning rate for the optimiser.
-
-#### Override Callbacks
-
-- `callbacks.early_stopping.patience`: Number of epochs to wait before applying early stopping.
-- `callbacks.model_checkpoint.monitor`: Metric to monitor for saving checkpoints.
-
-### Examples
-
-#### Basic Override Example
-``` console
-canari_ml train train.dataset=preprocessed_data/train_demo_dataset/03_cache_demo_dataset/cached.DAY.north.json train.name=demo_train train.epochs=2
-```
-
-#### Advanced Override Example
-``` console
-canari_ml train train.dataset=preprocessed_data/train_demo_dataset/03_cache_demo_dataset/cached.DAY.north.json train.name=demo_train train.seed=42 train.epochs=20 train.workers=8 train.batch_size=16
-```
-
-#### Override Callbacks
-
-To modify callbacks like early stopping and checkpoint monitoring, add the following overrides to the above command:
-
-``` console
-callbacks.early_stopping.patience=5 callbacks.model_checkpoint.monitor=val_rmse
-```
-
----
-
-## Override Defaults via YAML Config File
-
-For more complex customisations, you can create a YAML config file. Below is an example configuration:
-
-``` yaml title="configs/train/custom_train.yaml" linenums="1"
-# @package _global_
-
-defaults:                                   # (1)!
-  - ../preprocess/train_demo_dataset.yaml   # (2)!
-  - /train                                  # (3)!
-  - _self_                                  # (4)!
-
-train:
-  dataset: preprocessed_data/train_demo_dataset/03_cache_demo_dataset/cached.DAY.north.json
-  name: demo_train
-  seed: 42
-  epochs: 2
-  workers: 4
-  batch_size: 4
-  shuffling: true
-  wandb_group: demo_unet
-  wandb_project: CANARI_Training
-
-model:
-  model_name: unet
-  network:
-    filter_size: 3
-    n_filters_factor: 0.1
-  litmodule:
-    criterion:
-      loss_type: mse
-```
-
-1. Always define `defaults` in the header of your custom config file.
-2. Define path to the config file used for training.
-3. Define `/train` to inherit from the default configuration.
-4. Override the above defaults with values from this file. (The order matters, `_self_` should be defined last to override previous configs in this list).
-
-You can run training with this config file using:
-
-``` console
-canari_ml train -cd configs/train/ -cn custom_train.yaml
-```
-
----
-
 ## Next Steps
 
 After training your model, you can:
 
 1. Evaluate its performance using validation metrics.
 2. Generate [predictions](../predict/index.md) using the trained model.
-
-???+ todo
-    Custom loggers, including WandB
 
 ???+ todo
     Ensemble runs

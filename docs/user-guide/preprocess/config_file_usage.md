@@ -16,7 +16,7 @@ defaults:       # (1)!
   - _self_      # (3)!
 
 input:
-  name: train_demo_dataset
+  name: demo_dataset
   forecast_length: 3
   lag_length: 2
   vars:

@@ -1,6 +1,5 @@
 # Advanced Usage
 
-
 ## Using Custom Loggers
 
 By default, Tensorboard logging is enabled, however, you can easily switch to [WandB](http://wandb.ai/) (W&B) (after registering and logging in on your system) via a command line override.
@@ -28,9 +27,19 @@ To set-up W&B login credentials on your system, run the following and enter the 
 
 This will store your API key locally under:
 
-``` bash
-~/.netrc
-```
+=== "File"
+
+    ``` bash
+    ~/.netrc
+    ```
+
+=== "Contents"
+
+    ``` bash
+    machine api.wandb.ai
+      login user
+      password b???...
+    ```
 
 ### Use W&B Logger
 
@@ -56,10 +65,12 @@ defaults:
 
 ## Specify Accelerators
 
-By default, the "auto" keyword is used to allow PyTorch Lightning to auto-select the accelerator, and a single accelerator device is set to be used. To override which accelerator to use, and how many GPUs (or which GPU by GPU id):
+By default, the `auto` keyword is used to allow PyTorch Lightning to auto-select the accelerator, and a single accelerator device is set to be used. To override which accelerator to use, and how many GPUs (or which GPU by GPU id):
 
 ``` console
-canari_ml train -cd configs/train/ -cn custom_train.yaml trainer.accelerator="gpu" trainer.devices="'3'"
+canari_ml train -cd configs/train/ -cn custom_train.yaml trainer.accelerator="gpu" strategy="ddp" trainer.devices="[0]"
 ```
+
+This will run on a single GPUs, with id of `0`.
 
 Refer to the [Lightning docs](https://lightning.ai/docs/pytorch/stable/accelerators/gpu_basic.html#train-on-gpus) for more details.

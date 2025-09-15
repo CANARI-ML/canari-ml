@@ -159,11 +159,14 @@ nav:
       - CLI help: help/preprocess.md
     - Train:
       - user-guide/train/index.md
+      - CLI usage: user-guide/train/cli_usage.md
+      - Config file usage: user-guide/train/config_file_usage.md
       - Advanced usage: user-guide/train/advanced_usage.md
-      - Help: user-guide/train/help.md
+      # - Help: user-guide/train/help.md
       - CLI help: help/train.md
     - Predict:
       - user-guide/predict/index.md
+      - Config file usage: user-guide/predict/config_file_usage.md
       - CLI help: help/predict.md
     - Postprocess:
       - user-guide/postprocess/index.md

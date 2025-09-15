@@ -14,7 +14,7 @@ defaults:     # (1)!
 vars:
   - ua
   - zg
-  - tos
+  - tas
   - tos
   - sic
 

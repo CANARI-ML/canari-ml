@@ -159,6 +159,7 @@ nav:
       - CLI help: help/preprocess.md
     - Train:
       - user-guide/train/index.md
+      - Advanced usage: user-guide/train/advanced_usage.md
       - Help: user-guide/train/help.md
       - CLI help: help/train.md
     - Predict:

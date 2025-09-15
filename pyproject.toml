@@ -42,6 +42,7 @@ dependencies = [
   "scitools-iris",
   "seaborn",
   "shapely",
+  "tensorboard",
   "tqdm",
   "typing-extensions",
   "wandb",

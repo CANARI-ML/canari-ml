@@ -70,7 +70,7 @@ canari_ml predict -cd configs/predict/custom_train/ -cn 1979-01-26
 
 You can also enable the default `/postprocess` and `/plot` config files to the prediction config, which will allow you to use the same config file to generate the output netCDF, and plot the results.
 
-``` yaml title="configs/predict/custom_train/1979-01-26.yaml" linenums="1" hl_lines="6-7"
+``` yaml title="configs/predict/custom_train/1979-01-26_and_plot.yaml" linenums="1" hl_lines="6-7"
 # @package _global_
 
 defaults:
@@ -89,3 +89,5 @@ predict:
   workers: 4
   batch_size: 4
 ```
+
+This will generate raw numpy prediction files which must be post-processed to denormalise the predictions, and obtain an equivalent to the ground truth `ua700`.

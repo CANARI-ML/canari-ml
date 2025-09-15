@@ -175,6 +175,8 @@ nav:
     - Plot:
       - user-guide/plot/index.md
       - CLI help: help/plot.md
+    - "Advanced: SLURM Submission":
+      - user-guide/slurm.md
   # - Examples:
   #   - Experiments: user-guide/experiments/index.md
   - Code Reference: reference/

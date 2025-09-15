@@ -43,7 +43,4 @@ After training your model, you can:
 2. Generate [predictions](../predict/index.md) using the trained model.
 
 ???+ todo
-    Ensemble runs
-
-???+ todo
-    SLURM job submission
+    Show how to run ensembles.

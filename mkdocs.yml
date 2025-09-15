@@ -145,6 +145,7 @@ nav:
     - CLI help: help/general.md
     - Software architecture: user-guide/getting-started/software_architecture.md
   - Main Usage:
+    - user-guide/index.md
     - Download data:
       - user-guide/download/index.md
       - CLI usage: user-guide/download/cli_usage.md

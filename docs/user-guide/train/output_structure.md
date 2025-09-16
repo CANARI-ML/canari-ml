@@ -1,4 +1,4 @@
-# Output Directory Structure
+# Training Output Structure
 
 When you run the `canari_ml train` command, all outputs are written to the `outputs/` directory by default. This structure contains model checkpoints, logs, and symlinks to relevant preprocessed data used during training. The directory is organised to support both training reproducibility and downstream evaluation.
 

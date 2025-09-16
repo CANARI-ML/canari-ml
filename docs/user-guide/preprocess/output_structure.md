@@ -1,4 +1,4 @@
-# Output Directory Structure
+# Preprocess Output Structure
 
 When you run the `canari_ml preprocess` command, all outputs are created under the root `preprocessed_data/` directory.
 This section explains the purpose of each of these folders and how the downloaded and processed data is organised for training/prediction.

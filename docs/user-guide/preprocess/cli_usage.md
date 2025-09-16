@@ -8,16 +8,16 @@ If you are a fan of command line options, you will balk at the idea of using con
 
 ### Override Name and Forecast Steps for Training
 
-To change the dataset name, and forecast length to 5 days:
+To change the dataset name, and forecast length to 3 days:
 
 ``` console
-$ canari_ml preprocess train input.name=primo input.forecast_length=5
+$ canari_ml preprocess train input.name=primo input.forecast_length=3
 ```
 
 By default, the number of historical days used to generate the dataset will match the forecast length, to adjust it to a specific number of days, you can override the `lag_length` parameter:
 
 ``` console
-$ canari_ml preprocess train input.name=primo input.forecast_length=3 input.lag_length=3
+$ canari_ml preprocess train input.name=primo input.forecast_length=2 input.lag_length=2
 ```
 
 ### Override More Options

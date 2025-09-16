@@ -173,6 +173,7 @@ nav:
       - CLI help: help/predict.md
     - Postprocess:
       - user-guide/postprocess/index.md
+      - Output structure: user-guide/postprocess/output_structure.md
       - CLI help: help/postprocess.md
     - Plot:
       - user-guide/plot/index.md

@@ -177,6 +177,7 @@ nav:
       - CLI help: help/postprocess.md
     - Plot:
       - user-guide/plot/index.md
+      - Output structure: user-guide/plot/output_structure.md
       - CLI help: help/plot.md
     - "Advanced: SLURM Submission":
       - user-guide/slurm.md

@@ -11,3 +11,5 @@ configs/predict/custom_train/1979-01-26.yaml
 ```
 
 This is just a recommendation, and you can use the directory structure to hold your config files that you prefer.
+
+This step will generate raw numpy prediction files which must be post-processed to denormalise the predictions, and obtain an equivalent to the ground truth `ua700`.

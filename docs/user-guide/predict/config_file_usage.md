@@ -6,7 +6,7 @@
 
 ### Generate Prediction Dataset
 
-``` yaml title="configs/predict/custom_train/1979-01-26.yaml" linenums="1"
+``` yaml title="configs/predict/custom_train/preprocess_1976_example.yaml" linenums="1"
 # @package _global_
 
 defaults:
@@ -16,7 +16,7 @@ defaults:
 
 # To create prediction dataset
 input:
-  name: predict_1976_example
+  name: 1976_example
   dates:
     predict:
       start:
@@ -49,7 +49,7 @@ predict:
   name: 1979-01-26
   dates:
     - 1979-01-26     # (2)!
-  dataset: preprocessed_data/predict_1976_example/03_cache_predict_1976_example/cached.DAY.north.json # (3)!
+  dataset: preprocessed_data/predict_1976_example/03_cache_1976_example/cached.DAY.north.json # (3)!
   seed: 42
   workers: 4
   batch_size: 4
@@ -59,7 +59,6 @@ predict:
 2. You can define a list of dates for which to make predictions. This date has to exist in the prediction dataset being used.
 3. Relative path to the prediction dataset config file (relative to the path you are running the `canari_ml predict` command from).
 
-
 This can be run using:
 
 ```console
@@ -68,7 +67,7 @@ canari_ml predict -cd configs/predict/custom_train/ -cn 1979-01-26
 
 ### Example 2: Combined prediction, postprocess and plotting config
 
-You can also enable the default `/postprocess` and `/plot` config files to the prediction config, which will allow you to use the same config file to generate the output netCDF, and plot the results.
+You can also (optionally) enable the default `/postprocess` and `/plot` config files to the prediction config, which will allow you to use the same config file to generate the output netCDF, and plot the results.
 
 ``` yaml title="configs/predict/custom_train/1979-01-26_and_plot.yaml" linenums="1" hl_lines="6-7"
 # @package _global_
@@ -84,10 +83,14 @@ predict:
   name: 1979-01-26
   dates:
     - 1979-01-26
-  dataset: preprocessed_data/predict_1976_example/03_cache_predict_1976_example/cached.DAY.north.json
+  dataset: preprocessed_data/predict_1976_example/03_cache_1976_example/cached.DAY.north.json
   seed: 42
   workers: 4
   batch_size: 4
 ```
 
-This will generate raw numpy prediction files which must be post-processed to denormalise the predictions, and obtain an equivalent to the ground truth `ua700`.
+This can be run using:
+
+```console
+canari_ml predict -cd configs/predict/custom_train/ -cn 1979-01-26_and_plot
+```

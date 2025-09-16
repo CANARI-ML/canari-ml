@@ -3,7 +3,6 @@ hide:
   - toc
 ---
 
-
 # Software Architecture
 
 This codebase utilises external codebases for downloading source data, pre-processing and forecast delivery. The high-level software architecture diagram is as follows:
@@ -41,5 +40,12 @@ Rel(downloadAlias, preprocessAlias, "JSON Configuration")
 Rel(preprocessAlias, canariMLAlias, "JSON Configuration")
 Rel(canariMLAlias, stacAlias, "Convert netCDF to COGs & display on dashboard")
 Rel_R(canariMLExperimentsAlias, canariMLAlias, "Drives experiments")
+
+url of downloadAlias is [[https://github.com/environmental-forecasting/download-toolbox]]
+url of preprocessAlias is [[https://github.com/environmental-forecasting/preprocess-toolbox]]
+url of canariMLAlias is [[https://github.com/canari-ml/canari-ml]]
+url of canariMLExperimentsAlias is [[https://github.com/canari-ml/canari-ml-experiments]]
+url of stacAlias is [[https://github.com/environmental-forecasting/environmental-stac-orchestrator]]
+
 @enduml
 ```

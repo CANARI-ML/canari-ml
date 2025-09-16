@@ -1,6 +1,6 @@
 # Override Defaults via Config File
 
-For more complex customisations, you can create a YAML config file.
+To utilise a YAML config file instead of CLI overriding, you can following the examples in this section. And, as always, to understand the defaults and what can be overridden, use [`canari_ml train --help`](../../help/train.md).
 
 ## Examples
 

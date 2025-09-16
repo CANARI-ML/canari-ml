@@ -34,7 +34,7 @@ dates:
 2. Uses the default download config within the canari-ml codebase as base config.
 3. Override the above defaults with values from this file. (The order matters, `_self_` should be defined last to override previous configs in this list).
 4. Download multiple pressure levels, separated by the `|` operator.
-5. Surface-level variables do not have a pressure-level associated with them, so they are set to `null`. Check [Variables](#variables) section on whether a variable is surface-level or has multiple pressure-levels, in which case, you should specify the pressure levels you want to download.
+5. Surface-level variables do not have a pressure-level associated with them, so they are set to `null`. Check [Variables](index.md#variables) section on whether a variable is surface-level or has multiple pressure-levels, in which case, you should specify the pressure levels you want to download.
 
 ???+ note
     The AWS ERA5 mirror stores all 37 pressure levels in a single netCDF file (Initial version of this downloader extracted just the necessary variables from the S3 bucket using boto and xarray, but, this was slower than downloading the entire file on BAS HPC, so, code now downloads the entire file, then extracts the required pressure levels).

@@ -56,7 +56,7 @@ workers: 2
 3. Override the above defaults with values from this file. (The order matters, `_self_` should be defined last to override previous configs in this list).
 4. If you do not want anomaly variables, you can set `anomaly: null`.
 
-You can now run the preprocess command and point to this custom config file (just like in the [download](../download/index.md#example-override-config-file) section).
+You can now run the preprocess command and point to this custom config file (just like in the [download](../download/config_file_usage.md#example-override-config-file) section).
 
 ``` console
 $ canari_ml preprocess train -cd configs/preprocess/ -cn train_demo_dataset

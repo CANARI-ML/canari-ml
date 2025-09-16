@@ -169,6 +169,7 @@ nav:
     - Predict:
       - user-guide/predict/index.md
       - Config file usage: user-guide/predict/config_file_usage.md
+      - Output structure: user-guide/predict/output_structure.md
       - CLI help: help/predict.md
     - Postprocess:
       - user-guide/postprocess/index.md

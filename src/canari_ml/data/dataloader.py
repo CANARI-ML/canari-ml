@@ -77,7 +77,9 @@ class CANARIMLDataSetTorch(IceNetDataSet):
         shuffling=False,
         **kwargs,
     ):
-        super().__init__(configuration_path=configuration_path, path=path)
+        super().__init__(
+            *args, configuration_path=configuration_path, path=path, **kwargs
+        )
 
         self._config = {}
         self._configuration_path = configuration_path

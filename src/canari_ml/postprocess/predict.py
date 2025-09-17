@@ -224,9 +224,9 @@ def create_cf_output(cfg: DictConfig) -> None:
     # Get config file from cache dir
     dataset_config_file = glob.glob(os.path.join(cache_dir, "*.json"))[0]
 
-    # TODO: This creates empty "./network_datasets" directory.
-    ds = CANARIMLDataSetTorch(dataset_config_file)
-    dl = ds.get_data_loader()
+    # Use `dummy=True` to prevent empty "./network_datasets" dir being created
+    ds = CANARIMLDataSetTorch(dataset_config_file, dummy=True)
+    dl = ds.get_data_loader(dummy=True)
     hemi_str = "north" if dl.north else "south"
 
     # Use reference regridded/reprojected dataset with rioxarray projection details

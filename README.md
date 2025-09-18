@@ -1,14 +1,16 @@
 <!--header-start-->
 
-<figure markdown="span" align="center">
-  <img src="docs/assets/images/canari-hero-image.png" alt="Canari-ML Image" width="300" height="254">
-  <figcaption>CANARI-ML</figcaption>
-</figure>
-
 <div align="center">
-  <h1 align="center" style="display:inline-block;">Canari-ML: North-Atlantic zonal wind forecasting codebase</h1>
+  <h1 style="display:inline-block;">Canari-ML: North-Atlantic zonal wind forecasting codebase</h1>
 </div>
 
+<div align="center">
+  <figure markdown="span">
+    <img src="docs/assets/images/canari-hero-image.png" alt="Canari-ML Image" width="300" height="254">
+    <br>
+    <figcaption>CANARI-ML</figcaption>
+  </figure>
+</div>
 
 <p align="center">
   <a href="https://github.com/canari-ml/canari-ml/actions/workflows/test.yaml?query=branch%3Amain">

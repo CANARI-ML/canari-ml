@@ -26,6 +26,7 @@ theme:
   favicon: assets/images/canari-hero-image.png
   icon:
     annotation: material/arrow-right-circle-outline
+    repo: simple/github
   features:
     - content.code.annotate
     - content.code.copy
@@ -101,11 +102,21 @@ plugins:
           path: "~/.cache/mkdocs_puml"
       interaction:
         enabled: true
-  - markdown-exec
-  - git-revision-date-localized
-  - section-index
-  - privacy
   - autorefs
+  - git-revision-date-localized
+  - include-markdown:
+      preserve_includer_indent: false
+      dedent: false
+      trailing_newlines: true
+      comments: true
+      rewrite_relative_urls: true
+      heading_offset: 0
+      start: <!--start-->
+      end: <!--end-->
+      recursive: true
+  - markdown-exec
+  - privacy
+  - section-index
 
 extra_css:
   - css/github-permalink-style.css

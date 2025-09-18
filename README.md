@@ -1,8 +1,14 @@
-<p align="center">
-  <img src="docs/assets/images/canari-hero-image.png" alt="Canari-ML Image" width="250" height="212">
-</p>
+<!--header-start-->
 
-<h1 align="center">Canari-ML</h1>
+<figure markdown="span" align="center">
+  <img src="docs/assets/images/canari-hero-image.png" alt="Canari-ML Image" width="300" height="254">
+  <figcaption>CANARI-ML</figcaption>
+</figure>
+
+<div align="center">
+  <h1 align="center" style="display:inline-block;">Canari-ML: North-Atlantic zonal wind forecasting codebase</h1>
+</div>
+
 
 <p align="center">
   <a href="https://github.com/canari-ml/canari-ml/actions/workflows/test.yaml?query=branch%3Amain">
@@ -35,46 +41,54 @@
   <img alt="Linux Logo" src="https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black">
 </p>
 
+???+ warning
+    This is a highly experimental codebase with constant changes with every development release, and is not ready for production use.
 
-Canari-ML is a machine learning library based on PyTorch lightning for wind forecasting across the North Atlantic.
+Canari-ML is a machine learning library built with PyTorch Lightning for wind forecasting (zonal wind at 700hPa) across the North Atlantic.
 
-It is designed to be used in conjunction with the [environmental-forecasting](http://github.com/environmental-forecasting/) initiative which is used for data download and for majority of the pre-processing steps to prepare the source data for training and prediction.
+<!--header-end-->
 
-## Table of Contents
+<!--main-start-->
 
-- [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Documentation](#documentation)
-- [License](#license)
-- [Contributing](#contributing)
+## What is Canari-ML?
+
+Canari-ML provides tools and models for processing environmental data and making wind forecast predictions. It is designed to be used in conjunction with the [environmental-forecasting initiative](http://github.com/environmental-forecasting/) which is used for data download and for majority of the pre-processing steps to prepare the source data for training and prediction.
 
 ## Features
 
 - **Models**: Currently, a reference UNet model is implemented for wind forecasting.
-- **Preprocessing**: Utilities for loading, reprojecting, and preprocessing ERA datasets using.
-- **Prediction**: Tools for making predictions on new data using trained models.
+- **Preprocessing**: Utilities for loading, reprojecting, preparing and caching ERA5 datasets for ML training.
+- **Integrated Experiment Tracking**: Track experiments using either Tensorboard, or WandB integration.
+- **Prediction**: Functions to train and predict on new data.
 - **Visualisation**: Tools for visualising the results of predictions and model training.
 
-## Installation
+## Quick start
 
-`canari-ml` can be installed from the source as it is not on PyPI yet:
+To begin using Canari-ML:
 
-```bash
+1. **Installation**:
+
+``` bash
 pip install git+https://github.com/CANARI-ML/canari-ml@main
 ```
 
-## Usage
+2. **Usage**:
+Run the following command to see available entry points:
 
-There are various command line entry points for the package which can be found using `canari_ml --help`.
+``` bash
+canari_ml --help
+```
+
+## License
+
+CANARI-ML is licensed under the MIT license. See [LICENSE](https://github.com/CANARI-ML/canari-ml/blob/main/LICENSE) for more information.
+
+<!--main-end-->
 
 ## Documentation
 
 The latest documentation can be found on [Read the Docs](https://canari-ml.readthedocs.io).
 
-## License
-
-CANARI-ML is licensed under the MIT license. See [LICENSE](https://github.com/CANARI-ML/canari-ml/blob/main/LICENSE) for more information.
 
 ## Contributing
 
@@ -124,8 +138,12 @@ v1.2.4-alpha.3 → v1.2.5-alpha.0
 For full documentation on its usage, please peruse the [Commitizen docs](https://commitizen-tools.github.io/commitizen/commands/bump/).
 
 
+<!--contributors-start-->
+
 ## Contributors
 
 <a href="https://github.com/canari-ml/canari-ml/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=canari-ml/canari-ml" />
 </a>
+
+<!--contributors-end-->

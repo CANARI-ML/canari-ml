@@ -50,6 +50,12 @@ To get started with using `canari-ml`, you will need to have Python set-up on yo
 pip install git+https://github.com/CANARI-ML/canari-ml@main
 ```
 
+To install a specific [tagged version](https://github.com/CANARI-ML/canari-ml/tags):
+
+``` console
+pip install git+https://github.com/CANARI-ML/canari-ml@0.0.1a1
+```
+
 ### (Optional) Create local clone for development
 
 1. **Clone the repository**:

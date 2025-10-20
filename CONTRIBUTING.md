@@ -46,6 +46,15 @@ If you are proposing a feature:
 * Remember that this is a volunteer-driven project, and that contributions
   are welcome :)
 
+## Developer Install
+
+To install all dependencies including testing and documentation, clone the code as normal,
+change directory into it, then run:
+
+``` bash
+pip install -e .[dev,docs]
+```
+
 <!--contributing-end-->
 
 <!--releases-start-->

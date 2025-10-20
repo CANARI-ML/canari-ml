@@ -5,8 +5,8 @@ Welcome to the Developer Guide for CANARI-ML! This section is designed to help n
 Whether you're fixing a bug, adding a feature, or simply exploring how things work, this guide provides the essential information to get started efficiently and contribute effectively.
 
 <div class="result">
-  <div class="admonition tip">
-    <p class="admonition-title">ToDo</p>
+  <details class="admonition tip" open="true">
+    <summary class="admonition-title"><strong>ToDo</strong></summary>
     <p> ## What You'll Find in This Section</p>
     <p> **Project Structure**: Understand how the codebase is organised and why.</p>
     <p> **Development Setup**: Step-by-step instructions to set up your local development environment.</p>
@@ -16,7 +16,7 @@ Whether you're fixing a bug, adding a feature, or simply exploring how things wo
     <p> **Workflow**: Our Git branching strategy and how to submit pull requests.</p>
     <p> **Dependencies**: How we manage packages and virtual environments.</p>
     <p> **Documentation**: How to build and contribute to the project documentation.</p>
-  </div>
+  </details>
 </div>
 
 ## Prerequisites

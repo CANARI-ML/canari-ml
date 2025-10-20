@@ -131,12 +131,12 @@ v1.2.4a3 → v1.2.5a0
 In this case, without specifying we want to increment the patch number, it will increment the alpha version instead!
 
 <div class="result">
-  <div class="admonition note">
-    <p class="admonition-title">Note</p>
+  <details class="admonition note" open="true">
+    <summary class="admonition-title"><strong>Note</strong></summary>
     <p>This project follows PEP 440 versioning. Pre-releases use a (alpha), b (beta), or rc (release candidate)
     without hyphens or dots (e.g., 1.2.5a1 not 1.2.5-alpha.1) unlike SemVer.</p>
     <p>Examples: 1.2.5a1, 1.2.5b2, 1.2.5rc1, 1.2.5.dev0</p>
-  </div>
+  </details>
 </div>
 
 For full documentation on its usage, please peruse the [Commitizen docs](https://commitizen-tools.github.io/commitizen/commands/bump/).

@@ -65,7 +65,7 @@ We use the [PEP440](https://peps.python.org/pep-0440/) standard for release vers
 
 ## Generating releases
 
-To aid in managing automated changelogs and package version control, this codebase uses the [Commitizen](https://commitizen-tools.github.io/commitizen/) package (installed as dev dependency) to .
+To aid in managing automated changelogs and package version control, this codebase uses the [Commitizen](https://commitizen-tools.github.io/commitizen/) package (installed as dev dependency). Please note that Commitizen has an automated approach of inferring what semantic versioning level the next bump should be (See last sub-section of this page).
 
 To bump to the next stable version:
 
@@ -77,7 +77,6 @@ Examples:
 
 ```
 v0.0.1 → v0.0.2
-v1.2.3 → v1.2.4
 ```
 
 ## Create a Pre-release
@@ -94,7 +93,6 @@ Examples:
 
 ```
 v1.0.4 → v1.0.5a0
-v1.0.5a0 → v1.0.5a1
 ```
 
 ### Beta (b)
@@ -107,7 +105,6 @@ Examples:
 
 ```
 v1.0.5a2 → v1.0.5b0
-v1.0.5b0 → v1.0.5b1
 ```
 
 ### Release Candidate (rc)
@@ -120,12 +117,16 @@ Examples:
 
 ```
 v1.0.5b2 → v1.0.5rc0
-v1.0.5rc0 → v1.0.5rc1
 ```
 
 ### Explicit patch-level prerelease
 
-To start a new patch-level prerelease explicitly:
+Commitizen will automatically infer the SemVer level based on the commit history.
+While this can be nice, you might want to define your own release definition like
+I have been doing till hitting production stage.
+
+To start a new patch-level prerelease explicitly rather than letting commitizen
+infer it:
 
 ```bash
 cz bump --increment patch --prerelease alpha

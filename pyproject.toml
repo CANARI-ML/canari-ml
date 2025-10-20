@@ -57,6 +57,7 @@ dev = [
   "ruff",
   "tox",
   "pytest",
+  "pytest-xdist",
   "build",
   "torch-tb-profiler",
   "commitizen",

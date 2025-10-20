@@ -29,8 +29,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          # Installing CPU-only PyTorch explicitly for GH runner
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install .[dev]
 
       - name: Run tests
-        run: pytest
+        run: pytest -n auto

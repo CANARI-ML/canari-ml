@@ -1,3 +1,91 @@
+## 0.0.1a2 (2025-10-20)
+
+### Feat
+
+- **preprocess**: Output compressed nc files in each step
+- Use relative path symlink for final preprocess dir
+- Add `hydra-submitit-launcher` dep for SLURM submission
+- **wandb**: Updated tags, include model name
+- **hydra**: Use overload postproc & add plot
+- **nc**: Add postprocess config + nc output
+- **preprocess**: Symlink to norm path w/ pred dset
+- **torch**: Symlink to cache dir in train/pred
+- **predict**: WIP HYDRA config+code for runs
+- **hydra**: Add WandB logging support
+- **hydra**: Tweaks to outputs w/ ensemble
+- **hydra**: Use hydra conf for trainer as well
+- **hydra**: Migrate to config driven training
+- **hydra**: Add colour logging
+- **hydra**: Code to skip previously run preproc steps
+- **hydra**: Symlink preprocess outputs to main dir
+- **hydra**: Add hash gen for each preprocess step
+- **hydra**: Work towards non-default output dirs
+- **hydra**: Proper logging, output dir definition
+- **hydra**: Initial manual logging
+- **hydra**: CLI entrypoints for download/preproc
+- **hydra**: Add initial HYDRA config management
+
+### Fix
+
+- **postprocess**: Empty default './network_datasets' being created
+- Add tensorboard dependency
+- Move custom preprocess OmegaConf resolvers to utils
+- **hydra**: Resolving interpolating by default print causing error
+- slow argparse, temp fix
+- **hydra**: Indentation of yaml only in logging
+- **postprocess**: Setting type not overridden correctly
+- **hydra**: Remove '.' from hydra search path in train
+- **hydra**: Remove '.' from hydra search path in preprocess
+- **hydra**: Adjust imports for new hydra/ entrypoint location
+- Update pyproject to point to new GH org repo location
+- **hydra**: Include pyproject update to new hydra location
+- **hydra**: Incorrect download config location
+- **hydra**: Config files not included in normal install
+- **unet**: Forgot to commit for unet test
+- Again, preprocess SLURM submission w/ multirun not working
+- Preprocess SLURM submission w/ multirun not working
+- Remove setting matplotlib backend
+- **hydra**: preprocess --help cmd error
+- **postprocess**: Incorrect single comment on postproc cli
+- Re-add geospatial_bounds_crs to .nc outputs
+- **dataloader**: Mem leak in cache zarr output
+- **ncout**: Version info pointing to right place
+- **model**: Incorrect type hint
+- **hydra**: Register resolver before calling hydra func
+- **pyproject**: Incorrect github dependency install format
+- Changes to toolboxes & code for alternate output locations
+- **pyproject**: Incorrect github dependency install format
+- **zarr**: Limit zarr install version < 3
+- **deps**: Pin numpy, min Python3.11 for hydra
+
+### Refactor
+
+- Remove icenet and numpy<2 deps
+- **plot**: Add broadcast_forecast func from icenet
+- **dataloader**: Strip out unused methods
+- Working towards removing icenet deps
+- **hydra**: Heavy refactor for individual cfg files
+- **download**: Make consistent with other hydra init code
+- **hydra**: Move cli/ subdir to hydra/
+- **hydra**: Heavy changes, work from 1 exp file
+- **hydra**: Rename 'main:' to 'input:'
+- **hydra**: Move common configs to predict defaults dir
+- **hydra**: train.run_name to train.name
+- **hydra**: output layout, plotting, ensemble fixes
+- **hydra**: Move hydra config print to utils
+- **hydra**: Move train/predict configs to group
+- **hydra**: Move train out into config group
+- **ncout**: Move module path to postprocess
+- **hydra**: Skip hash if name overridden
+- **hydra**: Changes to make non-CLI preproc
+- **download**: Update hydra config + no CLI
+- **train**: Update ckpt output filename
+- **hydra**: Streamline preprocess output locs
+- **hydra**: Preprocess output locations & log
+- **hydra**: Restructure config layout for hash
+- **hydra**: Update output dir/path to dict
+- **hydra**: Preprocess cmds in hydra config
+
 ## 0.0.1a1 (2025-06-19)
 
 ### Feat

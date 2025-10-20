@@ -133,6 +133,6 @@ filename = "docs/reference.md"
 [tool.commitizen]
 name = "cz_conventional_commits"
 version_scheme = "pep440"
-version = "0.0.1a1"
+version = "0.0.1a2"
 update_changelog_on_bump = true
 major_version_zero = true        # Using this for initial dev before hitting v1.0.0

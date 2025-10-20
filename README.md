@@ -43,8 +43,11 @@
   <img alt="Linux Logo" src="https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black">
 </p>
 
-???+ warning
-    This is a highly experimental codebase with constant changes with every development release, and is not ready for production use.
+<details class="admonition warning" open="true">
+<summary class="admonition-title"><strong>Warning</strong></summary>
+<p>This is a highly experimental codebase with constant changes with every development release, and is not ready for production use.</p>
+</details>
+
 
 Canari-ML is a machine learning library built with PyTorch Lightning for wind forecasting (zonal wind at 700hPa) across the North Atlantic.
 

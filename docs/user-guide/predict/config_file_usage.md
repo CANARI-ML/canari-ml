@@ -31,7 +31,7 @@ workers: 1
 2. Point to the config of the training dataset (relative to where this config file is placed).
 3. This should be a list of date ranges you would want to generate predictions for.
 
-```console
+```bash
 canari_ml preprocess predict -cd configs/predict/custom_train/ -cn preprocess_1976_example
 ```
 
@@ -61,7 +61,7 @@ predict:
 
 This can be run using:
 
-```console
+```bash
 canari_ml predict -cd configs/predict/custom_train/ -cn 1979-01-26
 ```
 
@@ -91,6 +91,6 @@ predict:
 
 This can be run using:
 
-```console
+```bash
 canari_ml predict -cd configs/predict/custom_train/ -cn 1979-01-26_and_plot
 ```

@@ -4,6 +4,6 @@ After generating the netCDFs, we can create comparison plots of the prediction a
 
 We can use the same [prediction config file](../predict/config_file_usage.md#example-2-combined-prediction-postprocess-and-plotting-config) from the previous two steps to generate these files.
 
-```console
+```bash
 canari_ml plot -cd configs/predict/custom_train -cn 1979-01-26_and_plot
 ```

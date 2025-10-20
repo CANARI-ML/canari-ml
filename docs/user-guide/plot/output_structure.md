@@ -12,7 +12,7 @@ The `plot` subcommand will output visualisations comparing the prediction agains
 
 ## Simplified Output Tree
 
-```console
+```bash
 outputs/
 └── demo_train/                     # Parent directory corresponding to the training run
     └── prediction/

@@ -18,7 +18,7 @@ The prediction pipeline performs the following steps:
 
 ## Simplified Output Tree
 
-```console
+```bash
 outputs/
 └── demo_train/                      # Parent directory corresponding to the training run
     └── prediction/

@@ -12,7 +12,7 @@ One of the most powerful features of Hydra is its ability to override configurat
 
 To view the different available options, use the `--help` command, as an example of the training command:
 
-``` console
+```bash
 canari_ml train --help
 ```
 
@@ -24,7 +24,7 @@ This documentation captures the latest help outputs for reference, and can be fo
 
 To override the default parameters at runtime:
 
-``` console
+```bash
 canari_ml train model.network.filter_size=5 model.litmodule.criterion.learning_rate=0.001
 ```
 
@@ -34,7 +34,7 @@ This will override the default values of `model.network.filter_size` and `model.
 
 You can even add new values that were not present in the original configuration file:
 
-``` console
+```bash
 canari_ml train +new_param="extra_value"
 ```
 

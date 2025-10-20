@@ -6,7 +6,7 @@ Canari-ML provides a flexible configuration system using Hydra to download ERA5 
 
 The main command for downloading data is `canari_ml download`. To find the default options, and what configuration options can be changed, run:
 
-``` console exec="on" source="tabbed-left" result="ansi" tabs="Command|Output"
+```console exec="on" source="tabbed-left" result="ansi" tabs="Command|Output"
 $ canari_ml download --help
 ```
 

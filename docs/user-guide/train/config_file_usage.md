@@ -42,6 +42,6 @@ model:
 
 You can run training with this config file using:
 
-``` console
+```bash
 canari_ml train -cd configs/train/ -cn custom_train.yaml
 ```

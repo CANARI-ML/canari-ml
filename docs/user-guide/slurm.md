@@ -6,7 +6,7 @@ Running jobs on clusters is relatively straightforward.
 
 As an example, for preprocessing:
 
-``` console
+```bash
 canari_ml preprocess train 'hydra.searchpath=[file://.]' hydra/launcher=slurm_jasmin_cpu -cd configs/preprocess/ -cn train_demo_dataset -m
 ```
 
@@ -15,7 +15,7 @@ canari_ml preprocess train 'hydra.searchpath=[file://.]' hydra/launcher=slurm_ja
 
 where, this custom config file is used to define the job submission on a SLURM cluster. As an example, for the [JASMIN LOTUS2 cluster](https://help.jasmin.ac.uk/docs/batch-computing/lotus-overview/), you would use the following config file:
 
-``` yaml title="hydra/launcher/slurm_jasmin_cpu.yaml"
+```yaml title="hydra/launcher/slurm_jasmin_cpu.yaml"
 # @package hydra.launcher
 _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
 
@@ -43,11 +43,11 @@ setup:   #(2)!
 
 And, for submitting a training run on a GPU partition:
 
-``` console
+```bash
 canari_ml train 'hydra.searchpath=[file://.]' hydra/launcher=slurm_jasmin_cpu train.dataset=preprocessed_data/train_demo_dataset/03_cache_demo_dataset/cached.DAY.north.json train.name=demo_train train.epochs=2
 ```
 
-``` yaml title="hydra/launcher/slurm_jasmin_gpu.yaml"
+```yaml title="hydra/launcher/slurm_jasmin_gpu.yaml"
 # @package hydra.launcher
 _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
 

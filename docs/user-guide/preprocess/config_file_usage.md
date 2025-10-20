@@ -8,7 +8,7 @@ For more complex configurations, you will probably prefer using a YAML config fi
 
 Create a custom configuration file `configs/preprocess/train_demo_dataset.yaml`:
 
-``` yaml title="configs/preprocess/train_demo_dataset.yaml" linenums="1"
+```yaml title="configs/preprocess/train_demo_dataset.yaml" linenums="1"
 # @package _global_
 
 defaults:       # (1)!
@@ -58,8 +58,8 @@ workers: 2
 
 You can now run the preprocess command and point to this custom config file (just like in the [download](../download/config_file_usage.md#example-override-config-file) section).
 
-``` console
-$ canari_ml preprocess train -cd configs/preprocess/ -cn train_demo_dataset
+```bash
+canari_ml preprocess train -cd configs/preprocess/ -cn train_demo_dataset
 ```
 
 ---
@@ -106,6 +106,6 @@ workers: 2
 
 To generate the prediction dataset, run:
 
-``` console
-$ canari_ml preprocess predict -cd configs/preprocess/ -cn predict_trial_dataset
+```bash
+canari_ml preprocess predict -cd configs/preprocess/ -cn predict_trial_dataset
 ```

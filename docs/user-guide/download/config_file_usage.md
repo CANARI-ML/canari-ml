@@ -43,20 +43,20 @@ dates:
 
 You can now run the download command and point to this config file.
 
-``` console
-$ canari_ml download --config-dir configs/download/ --config-name small_download
+``` bash
+canari_ml download --config-dir configs/download/ --config-name small_download
 ```
 
 or, for brevity, you can use the short options:
 
-``` console
-$ canari_ml download -cd configs/download/ -cn small_download
+``` bash
+canari_ml download -cd configs/download/ -cn small_download
 ```
 
 You can confirm the default options have been overridden by adding the `--help` flag:
 
-``` console
-$ canari_ml download -cd configs/download/ -cn small_download --help
+``` bash
+canari_ml download -cd configs/download/ -cn small_download --help
 ```
 
 where the following hydra options are,
@@ -72,14 +72,14 @@ You can override settings in the config file while providing additional CLI argu
 
 ## Example Command
 
-``` console
-$ canari_ml download -cd configs/download/ -cn small_download vars="[ua]" levels="[700]" dates.start="1979-01-01"
+``` bash
+canari_ml download -cd configs/download/ -cn small_download vars="[ua]" levels="[700]" dates.start="1979-01-01"
 ```
 
 This would override the definition in the custom config file and only download `ua` at `700hPa`, with dates between `1979-01-01` to `1979-01-31`.
 
 And, once again, you can verify the default options have been overridden by adding the `--help` flag:
 
-``` console
-$ canari_ml download -cd configs/download/ -cn small_download vars="[ua]" levels="[700]" dates.start="1979-01-01" --help
+``` bash
+canari_ml download -cd configs/download/ -cn small_download vars="[ua]" levels="[700]" dates.start="1979-01-01" --help
 ```

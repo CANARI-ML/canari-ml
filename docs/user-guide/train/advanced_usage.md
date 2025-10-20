@@ -10,13 +10,13 @@ To set-up W&B login credentials on your system, run the following and enter the 
 
 === "Command"
 
-    ``` console
-    $ wandb login
+    ```bash
+    wandb login
     ```
 
 === "Output"
 
-    ``` console
+    ```bash
     wandb: Logging into wandb.ai. (Learn how to deploy a W&B server locally: https://wandb.me/wandb-server)
     wandb: You can find your API key in your browser here: https://wandb.ai/authorize?ref=models
     wandb: Paste an API key from your profile and hit enter, or press ctrl+c to quit:
@@ -45,8 +45,8 @@ This will store your API key locally under:
 
 Now, the W&B logger can be used for training.
 
-``` console
-$ canari_ml train -cd configs/train/ -cn custom_train.yaml +logger=wandb
+``` bash
+canari_ml train -cd configs/train/ -cn custom_train.yaml +logger=wandb
 ```
 
 Alternatively, you could also define this in your training YAML config file as a config group after loading the default `/train` config file.
@@ -67,7 +67,7 @@ defaults:
 
 By default, the `auto` keyword is used to allow PyTorch Lightning to auto-select the accelerator, and a single accelerator device is set to be used. To override which accelerator to use, and how many GPUs (or which GPU by GPU id):
 
-``` console
+```bash
 canari_ml train -cd configs/train/ -cn custom_train.yaml trainer.accelerator="gpu" strategy="ddp" trainer.devices="[0]"
 ```
 

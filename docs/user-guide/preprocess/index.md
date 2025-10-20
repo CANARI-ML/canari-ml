@@ -37,7 +37,7 @@ The `canari_ml preprocess` command preprocesses the ERA5 data running the follow
 
 To see the subcommands available, run:
 
-``` console exec="on" source="tabbed-left" result="ansi" tabs="Command|Output"
+```console exec="on" source="tabbed-left" result="ansi" tabs="Command|Output"
 $ canari_ml preprocess --help
 ```
 
@@ -48,7 +48,7 @@ The `train` subcommand applies the [preprocessing steps](#usage), then processes
 #### Basic Usage
 
 
-``` console exec="on" source="tabbed-left" result="ansi" tabs="Command|Output"
+```console exec="on" source="tabbed-left" result="ansi" tabs="Command|Output"
 $ canari_ml preprocess train --help
 ```
 
@@ -58,7 +58,7 @@ This displays the help menu with all available default configuration options. An
 
 To execute the training preprocessing with the defaults:
 
-``` console
+```bash
 canari_ml preprocess train
 ```
 
@@ -70,7 +70,7 @@ The `predict` subcommand applies the [preprocessing steps](#usage), then just ou
 
 #### Basic Usage
 
-``` console exec="on" source="tabbed-left" result="ansi" tabs="Command|Output"
+```console exec="on" source="tabbed-left" result="ansi" tabs="Command|Output"
 $ canari_ml preprocess predict --help
 ```
 
@@ -80,6 +80,6 @@ This displays the help menu for the prediction command.
 
 To execute the prediction preprocessing using the defaults:
 
-``` console
-$ canari_ml preprocess predict
+```bash
+canari_ml preprocess predict
 ```

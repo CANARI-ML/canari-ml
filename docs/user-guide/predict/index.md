@@ -6,7 +6,7 @@ After creating a trained model, we can generate a dataset for prediction, utilis
 
 Since we can generate multiple predictions for one trained model, we can create a directory with the same name as the trained model, and then create the hydra yaml config file in that directory to specify the parameters of the prediction. i.e.:
 
-``` console
+```bash
 configs/predict/custom_train/1979-01-26.yaml
 ```
 

@@ -18,7 +18,7 @@ __
 
 ## Simplified Output Tree
 
-``` console
+```bash
 preprocessed_data/
 ├── cache/
 │   └── 03_cache_{name}/       # Step 3: Final cached Zarr datasets (train/val/test)

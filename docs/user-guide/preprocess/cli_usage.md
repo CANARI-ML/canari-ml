@@ -10,22 +10,22 @@ If you are a fan of command line options, you will balk at the idea of using con
 
 To change the dataset name, and forecast length to 3 days:
 
-``` console
-$ canari_ml preprocess train input.name=primo input.forecast_length=3
+```bash
+canari_ml preprocess train input.name=primo input.forecast_length=3
 ```
 
 By default, the number of historical days used to generate the dataset will match the forecast length, to adjust it to a specific number of days, you can override the `lag_length` parameter:
 
-``` console
-$ canari_ml preprocess train input.name=primo input.forecast_length=2 input.lag_length=2
+```bash
+canari_ml preprocess train input.name=primo input.forecast_length=2 input.lag_length=2
 ```
 
 ### Override More Options
 
 To set the variables, dates and more options you want to use for training:
 
-``` console
-$ canari_ml preprocess train input.name=primo input.forecast_length=3 input.lag_length=2 input.vars.absolute="[ua500, ua700]" input.vars.anomaly="[zg500,zg700]" input.dates.train.start="[1979-01-05, 1979-01-20]" input.dates.train.end="[1979-01-15, 1979-01-25]" preprocess_cache.output_batch_size=4 workers=2
+```bash
+canari_ml preprocess train input.name=primo input.forecast_length=3 input.lag_length=2 input.vars.absolute="[ua500, ua700]" input.vars.anomaly="[zg500,zg700]" input.dates.train.start="[1979-01-05, 1979-01-20]" input.dates.train.end="[1979-01-15, 1979-01-25]" preprocess_cache.output_batch_size=4 workers=2
 ```
 
 - The variable names are a combination of [variables](../download/index.md#variables) and [pressure-levels](../download/index.md#pressure-levels) (if not a surface variable).

@@ -16,7 +16,7 @@ To get started with using `canari-ml`, you will need to have Python set-up on yo
 
     You can replace the `mamba` command with `conda` if you prefer.
 
-    ``` console
+    ```bash
     mamba create -n canari_ml python=3.11 -y
     mamba activate canari_ml
     ```
@@ -24,7 +24,7 @@ To get started with using `canari-ml`, you will need to have Python set-up on yo
 ### Using Python's venv
 1. **Create a virtual environment**:
 
-    ``` console
+    ```bash
     python -m venv venv
     ```
     This requires Python to already be installed on your system. You could use the Python installed by the OS, by MiniForge, or any other approach.
@@ -32,13 +32,13 @@ To get started with using `canari-ml`, you will need to have Python set-up on yo
 2. **Activate the virtual environment**:
 
     === "macOS/Linux"
-        ``` console
+        ```bash
         source venv/bin/activate
         ```
 
     === "Windows"
 
-        ``` console
+        ```bash
         .\venv\Scripts\activate.bat
         ```
 
@@ -46,13 +46,13 @@ To get started with using `canari-ml`, you will need to have Python set-up on yo
 
 ### Install latest default branch directly using pip
 
-``` console
+```bash
 pip install git+https://github.com/CANARI-ML/canari-ml@main
 ```
 
 To install a specific [tagged version](https://github.com/CANARI-ML/canari-ml/tags):
 
-``` console
+```bash
 pip install git+https://github.com/CANARI-ML/canari-ml@0.0.1a1
 ```
 
@@ -60,27 +60,27 @@ pip install git+https://github.com/CANARI-ML/canari-ml@0.0.1a1
 
 1. **Clone the repository**:
 
-    ``` console
+    ```bash
     git clone git@github.com:CANARI-ML/canari-ml.git
     cd canari-ml
     ```
 
     To specify the branch to clone:
 
-    ``` console
+    ```bash
     git clone -b <branch_name> git@github.com:CANARI-ML/canari-ml.git
     cd canari-ml
     ```
 
 2. **Install in development mode** (editable installation):
 
-    ``` console
+    ```bash
     pip install -e .
     ```
 
     To install for local development, including documentation:
 
-    ``` console
+    ```bash
     pip install -e .[dev,docs]
     ```
 
@@ -88,7 +88,7 @@ pip install git+https://github.com/CANARI-ML/canari-ml@0.0.1a1
 
     Run `pre-commit` once to set up the hook to run each time a commit is attempted:
 
-    ``` console
+    ```bash
     pre-commit install
     ```
 

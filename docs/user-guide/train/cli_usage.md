@@ -13,7 +13,7 @@ The `canari_ml train` command uses a structured configuration system, where you 
 
 You can also override model-specific parameters:
 
-``` console
+```bash
 canari_ml train model.network.filter_size=5 model.litmodule.criterion.learning_rate=0.001
 ```
 
@@ -28,12 +28,12 @@ canari_ml train model.network.filter_size=5 model.litmodule.criterion.learning_r
 # Examples
 
 ## Basic Override Example
-``` console
+```bash
 canari_ml train train.dataset=preprocessed_data/train_demo_dataset/03_cache_demo_dataset/cached.DAY.north.json train.name=demo_train train.epochs=2
 ```
 
 ## Advanced Override Example
-``` console
+```bash
 canari_ml train train.dataset=preprocessed_data/train_demo_dataset/03_cache_demo_dataset/cached.DAY.north.json train.name=demo_train train.seed=42 train.epochs=20 train.workers=8 train.batch_size=16
 ```
 
@@ -41,6 +41,6 @@ canari_ml train train.dataset=preprocessed_data/train_demo_dataset/03_cache_demo
 
 To modify callbacks like early stopping and checkpoint monitoring, add the following overrides to the above command:
 
-``` console
+```bash
 callbacks.early_stopping.patience=5 callbacks.model_checkpoint.monitor=val_rmse
 ```

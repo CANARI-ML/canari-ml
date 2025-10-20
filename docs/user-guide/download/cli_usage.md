@@ -16,18 +16,18 @@ Due to the scope of this project, I would recommend not changing the following v
 
 #### Select Specific Variables and Levels
 
-``` console
-$ canari_ml download vars="[ua, zg]" levels="[700, 700]"
+``` bash
+canari_ml download vars="[ua, zg]" levels="[700, 700]"
 ```
 
 #### Custom Date Range
 
-``` console
-$ canari_ml download dates.start="1980-01-01" dates.end="1990-12-31"
+``` bash
+canari_ml download dates.start="1980-01-01" dates.end="1990-12-31"
 ```
 
 #### Common Override Options
 
-``` console
-$ canari_ml download vars="[ua]" levels="[700]" dates.start="[1979-01-01]" dates.end="[1979-01-02]" delete_cache=true
+``` bash
+canari_ml download vars="[ua]" levels="[700]" dates.start="[1979-01-01]" dates.end="[1979-01-02]" delete_cache=true
 ```

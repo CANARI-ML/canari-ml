@@ -19,7 +19,7 @@ The postprocessing pipeline performs the following key steps:
 
 The main output directory is the same as the prediction step.
 
-```console
+```bash
 outputs/
 └── demo_train/                     # Parent directory corresponding to the training run
     └── prediction/

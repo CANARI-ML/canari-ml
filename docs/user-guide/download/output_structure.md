@@ -16,7 +16,7 @@ __
 
 ## Simplified Output Tree
 
-``` console
+```bash
 data/
 ├── aws/
 │   ├── cache/                # Raw hourly netCDF downloads from AWS S3 bucket

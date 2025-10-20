@@ -16,7 +16,7 @@ The training pipeline performs the following:
 
 ## Simplified Output Tree
 
-```console
+```bash
 outputs/
 └── demo_train/                     # Output folder for a training run (named via config or CLI)
     └── training/                   # Container for training experiment

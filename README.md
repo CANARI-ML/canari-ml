@@ -102,44 +102,6 @@ Please see [CONTRIBUTING](https://github.com/CANARI-ML/canari-ml/blob/main/CONTR
 
 CANARI-ML is a work in progress and will be updated as development progresses.
 
-## Release
-
-This repo uses the [Commitizen](https://commitizen-tools.github.io/commitizen/) package (installed as dev dependency) to manage changelogs and package version control.
-
-To bump to the next stable version:
-
-```bash
-cz bump
-```
-
-Examples:
-
-v0.0.1 → v0.0.2
-
-To release an alpha version:
-
-```bash
-cz bump --prerelease alpha
-```
-
-Examples:
-
-v1.0.4 → v1.0.5-alpha.0
-v1.0.5-alpha.0 → v1.0.5-alpha.1
-
-To start a new patch-level prerelease explicitly:
-
-```bash
-cz bump --increment patch --prerelease alpha
-```
-
-Examples:
-
-v1.2.4-alpha.3 → v1.2.5-alpha.0
-
-For full documentation on its usage, please peruse the [Commitizen docs](https://commitizen-tools.github.io/commitizen/commands/bump/).
-
-
 <!--contributors-start-->
 
 ## Contributors
@@ -149,3 +111,4 @@ For full documentation on its usage, please peruse the [Commitizen docs](https:/
 </a>
 
 <!--contributors-end-->
+

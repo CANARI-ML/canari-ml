@@ -194,4 +194,9 @@ nav:
       - user-guide/slurm.md
   # - Examples:
   #   - Experiments: user-guide/experiments/index.md
+  - Dev Usage:
+    - dev-guide/index.md
+    - Contributing: dev-guide/contributing.md
+    - Releasing versions: dev-guide/releases.md
   - Code Reference: reference/
+
